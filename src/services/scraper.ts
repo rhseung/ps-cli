@@ -85,6 +85,24 @@ function htmlToMarkdown(
         case "li":
           result += htmlToMarkdown($, $node);
           break;
+        case "img":
+          const imgSrc = $node.attr("src") || "";
+          const imgAlt = $node.attr("alt") || "";
+          if (imgSrc) {
+            // 상대 경로를 절대 URL로 변환
+            let imageUrl = imgSrc;
+            if (imgSrc.startsWith("/")) {
+              imageUrl = `${BOJ_BASE_URL}${imgSrc}`;
+            } else if (
+              !imgSrc.startsWith("http") &&
+              !imgSrc.startsWith("data:")
+            ) {
+              // 상대 경로인 경우
+              imageUrl = `${BOJ_BASE_URL}/${imgSrc}`;
+            }
+            result += `![${imgAlt}](${imageUrl})`;
+          }
+          break;
         default:
           result += htmlToMarkdown($, $node);
       }
