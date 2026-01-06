@@ -14,6 +14,7 @@ import {
   getSolvedAcHandle,
   setProblemDir,
   getProblemDir,
+  clearConfig,
 } from "../utils/config";
 import {
   getSupportedLanguages,
@@ -27,6 +28,7 @@ export function getConfigHelp(): string {
     $ ps config <키> [값]
     $ ps config <키> --get
     $ ps config --list
+    $ ps config clear
 
   설명:
     사용자 설정을 관리합니다.
@@ -44,6 +46,7 @@ export function getConfigHelp(): string {
   옵션:
     --get                  설정 값 조회
     --list                 모든 설정 조회
+    clear                  모든 설정 초기화
     --help, -h             도움말 표시
 
   예제:
@@ -54,6 +57,7 @@ export function getConfigHelp(): string {
     $ ps config problem-dir "problems"      # problems 디렉토리 사용 (기본값)
     $ ps config problem-dir --get
     $ ps config --list
+    $ ps config clear                       # 모든 설정 초기화
 `;
 }
 
@@ -65,14 +69,24 @@ function ConfigCommand({
   value,
   get,
   list,
+  clear,
   onComplete,
 }: {
   configKey?: string;
   value?: string;
   get?: boolean;
   list?: boolean;
+  clear?: boolean;
   onComplete: () => void;
 }) {
+  if (clear) {
+    clearConfig();
+    return (
+      <Box>
+        <Text color="green">✓ 모든 설정이 초기화되었습니다.</Text>
+      </Box>
+    );
+  }
   if (list) {
     const bojCookie = getBojSessionCookie();
     const defaultLang = getDefaultLanguage();
@@ -203,7 +217,8 @@ async function configCommand(
   configKey?: string,
   value?: string,
   get?: boolean,
-  list?: boolean
+  list?: boolean,
+  clear?: boolean
 ) {
   return new Promise<void>((resolve) => {
     const { unmount } = render(
@@ -212,6 +227,7 @@ async function configCommand(
         value={value}
         get={get}
         list={list}
+        clear={clear}
         onComplete={() => {
           unmount();
           resolve();
@@ -236,6 +252,12 @@ export async function configExecute(
     return;
   }
 
+  // clear 명령어 처리
+  if (args[0] === "clear") {
+    await configCommand(undefined, undefined, false, false, true);
+    return;
+  }
+
   if (flags.list) {
     await configCommand(undefined, undefined, false, true);
     return;
@@ -247,6 +269,7 @@ export async function configExecute(
   if (!key) {
     console.error("오류: 설정 키를 입력해주세요.");
     console.error(`사용법: ps config <키> [값]`);
+    console.error(`사용법: ps config clear`);
     console.error(`도움말: ps config --help`);
     process.exit(1);
   }
