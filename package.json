@@ -22,8 +22,16 @@
     "cli",
     "problem-solving"
   ],
-  "author": "",
+  "author": "rhseung <ryu@rhseung.me>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhseung/ps-cli.git"
+  },
+  "homepage": "https://github.com/rhseung/ps-cli#readme",
+  "bugs": {
+    "url": "https://github.com/rhseung/ps-cli/issues"
+  },
   "dependencies": {
     "@types/gradient-string": "^1.1.6",
     "chalk": "^5.3.0",

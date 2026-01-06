@@ -1,0 +1,43 @@
+# 소스 파일
+src/
+*.ts
+*.tsx
+tsconfig.json
+tsup.config.ts
+
+# 개발 도구
+.cursor/
+.cursorignore
+.vscode/
+.idea/
+
+# 빌드 관련 (dist는 package.json의 files에 포함되므로 제외하지 않음)
+*.tsbuildinfo
+
+# 개발 스크립트
+scripts/
+
+# 문제 디렉토리
+problems/
+
+# 로그 파일
+*.log
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# 환경 파일
+.env
+.env.local
+
+# 테스트 파일
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# 문서 (README.md는 자동 포함됨)
+AGENTS.md
+*.plan.md
+
