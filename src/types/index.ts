@@ -70,3 +70,23 @@ export interface ScrapedProblem {
   acceptedUsers?: string;
   acceptedRate?: string;
 }
+
+export type TestStatus = "pass" | "fail" | "error";
+
+export interface TestResult {
+  caseId: number;
+  inputPath: string;
+  expected?: string;
+  actual?: string;
+  error?: string;
+  stderr?: string;
+  status: TestStatus;
+  durationMs?: number;
+}
+
+export interface TestSummary {
+  total: number;
+  passed: number;
+  failed: number;
+  errored: number;
+}

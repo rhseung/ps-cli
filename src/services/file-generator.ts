@@ -6,6 +6,15 @@ import type { Language } from "../utils/language";
 import { getLanguageConfig } from "../utils/language";
 import { getTierName, getTierImageUrl } from "../utils/tier";
 
+function parseTimeLimitToMs(timeLimit?: string): number | undefined {
+  if (!timeLimit) return undefined;
+  const match = timeLimit.match(/([\d.]+)/);
+  if (!match) return undefined;
+  const seconds = parseFloat(match[1]);
+  if (Number.isNaN(seconds)) return undefined;
+  return Math.round(seconds * 1000);
+}
+
 // 프로젝트 루트 경로 찾기 (dist 또는 src에서 실행될 수 있음)
 function getProjectRoot(): string {
   const __filename = fileURLToPath(import.meta.url);
@@ -137,6 +146,19 @@ ${tags}
 
   const readmePath = join(problemDir, "README.md");
   await writeFile(readmePath, readmeContent, "utf-8");
+
+  // 메타데이터 저장 (예: 시간 제한 ms)
+  const meta = {
+    id: problem.id,
+    title: problem.title,
+    level: problem.level,
+    timeLimit: problem.timeLimit,
+    timeLimitMs: parseTimeLimitToMs(problem.timeLimit),
+    memoryLimit: problem.memoryLimit,
+  };
+
+  const metaPath = join(problemDir, "meta.json");
+  await writeFile(metaPath, JSON.stringify(meta, null, 2), "utf-8");
 
   return problemDir;
 }

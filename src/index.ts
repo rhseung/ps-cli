@@ -1,23 +1,128 @@
 import meow from "meow";
-import { fetchCommand } from "./commands/fetch";
-import type { Language } from "./utils/language";
+import { readdir } from "fs/promises";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import type { CommandDefinition } from "./types/command";
+
+// commands 디렉토리 경로 찾기 (개발/빌드 환경 모두 지원)
+function getCommandsDir(): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+
+  // dist에서 실행되는 경우
+  if (__dirname.includes("dist")) {
+    return join(__dirname, "commands");
+  }
+  // src에서 실행되는 경우 (개발 모드)
+  return join(__dirname, "commands");
+}
+
+// commands 디렉토리에서 모든 명령어 동적으로 로드
+async function loadCommands(): Promise<Map<string, CommandDefinition>> {
+  const commandsDir = getCommandsDir();
+  const commandMap = new Map<string, CommandDefinition>();
+
+  try {
+    const files = await readdir(commandsDir);
+
+    for (const file of files) {
+      // .tsx, .ts, .js 파일만 처리 (index 파일 제외)
+      if (
+        (!file.endsWith(".ts") &&
+          !file.endsWith(".tsx") &&
+          !file.endsWith(".js")) ||
+        file === "index.ts" ||
+        file === "index.tsx" ||
+        file === "index.js"
+      ) {
+        continue;
+      }
+
+      const commandName = file.replace(/\.(ts|tsx|js)$/, "");
+      try {
+        // 동적 import (import.meta.url 기준 상대 경로)
+        const isDist = commandsDir.includes("dist");
+        const baseUrl = new URL(import.meta.url);
+        const commandsUrl = new URL(
+          isDist ? `./commands/${commandName}.js` : `./commands/${commandName}`,
+          baseUrl
+        );
+        const module = await import(commandsUrl.href);
+
+        // {commandName}Help와 {commandName}Execute 함수 찾기
+        const helpKey = `${commandName}Help`;
+        const executeKey = `${commandName}Execute`;
+
+        if (module[helpKey] && module[executeKey]) {
+          commandMap.set(commandName, {
+            name: commandName,
+            help: module[helpKey],
+            execute: module[executeKey],
+          });
+        } else {
+          console.warn(
+            `명령어 ${commandName}: ${helpKey} 또는 ${executeKey}를 찾을 수 없습니다.`
+          );
+        }
+      } catch (error) {
+        // 명령어 로드 실패 시 경고만 출력하고 계속 진행
+        console.warn(`명령어 ${commandName} 로드 실패:`, error);
+      }
+    }
+  } catch (error) {
+    console.error(
+      `commands 디렉토리를 읽을 수 없습니다: ${commandsDir}`,
+      error
+    );
+    throw error;
+  }
+
+  return commandMap;
+}
+
+// 명령어 맵 (비동기 로드)
+let commands: Map<string, CommandDefinition> | null = null;
+
+// 전체 help 텍스트 생성
+function generateHelpText(commands: Map<string, CommandDefinition>): string {
+  const commandList = Array.from(commands.values())
+    .map((cmd) => `    ${cmd.name}`)
+    .join("\n");
+
+  return `
+  사용법:
+    $ ps <명령어> [인자] [옵션]
+
+  명령어:
+${commandList}
+    help                이 도움말 표시
+
+  옵션:
+    --language, -l      언어 선택
+                        지원 언어: python, javascript, typescript, cpp
+                        - fetch: 기본값 python
+                        - test: solution.* 파일로 자동 감지 (지정 시 덮어쓰기)
+
+    --watch, -w         테스트 watch 모드 (test 명령어 전용)
+                        - solution.*, input*.txt, output*.txt 파일 변경 감지
+                        - 변경 시 자동으로 테스트 재실행
+
+    --help, -h          명령어별 도움말 표시
+
+  예제:
+    $ ps fetch 1000
+    $ ps test 1000 --watch
+    $ ps help
+    $ ps fetch --help
+`;
+}
 
 const cli = meow(
   `
   사용법:
-    $ ps fetch <문제번호> [옵션]
+    $ ps <명령어> [인자] [옵션]
 
-  명령어:
-    fetch <문제번호>    문제를 가져와서 로컬에 파일 생성
-
-  옵션:
-    --language, -l      언어 선택 (python, javascript, typescript, cpp)
-                        기본값: python
-
-  예제:
-    $ ps fetch 1000
-    $ ps fetch 1000 --language python
-    $ ps fetch 1000 -l cpp
+  명령어를 로드하는 중...
 `,
   {
     importMeta: import.meta,
@@ -27,44 +132,56 @@ const cli = meow(
         shortFlag: "l",
         default: "python",
       },
+      watch: {
+        type: "boolean",
+        shortFlag: "w",
+        default: false,
+      },
+      help: {
+        type: "boolean",
+        shortFlag: "h",
+        default: false,
+      },
     },
   }
 );
 
-const [command, ...args] = cli.input;
-
 async function main() {
-  if (command === "fetch") {
-    const problemId = parseInt(args[0], 10);
-
-    if (isNaN(problemId)) {
-      console.error("오류: 문제 번호를 입력해주세요.");
-      process.exit(1);
-    }
-
-    const language = cli.flags.language as Language;
-    const validLanguages: Language[] = [
-      "python",
-      "javascript",
-      "typescript",
-      "cpp",
-    ];
-
-    if (!validLanguages.includes(language)) {
-      console.error(
-        `오류: 지원하지 않는 언어입니다. (${validLanguages.join(", ")})`
-      );
-      process.exit(1);
-    }
-
-    await fetchCommand(problemId, language);
-  } else if (!command) {
-    cli.showHelp();
-  } else {
-    console.error(`오류: 알 수 없는 명령어: ${command}`);
-    console.error("사용 가능한 명령어: fetch");
-    process.exit(1);
+  // 명령어 동적 로드
+  if (!commands) {
+    commands = await loadCommands();
   }
+
+  const [command, ...args] = cli.input;
+
+  // help 명령어 처리 또는 명령어 없이 --help 플래그
+  if (command === "help" || (!command && cli.flags.help)) {
+    const helpText = generateHelpText(commands);
+    console.log(helpText.trim());
+    process.exit(0);
+    return;
+  }
+
+  // 명령어가 없으면 전체 help 표시
+  if (!command) {
+    const helpText = generateHelpText(commands);
+    console.log(helpText.trim());
+    process.exit(0);
+    return;
+  }
+
+  // 명령어 실행
+  const commandDef = commands.get(command);
+  if (!commandDef) {
+    console.error(`오류: 알 수 없는 명령어: ${command}`);
+    console.error(
+      `사용 가능한 명령어: ${Array.from(commands.keys()).join(", ")}, help`
+    );
+    process.exit(1);
+    return;
+  }
+
+  await commandDef.execute(args, cli.flags);
 }
 
 main().catch((error) => {

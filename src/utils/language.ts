@@ -26,7 +26,8 @@ export const LANGUAGE_CONFIGS: Record<Language, LanguageConfig> = {
   cpp: {
     extension: "cpp",
     templateFile: "solution.cpp",
-    compileCommand: "g++ -o solution solution.cpp",
+    // 절대 경로로 에러를 표시해서 에디터에서 문제 디렉토리의 파일로 바로 이동할 수 있도록 함
+    compileCommand: "g++ -fdiagnostics-absolute-paths -o solution solution.cpp",
     runCommand: "./solution",
   },
 };

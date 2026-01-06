@@ -15,29 +15,27 @@ graph TB
     Router --> Run[Run Command]
     Router --> Submit[Submit Command]
     Router --> Stats[Stats Command]
-    
+
     Fetch --> SolvedAPI[Solved.ac API]
     Fetch --> Scraper[Cheerio Scraper]
     Fetch --> FileGen[File Generator]
-    
+
     Test --> Execa[Execa Runner]
     Run --> Execa
     Submit --> Execa
     Submit --> BOJAPI[BOJ Submit API]
-    
+
     Execa --> DiffChecker[Diff Checker]
-    
+
     FileGen --> Watcher[Chokidar Watcher]
     Watcher --> Test
-    
+
     Router --> InkUI[Ink UI Components]
     InkUI --> Dashboard[Problem Dashboard]
     InkUI --> TestResult[Test Result View]
     InkUI --> Spinner[Loading Spinner]
     InkUI --> SelectMenu[Select Menu]
 ```
-
-
 
 ## 기술 스택
 
@@ -99,8 +97,6 @@ ps-cli/
 └── README.md
 ```
 
-
-
 ## 단계별 구현 계획
 
 ### 1단계: 프로젝트 초기화 및 기본 구조
@@ -125,7 +121,7 @@ ps-cli/
 
 - Solved.ac API 클라이언트 구현 (`services/solved-api.ts`)
 - 문제 정보 조회: `GET /api/v3/problem/show?problemId={id}`
-    - 난이도, 티어, 태그, 제목, 시간/메모리 제한 정보
+  - 난이도, 티어, 태그, 제목, 시간/메모리 제한 정보
 - 문제 검색: `GET /api/v3/search/problem` (선택적, 추후 확장용)
 - 사용자 통계: `GET /api/v3/user/show?handle={handle}` (stats 명령어용)
 - API Rate Limit 처리 및 에러 핸들링
@@ -274,8 +270,6 @@ ps submit                  # BOJ 제출
 ps stats                   # 통계 보기
 ```
 
-
-
 ### 언어 지원 설정
 
 각 언어별로 다음 정보 관리:
@@ -293,8 +287,3 @@ ps stats                   # 통계 보기
 - 사용자 친화적인 Ink 에러 UI
 
 ### Solved.ac API 활용
-
-**참고 문서**: [Solved.ac 비공식 문서](https://solvedac.github.io/unofficial-documentation/#/)**주요 API 엔드포인트**:
-
-- `GET /api/v3/problem/show?problemId={id}`: 문제 정보 조회
-- `GET /api/v3/user/show?handle={handle}`: 사용자 정보 조회

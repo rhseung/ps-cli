@@ -26,31 +26,6 @@ export function ProblemDashboard({ problem }: ProblemDashboardProps) {
           #{problem.id}: {problem.title}
         </Text>
       </Text>
-
-      {(problem.timeLimit || problem.memoryLimit) && (
-        <Box marginTop={1}>
-          {problem.timeLimit && (
-            <Text color="yellow">⏱️ {problem.timeLimit}</Text>
-          )}
-          {problem.timeLimit && problem.memoryLimit && <Text> </Text>}
-          {problem.memoryLimit && (
-            <Text color="cyan">💾 {problem.memoryLimit}</Text>
-          )}
-        </Box>
-      )}
-
-      {problem.tags.length > 0 && (
-        <Box marginTop={1}>
-          <Text color="gray">태그: </Text>
-          <Text>{problem.tags.join(", ")}</Text>
-        </Box>
-      )}
-
-      {problem.testCases.length > 0 && (
-        <Box marginTop={1}>
-          <Text color="green">✓ 예제 {problem.testCases.length}개</Text>
-        </Box>
-      )}
     </Box>
   );
 }

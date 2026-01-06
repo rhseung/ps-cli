@@ -124,7 +124,7 @@ function FetchCommand({
   );
 }
 
-export async function fetchCommand(problemId: number, language?: Language) {
+async function fetchCommand(problemId: number, language?: Language) {
   return new Promise<void>((resolve) => {
     const { unmount } = render(
       <FetchCommand
@@ -137,4 +137,62 @@ export async function fetchCommand(problemId: number, language?: Language) {
       />
     );
   });
+}
+
+export const fetchHelp = `
+  사용법:
+    $ ps fetch <문제번호> [옵션]
+
+  설명:
+    백준 문제를 가져와서 로컬에 파일을 생성합니다.
+    - Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
+    - 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
+    - 선택한 언어의 솔루션 템플릿 파일 생성
+    - README.md에 문제 정보, 통계, 태그 등 포함
+
+  옵션:
+    --language, -l      언어 선택 (python, javascript, typescript, cpp)
+                        기본값: python
+
+  예제:
+    $ ps fetch 1000
+    $ ps fetch 1000 --language python
+    $ ps fetch 1000 -l cpp
+`;
+
+export async function fetchExecute(
+  args: string[],
+  flags: { language?: string; help?: boolean }
+): Promise<void> {
+  if (flags.help) {
+    console.log(fetchHelp.trim());
+    process.exit(0);
+    return;
+  }
+
+  const problemId = parseInt(args[0], 10);
+
+  if (isNaN(problemId)) {
+    console.error("오류: 문제 번호를 입력해주세요.");
+    console.error(`사용법: ps fetch <문제번호> [옵션]`);
+    console.error(`도움말: ps fetch --help`);
+    process.exit(1);
+  }
+
+  const validLanguages: Language[] = [
+    "python",
+    "javascript",
+    "typescript",
+    "cpp",
+  ];
+
+  const language = flags.language as Language | undefined;
+  if (language && !validLanguages.includes(language)) {
+    console.error(
+      `오류: 지원하지 않는 언어입니다. (${validLanguages.join(", ")})`
+    );
+    process.exit(1);
+  }
+
+  await fetchCommand(problemId, language || "python");
 }

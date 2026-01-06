@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/commands/**/*.tsx"],
   format: ["esm"],
   target: "node18",
   outDir: "dist",
@@ -9,12 +9,10 @@ export default defineConfig({
   banner: {
     js: "#!/usr/bin/env node",
   },
-  external: ["react", "ink", "cheerio"],
+  external: ["react", "ink", "cheerio", "chokidar"],
   noExternal: [
     "chalk",
-    "chokidar",
     "conf",
-    "execa",
     "gradient-string",
     "ink-spinner",
     "ink-select-input",
