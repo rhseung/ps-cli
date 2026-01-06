@@ -2,10 +2,14 @@ import React, { useEffect, useState } from "react";
 import { render, Box, Text } from "ink";
 import { readdir } from "fs/promises";
 import { join } from "path";
-import { detectLanguageFromFile } from "../utils/language";
+import {
+  detectLanguageFromFile,
+  getSupportedLanguages,
+  getSupportedLanguagesString,
+  type Language,
+} from "../utils/language";
 import { runSolution } from "../services/runner";
 import { LoadingSpinner } from "../components/spinner";
-import type { Language } from "../utils/language";
 import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
 
 interface RunCommandProps {
@@ -191,7 +195,7 @@ export const runHelp = `
 
   옵션:
     --language, -l      언어 선택 (지정 시 자동 감지 무시)
-                        지원 언어: python, javascript, typescript, cpp
+                        지원 언어: ${getSupportedLanguagesString()}
     --input, -i         입력 파일 지정 (기본값: input.txt 또는 input1.txt)
 
   예제:
@@ -217,17 +221,12 @@ export async function runExecute(
 
   const problemId = getProblemId(args);
 
-  const validLanguages: Language[] = [
-    "python",
-    "javascript",
-    "typescript",
-    "cpp",
-  ];
+  const validLanguages = getSupportedLanguages();
 
   const language = flags.language as Language | undefined;
   if (flags.language && language && !validLanguages.includes(language)) {
     console.error(
-      `오류: 지원하지 않는 언어입니다. (${validLanguages.join(", ")})`
+      `오류: 지원하지 않는 언어입니다. (${getSupportedLanguagesString()})`
     );
     process.exit(1);
   }

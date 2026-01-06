@@ -4,7 +4,12 @@ import { readdir } from "fs/promises";
 import { join } from "path";
 import { readFile } from "fs/promises";
 import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
-import { detectLanguageFromFile, type Language } from "../utils/language";
+import {
+  detectLanguageFromFile,
+  getSupportedLanguages,
+  getSupportedLanguagesString,
+  type Language,
+} from "../utils/language";
 import { submitSolution } from "../services/submitter";
 import { LoadingSpinner } from "../components/spinner";
 import type { SubmitResult } from "../types";
@@ -199,7 +204,7 @@ export const submitHelp = `
 
   옵션:
     --language, -l      언어 선택 (지정 시 자동 감지 무시)
-                        지원 언어: python, javascript, typescript, cpp
+                        지원 언어: ${getSupportedLanguagesString()}
     --dry-run          실제 제출 없이 검증만 수행
 
   예제:
@@ -230,17 +235,12 @@ export async function submitExecute(
     process.exit(1);
   }
 
-  const validLanguages: Language[] = [
-    "python",
-    "javascript",
-    "typescript",
-    "cpp",
-  ];
+  const validLanguages = getSupportedLanguages();
 
   const language = flags.language as Language | undefined;
   if (flags.language && language && !validLanguages.includes(language)) {
     console.error(
-      `오류: 지원하지 않는 언어입니다. (${validLanguages.join(", ")})`
+      `오류: 지원하지 않는 언어입니다. (${getSupportedLanguagesString()})`
     );
     process.exit(1);
   }

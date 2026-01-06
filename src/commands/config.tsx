@@ -13,8 +13,13 @@ import {
   setSolvedAcHandle,
   getSolvedAcHandle,
 } from "../utils/config";
+import {
+  getSupportedLanguages,
+  getSupportedLanguagesString,
+} from "../utils/language";
 
-export const configHelp = `
+export function getConfigHelp(): string {
+  return `
   사용법:
     $ ps config <키> [값]
     $ ps config <키> --get
@@ -26,7 +31,7 @@ export const configHelp = `
 
   설정 키:
     boj-session-cookie    BOJ 세션 쿠키
-    default-language       기본 언어 (python, javascript, typescript, cpp)
+    default-language       기본 언어 (${getSupportedLanguagesString()})
     code-open              코드 공개 여부 (true/false)
     editor                 에디터 명령어 (예: code, vim, nano)
     auto-open-editor       fetch 후 자동으로 에디터 열기 (true/false)
@@ -44,6 +49,10 @@ export const configHelp = `
     $ ps config solved-ac-handle --get
     $ ps config --list
 `;
+}
+
+// index.ts에서 동적으로 로드하기 위한 export
+export const configHelp = getConfigHelp();
 
 function ConfigCommand({
   configKey,
@@ -137,9 +146,10 @@ function ConfigCommand({
         setBojSessionCookie(value);
         break;
       case "default-language":
-        if (!["python", "javascript", "typescript", "cpp"].includes(value)) {
+        const supportedLanguages = getSupportedLanguages();
+        if (!supportedLanguages.includes(value as any)) {
           console.error(
-            `지원하지 않는 언어입니다: ${value}\n지원 언어: python, javascript, typescript, cpp`
+            `지원하지 않는 언어입니다: ${value}\n지원 언어: ${getSupportedLanguagesString()}`
           );
           process.exit(1);
         }
@@ -206,7 +216,7 @@ export async function configExecute(
   flags: { get?: boolean; list?: boolean; help?: boolean }
 ): Promise<void> {
   if (flags.help) {
-    console.log(configHelp.trim());
+    console.log(getConfigHelp().trim());
     process.exit(0);
     return;
   }

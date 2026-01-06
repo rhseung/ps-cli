@@ -3,11 +3,15 @@ import { render, Box, Text } from "ink";
 import chokidar from "chokidar";
 import { readdir } from "fs/promises";
 import { join } from "path";
-import { detectLanguageFromFile } from "../utils/language";
+import {
+  detectLanguageFromFile,
+  getSupportedLanguages,
+  getSupportedLanguagesString,
+  type Language,
+} from "../utils/language";
 import { runAllTests } from "../services/test-runner";
 import { LoadingSpinner } from "../components/spinner";
 import { TestResultView } from "../components/test-result";
-import type { Language } from "../utils/language";
 import type { TestResult, TestSummary } from "../types";
 import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
 
@@ -192,7 +196,7 @@ export const testHelp = `
 
   옵션:
     --language, -l      언어 선택 (지정 시 자동 감지 무시)
-                        지원 언어: python, javascript, typescript, cpp
+                        지원 언어: ${getSupportedLanguagesString()}
     --watch, -w         watch 모드 (파일 변경 시 자동 재테스트)
                         solution.*, input*.txt, output*.txt 파일 변경 감지
 
@@ -215,17 +219,12 @@ export async function testExecute(
 
   const problemId = getProblemId(args);
 
-  const validLanguages: Language[] = [
-    "python",
-    "javascript",
-    "typescript",
-    "cpp",
-  ];
+  const validLanguages = getSupportedLanguages();
 
   const language = flags.language as Language | undefined;
   if (flags.language && language && !validLanguages.includes(language)) {
     console.error(
-      `오류: 지원하지 않는 언어입니다. (${validLanguages.join(", ")})`
+      `오류: 지원하지 않는 언어입니다. (${getSupportedLanguagesString()})`
     );
     process.exit(1);
   }

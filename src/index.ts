@@ -3,6 +3,7 @@ import { readdir } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import type { CommandDefinition } from "./types/command";
+import { getSupportedLanguagesString } from "./utils/language";
 
 // commands 디렉토리 경로 찾기 (개발/빌드 환경 모두 지원)
 function getCommandsDir(): string {
@@ -99,7 +100,7 @@ ${commandList}
 
   옵션:
     --language, -l      언어 선택
-                        지원 언어: python, javascript, typescript, cpp
+                        지원 언어: ${getSupportedLanguagesString()}
                         - fetch: 기본값 python
                         - test: solution.* 파일로 자동 감지 (지정 시 덮어쓰기)
 

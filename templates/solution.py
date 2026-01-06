@@ -1,9 +1,5 @@
 import sys
 
-def main():
-    # TODO: 문제 해결 로직 구현
-    pass
+def input() -> str: return sys.stdin.readline().rstrip()
 
-if __name__ == '__main__':
-    main()
-
+# TODO: 문제 해결 로직 구현

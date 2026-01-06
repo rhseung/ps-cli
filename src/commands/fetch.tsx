@@ -9,6 +9,10 @@ import type { Problem } from "../types/index";
 import type { Language } from "../utils/language";
 import { getTierName } from "../utils/tier";
 import { getProblemId } from "../utils/problem-id";
+import {
+  getSupportedLanguages,
+  getSupportedLanguagesString,
+} from "../utils/language";
 import { getAutoOpenEditor, getEditor } from "../utils/config";
 import { execaCommand } from "execa";
 
@@ -177,7 +181,7 @@ export const fetchHelp = `
     - README.md에 문제 정보, 통계, 태그 등 포함
 
   옵션:
-    --language, -l      언어 선택 (python, javascript, typescript, cpp)
+    --language, -l      언어 선택 (${getSupportedLanguagesString()})
                         기본값: python
 
   예제:
@@ -208,17 +212,12 @@ export async function fetchExecute(
     process.exit(1);
   }
 
-  const validLanguages: Language[] = [
-    "python",
-    "javascript",
-    "typescript",
-    "cpp",
-  ];
+  const validLanguages = getSupportedLanguages();
 
   const language = flags.language as Language | undefined;
   if (language && !validLanguages.includes(language)) {
     console.error(
-      `오류: 지원하지 않는 언어입니다. (${validLanguages.join(", ")})`
+      `오류: 지원하지 않는 언어입니다. (${getSupportedLanguagesString()})`
     );
     process.exit(1);
   }
