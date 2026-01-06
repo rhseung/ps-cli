@@ -46,13 +46,13 @@ export const configHelp = `
 `;
 
 function ConfigCommand({
-  key,
+  configKey,
   value,
   get,
   list,
   onComplete,
 }: {
-  key?: string;
+  configKey?: string;
   value?: string;
   get?: boolean;
   list?: boolean;
@@ -98,9 +98,9 @@ function ConfigCommand({
     );
   }
 
-  if (get && key) {
+  if (get && configKey) {
     let configValue: string | undefined;
-    switch (key) {
+    switch (configKey) {
       case "boj-session-cookie":
         configValue = getBojSessionCookie();
         break;
@@ -120,7 +120,7 @@ function ConfigCommand({
         configValue = getSolvedAcHandle();
         break;
       default:
-        console.error(`알 수 없는 설정 키: ${key}`);
+        console.error(`알 수 없는 설정 키: ${configKey}`);
         process.exit(1);
     }
 
@@ -131,8 +131,8 @@ function ConfigCommand({
     );
   }
 
-  if (key && value !== undefined) {
-    switch (key) {
+  if (configKey && value !== undefined) {
+    switch (configKey) {
       case "boj-session-cookie":
         setBojSessionCookie(value);
         break;
@@ -158,14 +158,14 @@ function ConfigCommand({
         setSolvedAcHandle(value);
         break;
       default:
-        console.error(`알 수 없는 설정 키: ${key}`);
+        console.error(`알 수 없는 설정 키: ${configKey}`);
         process.exit(1);
     }
 
     return (
       <Box>
         <Text color="green">
-          ✓ 설정이 저장되었습니다: {key} = {value}
+          ✓ 설정이 저장되었습니다: {configKey} = {value}
         </Text>
       </Box>
     );
@@ -175,7 +175,7 @@ function ConfigCommand({
 }
 
 async function configCommand(
-  key?: string,
+  configKey?: string,
   value?: string,
   get?: boolean,
   list?: boolean
@@ -183,7 +183,7 @@ async function configCommand(
   return new Promise<void>((resolve) => {
     const { unmount } = render(
       <ConfigCommand
-        key={key}
+        configKey={configKey}
         value={value}
         get={get}
         list={list}
