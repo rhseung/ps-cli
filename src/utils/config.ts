@@ -7,6 +7,7 @@ interface ConfigSchema {
   editor?: string; // 에디터 명령어 (예: "code", "vim", "nano")
   autoOpenEditor?: boolean; // fetch 완료 후 자동으로 에디터 열기
   solvedAcHandle?: string; // Solved.ac 핸들 (stats 명령어용)
+  problemDir?: string; // 문제 디렉토리 경로 (기본값: "problems", "." 또는 ""는 프로젝트 루트)
 }
 
 const config = new Conf<ConfigSchema>({
@@ -18,6 +19,7 @@ const config = new Conf<ConfigSchema>({
     editor: "code", // 기본값: VS Code
     autoOpenEditor: false, // 기본값: 자동 열기 비활성화
     solvedAcHandle: undefined,
+    problemDir: "problems", // 기본값: problems 디렉토리
   },
 });
 
@@ -73,4 +75,12 @@ export function getSolvedAcHandle(): string | undefined {
 
 export function setSolvedAcHandle(handle: string): void {
   config.set("solvedAcHandle", handle);
+}
+
+export function getProblemDir(): string {
+  return config.get("problemDir") ?? "problems";
+}
+
+export function setProblemDir(dir: string): void {
+  config.set("problemDir", dir);
 }

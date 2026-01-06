@@ -3,7 +3,11 @@ import { render, Text, Box } from "ink";
 import { readdir } from "fs/promises";
 import { join } from "path";
 import { readFile } from "fs/promises";
-import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
+import {
+  getProblemId,
+  detectProblemIdFromPath,
+  getProblemDirPath,
+} from "../utils/problem-id";
 import {
   detectLanguageFromFile,
   getSupportedLanguages,
@@ -166,7 +170,7 @@ async function submitCommand(
   const problemDir =
     currentPathProblemId === problemId
       ? process.cwd()
-      : join(process.cwd(), "problems", String(problemId));
+      : getProblemDirPath(problemId);
 
   // 솔루션 파일 찾기
   const sourcePath = await detectSolutionFile(problemDir);

@@ -14,7 +14,11 @@ import { LoadingSpinner } from "../components/spinner";
 import { TestResultView } from "../components/test-result";
 import type { TestResult, TestSummary } from "../types";
 import type { CommandDefinition } from "../types/command";
-import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
+import {
+  getProblemId,
+  detectProblemIdFromPath,
+  getProblemDirPath,
+} from "../utils/problem-id";
 
 interface TestCommandOptions {
   id?: number;
@@ -162,7 +166,7 @@ async function testCommand(options: TestCommandOptions = {}) {
   // options.id가 있고, 현재 경로가 이미 해당 문제 디렉토리가 아닌 경우에만 경로 구성
   const problemDir =
     options.id && currentPathProblemId !== options.id
-      ? join(process.cwd(), "problems", String(options.id))
+      ? getProblemDirPath(options.id)
       : process.cwd();
 
   const language = options.language ?? (await detectLanguage(problemDir));

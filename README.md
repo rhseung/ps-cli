@@ -36,6 +36,31 @@ bunx @rhseung/ps-cli fetch 1000
 
 ## 명령어
 
+### `init` - 프로젝트 초기화
+
+현재 디렉토리를 ps-cli 프로젝트로 초기화합니다.
+
+```bash
+ps init
+```
+
+**기능:**
+
+- `problems/` 디렉토리 생성
+- `.gitignore`에 `problems/` 추가 (이미 있으면 스킵)
+
+**예제:**
+
+```bash
+# 프로젝트 폴더에서 초기화
+mkdir my-algorithm-problems
+cd my-algorithm-problems
+ps init
+
+# 이제 문제를 가져올 수 있습니다
+ps fetch 1000
+```
+
 ### `fetch` - 문제 가져오기
 
 백준 문제를 가져와서 로컬에 파일을 생성합니다.
@@ -206,6 +231,7 @@ ps config --list
 - `editor`: 에디터 명령어 (예: code, vim, nano)
 - `auto-open-editor`: fetch 후 자동으로 에디터 열기 (true/false)
 - `solved-ac-handle`: Solved.ac 핸들 (stats 명령어용)
+- `problem-dir`: 문제 디렉토리 경로 (기본값: `problems`, `"."` 또는 `""`는 프로젝트 루트에 직접 저장)
 
 **옵션:**
 
@@ -247,24 +273,27 @@ ps <명령어> --help
 ### 전체 워크플로우
 
 ```bash
-# 1. 문제 가져오기
+# 1. 프로젝트 초기화 (최초 1회)
+ps init
+
+# 2. 문제 가져오기
 ps fetch 1000 --language python
 
-# 2. 문제 디렉토리로 이동
+# 3. 문제 디렉토리로 이동
 cd problems/1000
 
-# 3. 코드 작성 (solution.py 편집)
+# 4. 코드 작성 (solution.py 편집)
 
-# 4. 로컬 테스트
+# 5. 로컬 테스트
 ps test
 
-# 5. Watch 모드로 개발 (파일 저장 시 자동 테스트)
+# 6. Watch 모드로 개발 (파일 저장 시 자동 테스트)
 ps test --watch
 
-# 6. 단일 입력으로 실행 테스트
+# 7. 단일 입력으로 실행 테스트
 ps run
 
-# 7. BOJ에 제출
+# 8. BOJ에 제출
 ps submit
 ```
 
@@ -283,6 +312,30 @@ ps config solved-ac-handle myhandle
 # fetch 후 자동으로 VS Code 열기
 ps config editor code
 ps config auto-open-editor true
+
+# 문제 디렉토리 설정
+ps config problem-dir "problems"  # problems 디렉토리 사용 (기본값)
+ps config problem-dir "."         # 프로젝트 루트에 직접 저장
+ps config problem-dir "solutions" # solutions 디렉토리 사용
+```
+
+### 문제 디렉토리 설정
+
+`problem-dir` 설정을 통해 문제 파일이 저장되는 위치를 변경할 수 있습니다:
+
+- **기본값 (`problems`)**: `problems/{문제번호}/` 형식으로 저장
+- **프로젝트 루트 (`"."` 또는 `""`)**: 프로젝트 루트에 `{문제번호}/` 형식으로 직접 저장
+
+**예제:**
+
+```bash
+# 프로젝트 루트에 직접 저장하도록 설정
+ps config problem-dir "."
+
+# 문제 가져오기 (프로젝트 루트에 1000/ 디렉토리 생성)
+ps fetch 1000
+
+# 결과: ./1000/solution.py, ./1000/input1.txt 등
 ```
 
 ## 라이선스

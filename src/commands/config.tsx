@@ -12,6 +12,8 @@ import {
   getAutoOpenEditor,
   setSolvedAcHandle,
   getSolvedAcHandle,
+  setProblemDir,
+  getProblemDir,
 } from "../utils/config";
 import {
   getSupportedLanguages,
@@ -37,6 +39,7 @@ export function getConfigHelp(): string {
     editor                 에디터 명령어 (예: code, vim, nano)
     auto-open-editor       fetch 후 자동으로 에디터 열기 (true/false)
     solved-ac-handle       Solved.ac 핸들 (stats 명령어용)
+    problem-dir            문제 디렉토리 경로 (기본값: problems, "." 또는 ""는 프로젝트 루트)
 
   옵션:
     --get                  설정 값 조회
@@ -47,7 +50,9 @@ export function getConfigHelp(): string {
     $ ps config boj-session-cookie "boj_session=xxx"
     $ ps config default-language python
     $ ps config solved-ac-handle myhandle
-    $ ps config solved-ac-handle --get
+    $ ps config problem-dir "."              # 프로젝트 루트에 직접 저장
+    $ ps config problem-dir "problems"      # problems 디렉토리 사용 (기본값)
+    $ ps config problem-dir --get
     $ ps config --list
 `;
 }
@@ -103,6 +108,9 @@ function ConfigCommand({
           <Text>
             solved-ac-handle: <Text bold>{handle || "설정 안 됨"}</Text>
           </Text>
+          <Text>
+            problem-dir: <Text bold>{getProblemDir()}</Text>
+          </Text>
         </Box>
       </Box>
     );
@@ -128,6 +136,9 @@ function ConfigCommand({
         break;
       case "solved-ac-handle":
         configValue = getSolvedAcHandle();
+        break;
+      case "problem-dir":
+        configValue = getProblemDir();
         break;
       default:
         console.error(`알 수 없는 설정 키: ${configKey}`);
@@ -167,6 +178,9 @@ function ConfigCommand({
         break;
       case "solved-ac-handle":
         setSolvedAcHandle(value);
+        break;
+      case "problem-dir":
+        setProblemDir(value);
         break;
       default:
         console.error(`알 수 없는 설정 키: ${configKey}`);

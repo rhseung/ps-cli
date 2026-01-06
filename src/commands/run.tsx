@@ -11,7 +11,11 @@ import {
 import { runSolution } from "../services/runner";
 import { LoadingSpinner } from "../components/spinner";
 import type { CommandDefinition } from "../types/command";
-import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
+import {
+  getProblemId,
+  detectProblemIdFromPath,
+  getProblemDirPath,
+} from "../utils/problem-id";
 
 interface RunCommandProps {
   problemDir: string;
@@ -149,7 +153,7 @@ async function runCommand(
   const currentPathProblemId = detectProblemIdFromPath(process.cwd());
   const problemDir =
     problemId && currentPathProblemId !== problemId
-      ? join(process.cwd(), "problems", String(problemId))
+      ? getProblemDirPath(problemId)
       : process.cwd();
 
   // 입력 파일 찾기
