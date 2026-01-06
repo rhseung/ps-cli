@@ -13,6 +13,7 @@ import {
 import { submitSolution } from "../services/submitter";
 import { LoadingSpinner } from "../components/spinner";
 import type { SubmitResult } from "../types";
+import type { CommandDefinition } from "../types/command";
 
 interface SubmitCommandProps {
   problemId: number;
@@ -247,3 +248,11 @@ export async function submitExecute(
 
   await submitCommand(problemId, language, Boolean(flags["dry-run"]));
 }
+
+const submitCommandDef: CommandDefinition = {
+  name: "submit",
+  help: submitHelp,
+  execute: submitExecute,
+};
+
+export default submitCommandDef;

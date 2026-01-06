@@ -17,6 +17,7 @@ import {
   getSupportedLanguages,
   getSupportedLanguagesString,
 } from "../utils/language";
+import type { CommandDefinition } from "../types/command";
 
 export function getConfigHelp(): string {
   return `
@@ -247,3 +248,11 @@ export async function configExecute(
     process.exit(1);
   }
 }
+
+const configCommandDef: CommandDefinition = {
+  name: "config",
+  help: configHelp,
+  execute: configExecute,
+};
+
+export default configCommandDef;

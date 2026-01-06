@@ -10,6 +10,7 @@ import {
 } from "../utils/language";
 import { runSolution } from "../services/runner";
 import { LoadingSpinner } from "../components/spinner";
+import type { CommandDefinition } from "../types/command";
 import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
 
 interface RunCommandProps {
@@ -233,3 +234,11 @@ export async function runExecute(
 
   await runCommand(problemId, language, flags.input);
 }
+
+const runCommandDef: CommandDefinition = {
+  name: "run",
+  help: runHelp,
+  execute: runExecute,
+};
+
+export default runCommandDef;

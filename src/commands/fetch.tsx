@@ -7,6 +7,7 @@ import { ProblemDashboard } from "../components/problem-dashboard";
 import { LoadingSpinner } from "../components/spinner";
 import type { Problem } from "../types/index";
 import type { Language } from "../utils/language";
+import type { CommandDefinition } from "../types/command";
 import { getTierName } from "../utils/tier";
 import { getProblemId } from "../utils/problem-id";
 import {
@@ -224,3 +225,11 @@ export async function fetchExecute(
 
   await fetchCommand(problemId, language || "python");
 }
+
+const fetchCommandDef: CommandDefinition = {
+  name: "fetch",
+  help: fetchHelp,
+  execute: fetchExecute,
+};
+
+export default fetchCommandDef;

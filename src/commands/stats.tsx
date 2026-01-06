@@ -6,6 +6,7 @@ import { getSolvedAcHandle } from "../utils/config";
 import { TIER_COLORS, getTierColor, getTierName } from "../utils/tier";
 import chalk from "chalk";
 import type { SolvedAcUser } from "../types";
+import type { CommandDefinition } from "../types/command";
 import gradient from "gradient-string";
 
 interface StatsCommandProps {
@@ -178,3 +179,11 @@ export async function statsExecute(
 
   await statsCommand(handle);
 }
+
+const statsCommandDef: CommandDefinition = {
+  name: "stats",
+  help: statsHelp,
+  execute: statsExecute,
+};
+
+export default statsCommandDef;

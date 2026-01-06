@@ -50,19 +50,19 @@ async function loadCommands(): Promise<Map<string, CommandDefinition>> {
         );
         const module = await import(commandsUrl.href);
 
-        // {commandName}Help와 {commandName}Execute 함수 찾기
-        const helpKey = `${commandName}Help`;
-        const executeKey = `${commandName}Execute`;
-
-        if (module[helpKey] && module[executeKey]) {
-          commandMap.set(commandName, {
-            name: commandName,
-            help: module[helpKey],
-            execute: module[executeKey],
-          });
+        // export default로 CommandDefinition 객체를 반환하도록 강제
+        if (module.default) {
+          const commandDef = module.default as CommandDefinition;
+          // name이 일치하는지 확인 (선택사항)
+          if (commandDef.name && commandDef.name !== commandName) {
+            console.warn(
+              `명령어 파일명(${commandName})과 정의된 이름(${commandDef.name})이 일치하지 않습니다.`
+            );
+          }
+          commandMap.set(commandName, commandDef);
         } else {
           console.warn(
-            `명령어 ${commandName}: ${helpKey} 또는 ${executeKey}를 찾을 수 없습니다.`
+            `명령어 ${commandName}: export default를 찾을 수 없습니다.`
           );
         }
       } catch (error) {

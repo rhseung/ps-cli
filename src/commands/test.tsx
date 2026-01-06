@@ -13,6 +13,7 @@ import { runAllTests } from "../services/test-runner";
 import { LoadingSpinner } from "../components/spinner";
 import { TestResultView } from "../components/test-result";
 import type { TestResult, TestSummary } from "../types";
+import type { CommandDefinition } from "../types/command";
 import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
 
 interface TestCommandOptions {
@@ -235,3 +236,11 @@ export async function testExecute(
     watch: Boolean(flags.watch),
   });
 }
+
+const testCommandDef: CommandDefinition = {
+  name: "test",
+  help: testHelp,
+  execute: testExecute,
+};
+
+export default testCommandDef;
