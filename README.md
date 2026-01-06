@@ -7,19 +7,19 @@
 ### npm 사용
 
 ```bash
-npm install -g ps-cli
+npm install -g @rhseung/ps-cli
 ```
 
 ### bun 사용
 
 ```bash
-bun install -g ps-cli
+bun install -g @rhseung/ps-cli
 ```
 
 또는 `bunx`를 사용하여 직접 실행:
 
 ```bash
-bunx ps-cli fetch 1000
+bunx @rhseung/ps-cli fetch 1000
 ```
 
 ## 요구사항
