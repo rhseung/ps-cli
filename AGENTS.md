@@ -1,4 +1,4 @@
-# Rhseung's Design System, RDS
+# PS CLI
 
 ## Commit messages
 

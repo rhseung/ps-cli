@@ -107,6 +107,7 @@ ps-cli/
 
 **목표**: TypeScript + ESM 빌드 환경 구축 및 기본 CLI 구조 생성**작업 내용**:
 
+- bun 사용
 - `package.json` 생성 및 의존성 설치
 - TypeScript 설정 (`tsconfig.json`)
 - tsup 빌드 설정 (`tsup.config.ts`)
@@ -297,10 +298,3 @@ ps stats                   # 통계 보기
 
 - `GET /api/v3/problem/show?problemId={id}`: 문제 정보 조회
 - `GET /api/v3/user/show?handle={handle}`: 사용자 정보 조회
-- `GET /api/v3/search/problem`: 문제 검색 (선택적)
-
-**구현 시 주의사항**:
-
-- User-Agent 헤더 설정 권장
-- Rate Limit 고려 (과도한 요청 방지)
-- 에러 응답 처리 (404, 429 등)
