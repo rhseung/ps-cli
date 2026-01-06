@@ -9,6 +9,7 @@ import { LoadingSpinner } from "../components/spinner";
 import { TestResultView } from "../components/test-result";
 import type { Language } from "../utils/language";
 import type { TestResult, TestSummary } from "../types";
+import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
 
 interface TestCommandOptions {
   id?: number;
@@ -150,9 +151,14 @@ async function detectLanguage(problemDir: string): Promise<Language> {
 }
 
 async function testCommand(options: TestCommandOptions = {}) {
-  const problemDir = options.id
-    ? join(process.cwd(), "problems", String(options.id))
-    : process.cwd();
+  // 현재 경로에서 문제 번호 추론
+  const currentPathProblemId = detectProblemIdFromPath(process.cwd());
+
+  // options.id가 있고, 현재 경로가 이미 해당 문제 디렉토리가 아닌 경우에만 경로 구성
+  const problemDir =
+    options.id && currentPathProblemId !== options.id
+      ? join(process.cwd(), "problems", String(options.id))
+      : process.cwd();
 
   const language = options.language ?? (await detectLanguage(problemDir));
 
@@ -207,8 +213,7 @@ export async function testExecute(
     return;
   }
 
-  const maybeId = args[0] ? parseInt(args[0], 10) : undefined;
-  const problemId = Number.isNaN(maybeId) ? undefined : maybeId;
+  const problemId = getProblemId(args);
 
   const validLanguages: Language[] = [
     "python",
@@ -226,7 +231,7 @@ export async function testExecute(
   }
 
   await testCommand({
-    id: problemId,
+    id: problemId ?? undefined,
     language: language ?? undefined,
     watch: Boolean(flags.watch),
   });

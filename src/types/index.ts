@@ -90,3 +90,26 @@ export interface TestSummary {
   failed: number;
   errored: number;
 }
+
+export type SubmitStatus =
+  | "AC"
+  | "WA"
+  | "TLE"
+  | "MLE"
+  | "RE"
+  | "CE"
+  | "OLE"
+  | "PE"
+  | "WAITING"
+  | "JUDGING";
+
+export interface SubmitResult {
+  problemId: number;
+  submitId?: number;
+  status: SubmitStatus;
+  time?: number | null;
+  memory?: number | null;
+  submittedAt?: Date;
+  language: string;
+  message?: string;
+}

@@ -37,6 +37,8 @@ graph TB
     InkUI --> SelectMenu[Select Menu]
 ```
 
+
+
 ## 기술 스택
 
 ### 핵심 라이브러리
@@ -97,6 +99,8 @@ ps-cli/
 └── README.md
 ```
 
+
+
 ## 단계별 구현 계획
 
 ### 1단계: 프로젝트 초기화 및 기본 구조
@@ -121,7 +125,7 @@ ps-cli/
 
 - Solved.ac API 클라이언트 구현 (`services/solved-api.ts`)
 - 문제 정보 조회: `GET /api/v3/problem/show?problemId={id}`
-  - 난이도, 티어, 태그, 제목, 시간/메모리 제한 정보
+- 난이도, 티어, 태그, 제목, 시간/메모리 제한 정보
 - 문제 검색: `GET /api/v3/search/problem` (선택적, 추후 확장용)
 - 사용자 통계: `GET /api/v3/user/show?handle={handle}` (stats 명령어용)
 - API Rate Limit 처리 및 에러 핸들링
@@ -270,6 +274,8 @@ ps submit                  # BOJ 제출
 ps stats                   # 통계 보기
 ```
 
+
+
 ### 언어 지원 설정
 
 각 언어별로 다음 정보 관리:
@@ -277,13 +283,3 @@ ps stats                   # 통계 보기
 - 컴파일 명령어 (C++)
 - 실행 명령어
 - 파일 확장자
-- 템플릿 코드
-
-### 에러 처리
-
-- 네트워크 오류 시 재시도 로직
-- Solved.ac API Rate Limit 처리 (429 에러 대응)
-- 파싱 실패 시 명확한 에러 메시지
-- 사용자 친화적인 Ink 에러 UI
-
-### Solved.ac API 활용

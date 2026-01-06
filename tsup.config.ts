@@ -9,13 +9,6 @@ export default defineConfig({
   banner: {
     js: "#!/usr/bin/env node",
   },
-  external: ["react", "ink", "cheerio", "chokidar"],
-  noExternal: [
-    "chalk",
-    "conf",
-    "gradient-string",
-    "ink-spinner",
-    "ink-select-input",
-    "meow",
-  ],
+  external: ["react", "ink", "cheerio", "chokidar", "gradient-string"],
+  noExternal: ["chalk", "conf", "ink-spinner", "ink-select-input", "meow"],
 });

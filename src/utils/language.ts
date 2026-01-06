@@ -5,6 +5,7 @@ export interface LanguageConfig {
   templateFile: string;
   compileCommand?: string;
   runCommand: string;
+  bojLangId?: number; // BOJ 제출 시 사용하는 언어 ID
 }
 
 export const LANGUAGE_CONFIGS: Record<Language, LanguageConfig> = {
@@ -12,16 +13,19 @@ export const LANGUAGE_CONFIGS: Record<Language, LanguageConfig> = {
     extension: "py",
     templateFile: "solution.py",
     runCommand: "python3",
+    bojLangId: 28, // Python 3
   },
   javascript: {
     extension: "js",
     templateFile: "solution.js",
     runCommand: "node",
+    bojLangId: 17, // Node.js
   },
   typescript: {
     extension: "ts",
     templateFile: "solution.ts",
     runCommand: "node",
+    bojLangId: 17, // TypeScript는 Node.js로 컴파일되므로 Node.js ID 사용
   },
   cpp: {
     extension: "cpp",
@@ -29,6 +33,7 @@ export const LANGUAGE_CONFIGS: Record<Language, LanguageConfig> = {
     // 절대 경로로 에러를 표시해서 에디터에서 문제 디렉토리의 파일로 바로 이동할 수 있도록 함
     compileCommand: "g++ -fdiagnostics-absolute-paths -o solution solution.cpp",
     runCommand: "./solution",
+    bojLangId: 84, // C++17
   },
 };
 

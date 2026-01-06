@@ -8,6 +8,9 @@ import { LoadingSpinner } from "../components/spinner";
 import type { Problem } from "../types/index";
 import type { Language } from "../utils/language";
 import { getTierName } from "../utils/tier";
+import { getProblemId } from "../utils/problem-id";
+import { getAutoOpenEditor, getEditor } from "../utils/config";
+import { execaCommand } from "execa";
 
 interface FetchCommandProps {
   problemId: number;
@@ -80,6 +83,29 @@ function FetchCommand({
 
         setStatus("success");
         setMessage(`✓ 문제 파일이 생성되었습니다: ${problemDir}`);
+
+        // 에디터 자동 열기 (설정이 활성화된 경우)
+        if (getAutoOpenEditor()) {
+          try {
+            const editor = getEditor();
+            await execaCommand(`${editor} ${problemDir}`, {
+              shell: true,
+              detached: true,
+              stdio: "ignore",
+            });
+            setMessage(
+              `✓ 문제 파일이 생성되었습니다: ${problemDir}\n✓ ${editor}로 열었습니다.`
+            );
+          } catch (err) {
+            // 에디터 열기 실패해도 계속 진행
+            console.warn(
+              `에디터를 열 수 없습니다: ${
+                err instanceof Error ? err.message : String(err)
+              }`
+            );
+          }
+        }
+
         setTimeout(() => {
           onComplete?.();
         }, 2000);
@@ -170,12 +196,15 @@ export async function fetchExecute(
     return;
   }
 
-  const problemId = parseInt(args[0], 10);
+  const problemId = getProblemId(args);
 
-  if (isNaN(problemId)) {
+  if (problemId === null) {
     console.error("오류: 문제 번호를 입력해주세요.");
     console.error(`사용법: ps fetch <문제번호> [옵션]`);
     console.error(`도움말: ps fetch --help`);
+    console.error(
+      `힌트: problems/{문제번호} 디렉토리에서 실행하면 자동으로 문제 번호를 추론합니다.`
+    );
     process.exit(1);
   }
 
