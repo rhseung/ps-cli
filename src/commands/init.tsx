@@ -4,11 +4,6 @@ import { mkdir, readFile, writeFile, access } from "fs/promises";
 import { join } from "path";
 import SelectInput from "ink-select-input";
 import TextInput from "ink-text-input";
-import {
-  StepIndicator,
-  type Step,
-  type StepStatus,
-} from "../components/step-indicator";
 import type { CommandDefinition } from "../types/command";
 import {
   getProblemDir,
@@ -31,7 +26,13 @@ type InitStep =
   | "auto-open"
   | "handle"
   | "done"
-  | "cancelled";
+  | "cancelled"
+  | "confirm-exit";
+
+interface CompletedStep {
+  label: string;
+  value: string;
+}
 
 interface InitCommandProps {
   onComplete: () => void;
@@ -39,13 +40,9 @@ interface InitCommandProps {
 
 function InitCommand({ onComplete }: InitCommandProps) {
   const [currentStep, setCurrentStep] = useState<InitStep>("problem-dir");
-  const [steps, setSteps] = useState<Step[]>([
-    { label: "문제 디렉토리 설정", status: "current" },
-    { label: "기본 언어 설정", status: "pending" },
-    { label: "에디터 설정", status: "pending" },
-    { label: "자동 에디터 열기", status: "pending" },
-    { label: "Solved.ac 핸들 (선택)", status: "pending" },
-  ]);
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [confirmExit, setConfirmExit] = useState(false);
+  const [exitConfirmInput, setExitConfirmInput] = useState("");
 
   // 프로젝트별 config 파일에서 초기값 로드
   const [initialized, setInitialized] = useState(false);
@@ -57,6 +54,44 @@ function InitCommand({ onComplete }: InitCommandProps) {
   const [handleInputMode, setHandleInputMode] = useState<boolean>(false);
   const [created, setCreated] = useState<string[]>([]);
   const [cancelled, setCancelled] = useState(false);
+
+  // Ctrl+C 처리 - 확인 모드
+  useEffect(() => {
+    const handleSigInt = () => {
+      if (confirmExit) {
+        // 이미 확인 모드인 경우 즉시 종료
+        setCancelled(true);
+        setCurrentStep("cancelled");
+        setTimeout(() => {
+          onComplete();
+        }, 500);
+        return;
+      }
+
+      // 확인 모드 진입
+      setConfirmExit(true);
+      setExitConfirmInput("");
+    };
+
+    process.on("SIGINT", handleSigInt);
+    return () => {
+      process.off("SIGINT", handleSigInt);
+    };
+  }, [confirmExit, onComplete]);
+
+  // 종료 확인 입력 처리
+  useEffect(() => {
+    if (confirmExit && exitConfirmInput.toLowerCase() === "y") {
+      setCancelled(true);
+      setCurrentStep("cancelled");
+      setTimeout(() => {
+        onComplete();
+      }, 500);
+    } else if (confirmExit && exitConfirmInput.toLowerCase() === "n") {
+      setConfirmExit(false);
+      setExitConfirmInput("");
+    }
+  }, [exitConfirmInput, confirmExit, onComplete]);
 
   // 프로젝트별 config 파일 로드
   useEffect(() => {
@@ -86,61 +121,30 @@ function InitCommand({ onComplete }: InitCommandProps) {
     loadProjectConfig();
   }, []);
 
-  // Ctrl+C 처리
-  useEffect(() => {
-    const handleSigInt = () => {
-      setCancelled(true);
-      setCurrentStep("cancelled");
-      const cancelledSteps = steps.map((step, idx) => {
-        const stepIndex = getStepIndex(currentStep);
-        if (idx === stepIndex) {
-          return {
-            ...step,
-            status: "cancelled" as StepStatus,
-            error: "작업이 취소되었습니다",
-          };
-        }
-        return step;
-      });
-      setSteps(cancelledSteps);
-      setTimeout(() => {
-        onComplete();
-      }, 2000);
-    };
-
-    process.on("SIGINT", handleSigInt);
-    return () => {
-      process.off("SIGINT", handleSigInt);
-    };
-  }, [currentStep, steps, onComplete]);
-
-  function getStepIndex(step: InitStep): number {
-    const stepOrder: InitStep[] = [
-      "problem-dir",
-      "language",
-      "editor",
-      "auto-open",
-      "handle",
-    ];
-    return stepOrder.indexOf(step);
+  function getStepLabel(step: InitStep): string {
+    switch (step) {
+      case "problem-dir":
+        return "문제 디렉토리 설정";
+      case "language":
+        return "기본 언어 설정";
+      case "editor":
+        return "에디터 설정";
+      case "auto-open":
+        return "자동 에디터 열기";
+      case "handle":
+        return "Solved.ac 핸들 (선택)";
+      default:
+        return "";
+    }
   }
 
-  function updateStepStatus(
-    stepIndex: number,
-    status: StepStatus,
-    value?: string,
-    error?: string
-  ) {
-    setSteps((prev) => {
-      const newSteps = [...prev];
-      if (newSteps[stepIndex]) {
-        newSteps[stepIndex] = { ...newSteps[stepIndex], status, value, error };
-      }
-      return newSteps;
-    });
-  }
+  function moveToNextStep(selectedValue: string, stepLabel: string) {
+    // 현재 단계를 완료 목록에 추가
+    setCompletedSteps((prev) => [
+      ...prev,
+      { label: stepLabel, value: selectedValue },
+    ]);
 
-  function moveToNextStep(selectedValue?: string) {
     const stepOrder: InitStep[] = [
       "problem-dir",
       "language",
@@ -152,19 +156,11 @@ function InitCommand({ onComplete }: InitCommandProps) {
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
       const nextStep = stepOrder[currentIndex + 1];
-
-      // 현재 step을 완료로 표시 (선택된 값이 있으면 사용, 없으면 현재 값 사용)
-      const displayValue = selectedValue || getStepValue(currentStep);
-      updateStepStatus(currentIndex, "completed", displayValue);
-
       setCurrentStep(nextStep);
 
       // 다음 step이 "done"이면 초기화 실행
       if (nextStep === "done") {
         void executeInit();
-      } else if (nextStep !== "cancelled") {
-        // 다음 step을 current로 표시
-        updateStepStatus(currentIndex + 1, "current");
       }
     }
   }
@@ -205,8 +201,6 @@ function InitCommand({ onComplete }: InitCommandProps) {
         "utf-8"
       );
       setCreated((prev) => [...prev, ".ps-cli.json"]);
-
-      setCurrentStep("done");
 
       // Global config에도 저장 (하위 호환성)
       setProblemDir(problemDir);
@@ -258,19 +252,13 @@ function InitCommand({ onComplete }: InitCommandProps) {
         }
       }
 
-      // 모든 step 완료 표시
-      setSteps((prev) =>
-        prev.map((step) => ({ ...step, status: "completed" as StepStatus }))
-      );
-
       setTimeout(() => {
         onComplete();
       }, 3000);
     } catch (err) {
       const error = err as Error;
       console.error("초기화 중 오류 발생:", error.message);
-      const stepIndex = getStepIndex(currentStep);
-      updateStepStatus(stepIndex, "cancelled", undefined, error.message);
+      setCancelled(true);
       setCurrentStep("cancelled");
       setTimeout(() => {
         onComplete();
@@ -278,26 +266,82 @@ function InitCommand({ onComplete }: InitCommandProps) {
     }
   }
 
+  function renderQuestionCard(title: string, children: React.ReactNode) {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor="yellow"
+        paddingX={1}
+        marginTop={1}
+      >
+        <Box marginBottom={1}>
+          <Text color="yellow" bold>
+            {title}
+          </Text>
+        </Box>
+        <Box flexDirection="column">{children}</Box>
+      </Box>
+    );
+  }
+
   function renderStepContent() {
     if (cancelled || currentStep === "cancelled") {
-      return null;
+      return (
+        <Box
+          flexDirection="column"
+          borderStyle="round"
+          borderColor="red"
+          paddingX={1}
+        >
+          <Text color="red" bold>
+            ✗ 초기화가 취소되었습니다.
+          </Text>
+        </Box>
+      );
+    }
+
+    if (confirmExit) {
+      return (
+        <Box flexDirection="column">
+          <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor="red"
+            paddingX={1}
+          >
+            <Text color="red" bold>
+              정말 종료하시겠습니까? (y/n)
+            </Text>
+            <Box marginTop={1}>
+              <TextInput
+                value={exitConfirmInput}
+                onChange={setExitConfirmInput}
+                placeholder=""
+                showCursor={true}
+              />
+            </Box>
+          </Box>
+        </Box>
+      );
     }
 
     switch (currentStep) {
       case "problem-dir": {
         const items = [
           { label: "problems", value: "problems" },
-          { label: ".", value: "." },
+          { label: ". (프로젝트 루트)", value: "." },
         ];
-        return (
+        return renderQuestionCard(
+          getStepLabel(currentStep),
           <SelectInput
             items={items}
             indicatorComponent={() => null}
             itemComponent={({ label, isSelected }) => (
               <Box>
-                <Text color="gray">│ </Text>
-                <Text color={isSelected ? "yellow" : "white"}>
-                  {isSelected ? "●" : "○"} {label}
+                <Text color={isSelected ? "yellow" : "gray"}>
+                  {isSelected ? "→ " : "  "}
+                  {label}
                 </Text>
               </Box>
             )}
@@ -305,7 +349,7 @@ function InitCommand({ onComplete }: InitCommandProps) {
               setProblemDirValue(item.value);
               const displayValue =
                 item.value === "." ? "프로젝트 루트" : item.value;
-              moveToNextStep(displayValue);
+              moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
           />
         );
@@ -317,21 +361,22 @@ function InitCommand({ onComplete }: InitCommandProps) {
           label: lang,
           value: lang,
         }));
-        return (
+        return renderQuestionCard(
+          getStepLabel(currentStep),
           <SelectInput
             items={items}
             indicatorComponent={() => null}
             itemComponent={({ label, isSelected }) => (
               <Box>
-                <Text color="gray">│ </Text>
-                <Text color={isSelected ? "yellow" : "white"}>
-                  {isSelected ? "●" : "○"} {label}
+                <Text color={isSelected ? "yellow" : "gray"}>
+                  {isSelected ? "→ " : "  "}
+                  {label}
                 </Text>
               </Box>
             )}
             onSelect={(item) => {
               setLanguage(item.value as string);
-              moveToNextStep(item.value);
+              moveToNextStep(item.value, getStepLabel(currentStep));
             }}
           />
         );
@@ -344,21 +389,22 @@ function InitCommand({ onComplete }: InitCommandProps) {
           { label: "vim", value: "vim" },
           { label: "nano", value: "nano" },
         ];
-        return (
+        return renderQuestionCard(
+          getStepLabel(currentStep),
           <SelectInput
             items={items}
             indicatorComponent={() => null}
             itemComponent={({ label, isSelected }) => (
               <Box>
-                <Text color="gray">│ </Text>
-                <Text color={isSelected ? "yellow" : "white"}>
-                  {isSelected ? "●" : "○"} {label}
+                <Text color={isSelected ? "yellow" : "gray"}>
+                  {isSelected ? "→ " : "  "}
+                  {label}
                 </Text>
               </Box>
             )}
             onSelect={(item) => {
               setEditorValue(item.value);
-              moveToNextStep(item.value);
+              moveToNextStep(item.value, getStepLabel(currentStep));
             }}
           />
         );
@@ -369,21 +415,25 @@ function InitCommand({ onComplete }: InitCommandProps) {
           { label: "예", value: "true" },
           { label: "아니오", value: "false" },
         ];
-        return (
+        return renderQuestionCard(
+          getStepLabel(currentStep),
           <SelectInput
             items={items}
             indicatorComponent={() => null}
             itemComponent={({ label, isSelected }) => (
               <Box>
-                <Text color="gray">│ </Text>
-                <Text color={isSelected ? "yellow" : "white"}>
-                  {isSelected ? "●" : "○"} {label}
+                <Text color={isSelected ? "yellow" : "gray"}>
+                  {isSelected ? "→ " : "  "}
+                  {label}
                 </Text>
               </Box>
             )}
             onSelect={(item) => {
               setAutoOpen(item.value === "true");
-              moveToNextStep(item.value === "true" ? "예" : "아니오");
+              moveToNextStep(
+                item.value === "true" ? "예" : "아니오",
+                getStepLabel(currentStep)
+              );
             }}
           />
         );
@@ -391,16 +441,16 @@ function InitCommand({ onComplete }: InitCommandProps) {
 
       case "handle": {
         if (handleInputMode) {
-          return (
+          return renderQuestionCard(
+            getStepLabel(currentStep),
             <Box>
-              <Text color="gray">│ </Text>
               <TextInput
                 value={handle}
                 placeholder="핸들 입력"
                 onChange={setHandle}
                 onSubmit={(value) => {
                   setHandleInputMode(false);
-                  moveToNextStep(value || "(스킵)");
+                  moveToNextStep(value || "(스킵)", getStepLabel(currentStep));
                 }}
               />
             </Box>
@@ -410,22 +460,23 @@ function InitCommand({ onComplete }: InitCommandProps) {
           { label: "설정", value: "set" },
           { label: "스킵", value: "skip" },
         ];
-        return (
+        return renderQuestionCard(
+          getStepLabel(currentStep),
           <SelectInput
             items={items}
             indicatorComponent={() => null}
             itemComponent={({ label, isSelected }) => (
               <Box>
-                <Text color="gray">│ </Text>
-                <Text color={isSelected ? "yellow" : "white"}>
-                  {isSelected ? "●" : "○"} {label}
+                <Text color={isSelected ? "yellow" : "gray"}>
+                  {isSelected ? "→ " : "  "}
+                  {label}
                 </Text>
               </Box>
             )}
             onSelect={(item) => {
               if (item.value === "skip") {
                 setHandle("");
-                moveToNextStep("(스킵)");
+                moveToNextStep("(스킵)", getStepLabel(currentStep));
               } else {
                 setHandleInputMode(true);
               }
@@ -436,22 +487,42 @@ function InitCommand({ onComplete }: InitCommandProps) {
 
       case "done": {
         return (
-          <Box flexDirection="column" marginTop={1}>
-            <Text color="green">✓ 프로젝트 초기화 완료</Text>
-            {created.length > 0 && (
-              <Box marginTop={1} flexDirection="column">
-                <Text color="gray">생성된 항목:</Text>
-                {created.map((item, idx) => (
-                  <Text key={idx} color="cyan">
-                    • {item}
-                  </Text>
-                ))}
+          <Box flexDirection="column">
+            <Box
+              flexDirection="column"
+              borderStyle="round"
+              borderColor="green"
+              paddingX={1}
+              marginTop={1}
+              marginBottom={1}
+            >
+              <Box marginBottom={1}>
+                <Text color="green" bold>
+                  ✓ 프로젝트 초기화 완료
+                </Text>
               </Box>
-            )}
-            <Box marginTop={1}>
+              {created.length > 0 && (
+                <Box flexDirection="column">
+                  <Text color="cyan" bold>
+                    생성된 항목:
+                  </Text>
+                  <Box flexDirection="column" marginTop={0} paddingLeft={1}>
+                    {created.map((item, idx) => (
+                      <Text key={idx} color="white">
+                        • {item}
+                      </Text>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+            <Box>
               <Text color="gray">
-                이제 <Text bold>ps fetch &lt;문제번호&gt;</Text> 명령어를 사용할
-                수 있습니다.
+                이제{" "}
+                <Text bold color="cyan">
+                  ps help
+                </Text>{" "}
+                명령어를 통해 더 자세한 정보를 확인할 수 있습니다.
               </Text>
             </Box>
           </Box>
@@ -463,16 +534,40 @@ function InitCommand({ onComplete }: InitCommandProps) {
     }
   }
 
-  const currentStepIndex = getStepIndex(currentStep);
+  if (!initialized) {
+    return (
+      <Box>
+        <Text color="gray">로딩 중...</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column">
-      <StepIndicator
-        steps={steps}
-        currentStepIndex={currentStepIndex >= 0 ? currentStepIndex : undefined}
-      >
-        {renderStepContent()}
-      </StepIndicator>
+      {/* 헤더 */}
+      <Box marginBottom={completedSteps.length > 0 ? 1 : 0}>
+        <Text color="cyan" bold>
+          🚀 ps-cli 프로젝트 초기화
+        </Text>
+      </Box>
+
+      {/* 완료된 단계 표시 */}
+      {completedSteps.length > 0 && (
+        <Box flexDirection="column">
+          {completedSteps.map((step, idx) => (
+            <Box key={idx} marginBottom={0}>
+              <Text color="green">✓ </Text>
+              <Text color="gray">{step.label}: </Text>
+              <Text color="cyan" bold>
+                {step.value}
+              </Text>
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {/* 현재 단계 */}
+      {renderStepContent()}
     </Box>
   );
 }
