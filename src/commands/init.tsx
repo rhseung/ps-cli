@@ -12,15 +12,10 @@ import {
 import type { CommandDefinition } from "../types/command";
 import {
   getProblemDir,
-  setProblemDir,
   getDefaultLanguage,
-  setDefaultLanguage,
   getEditor,
-  setEditor,
   getAutoOpenEditor,
-  setAutoOpenEditor,
   getSolvedAcHandle,
-  setSolvedAcHandle,
 } from "../utils/config";
 import { getSupportedLanguages } from "../utils/language";
 
@@ -190,15 +185,6 @@ function InitCommand({ onComplete }: InitCommandProps) {
         "utf-8"
       );
       setCreated((prev) => [...prev, ".ps-cli.json"]);
-
-      // Global config에도 저장 (하위 호환성)
-      setProblemDir(problemDir);
-      setDefaultLanguage(language);
-      setEditor(editor);
-      setAutoOpenEditor(autoOpen);
-      if (handle) {
-        setSolvedAcHandle(handle);
-      }
 
       // problemDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
       if (problemDir !== "." && problemDir !== "") {
@@ -413,9 +399,11 @@ function InitCommand({ onComplete }: InitCommandProps) {
             : "";
         return (
           <Box flexDirection="column">
-            <Alert variant="success">
-              프로젝트 초기화 완료{createdItemsText}
-            </Alert>
+            <Box marginTop={1}>
+              <Alert variant="success">
+                프로젝트 초기화 완료{createdItemsText}
+              </Alert>
+            </Box>
             <Box marginTop={1}>
               <Text color="gray">
                 이제{" "}

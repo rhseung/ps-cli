@@ -2,6 +2,7 @@ import meow from "meow";
 import { readdir } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { existsSync } from "fs";
 import type { CommandDefinition } from "./types/command";
 import { getSupportedLanguagesString } from "./utils/language";
 
@@ -180,6 +181,38 @@ async function main() {
     );
     process.exit(1);
     return;
+  }
+
+  // init 명령어는 예외 (프로젝트 초기화 명령어)
+  if (command !== "init") {
+    // 프로젝트 폴더 확인 (.ps-cli.json 파일 존재 여부)
+    // 현재 디렉토리부터 상위 디렉토리로 올라가면서 찾기
+    let currentDir = process.cwd();
+    let found = false;
+    const rootPath =
+      process.platform === "win32" ? currentDir.split("\\")[0] + "\\" : "/";
+
+    while (currentDir !== rootPath && !found) {
+      const projectConfigPath = join(currentDir, ".ps-cli.json");
+      if (existsSync(projectConfigPath)) {
+        found = true;
+        break;
+      }
+      const parentDir = dirname(currentDir);
+      // 루트에 도달했거나 더 이상 올라갈 수 없으면 중단
+      if (parentDir === currentDir) {
+        break;
+      }
+      currentDir = parentDir;
+    }
+
+    if (!found) {
+      console.error("오류: 현재 디렉토리가 ps-cli 프로젝트가 아닙니다.");
+      console.error("프로젝트를 초기화하려면 다음 명령어를 실행하세요:");
+      console.error("  $ ps init");
+      process.exit(1);
+      return;
+    }
   }
 
   await commandDef.execute(args, cli.flags);

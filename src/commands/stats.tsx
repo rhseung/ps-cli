@@ -76,13 +76,6 @@ function StatsCommand({ handle, onComplete }: StatsCommandProps) {
           </Text>
         </Box>
 
-        {/* 티어 & 레이팅 (한 줄) */}
-        <Box marginBottom={1}>
-          <Text>
-            {tierDisplay} <Text bold>{user.rating.toLocaleString()}</Text>
-          </Text>
-        </Box>
-
         {/* 통계 정보 */}
         <Box
           flexDirection="column"
@@ -91,6 +84,9 @@ function StatsCommand({ handle, onComplete }: StatsCommandProps) {
           alignSelf="flex-start"
         >
           <Box paddingX={1} paddingY={0} flexDirection="column">
+            <Text>
+              {tierDisplay} <Text bold>{user.rating.toLocaleString()}</Text>
+            </Text>
             <Text>
               해결한 문제:{" "}
               <Text bold color="green">
