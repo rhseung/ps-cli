@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { Badge, StatusMessage } from "@inkjs/ui";
 import type { TestResult, TestSummary } from "../types";
 
 interface TestResultProps {
@@ -17,9 +18,7 @@ function formatDuration(ms: number): string {
 }
 
 function ResultRow({ result }: { result: TestResult }) {
-  const statusIcon =
-    result.status === "pass" ? "✓" : result.status === "fail" ? "✗" : "!";
-  const statusColor =
+  const badgeColor =
     result.status === "pass"
       ? "green"
       : result.status === "fail"
@@ -35,13 +34,7 @@ function ResultRow({ result }: { result: TestResult }) {
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box>
-        <Text color={statusColor} bold>
-          {statusIcon}
-        </Text>
-        <Text> </Text>
-        <Text color={statusColor} bold>
-          {statusText}
-        </Text>
+        <Badge color={badgeColor}>{statusText}</Badge>
         <Text> </Text>
         <Text>케이스 {result.caseId}</Text>
         {result.durationMs !== undefined && (
@@ -79,46 +72,17 @@ function ResultRow({ result }: { result: TestResult }) {
 
 export function TestResultView({ summary, results }: TestResultProps) {
   const allPassed = summary.failed === 0 && summary.errored === 0;
-  const summaryColor = allPassed ? "green" : "red";
+  const summaryVariant = allPassed ? "success" : "error";
+
+  const summaryText = `총 ${summary.total}개 | Pass ${summary.passed}${
+    summary.failed > 0 ? ` | Fail ${summary.failed}` : ""
+  }${summary.errored > 0 ? ` | Error ${summary.errored}` : ""}`;
 
   return (
     <Box flexDirection="column">
-      <Box
-        borderStyle="round"
-        borderColor={summaryColor}
-        paddingX={1}
-        alignSelf="flex-start"
-        flexDirection="column"
-      >
-        <Box>
-          <Text bold>테스트 결과</Text>
-        </Box>
-        <Box marginTop={1}>
-          <Text>
-            총 <Text bold>{summary.total}</Text>개
-          </Text>
-          <Text> | </Text>
-          <Text color="green">
-            Pass <Text bold>{summary.passed}</Text>
-          </Text>
-          {summary.failed > 0 && (
-            <>
-              <Text> | </Text>
-              <Text color="red">
-                Fail <Text bold>{summary.failed}</Text>
-              </Text>
-            </>
-          )}
-          {summary.errored > 0 && (
-            <>
-              <Text> | </Text>
-              <Text color="yellow">
-                Error <Text bold>{summary.errored}</Text>
-              </Text>
-            </>
-          )}
-        </Box>
-      </Box>
+      <StatusMessage variant={summaryVariant}>
+        테스트 결과: {summaryText}
+      </StatusMessage>
       <Box flexDirection="column" marginTop={1}>
         {results.map((r) => (
           <ResultRow key={r.caseId} result={r} />

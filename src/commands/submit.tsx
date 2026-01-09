@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { render, Text, Box } from "ink";
+import { Badge, StatusMessage, Alert } from "@inkjs/ui";
 import { readdir } from "fs/promises";
 import { join } from "path";
 import { readFile } from "fs/promises";
@@ -15,7 +16,7 @@ import {
   type Language,
 } from "../utils/language";
 import { submitSolution } from "../services/submitter";
-import { LoadingSpinner } from "../components/spinner";
+import { Spinner } from "@inkjs/ui";
 import type { SubmitResult } from "../types";
 import type { CommandDefinition } from "../types/command";
 
@@ -81,7 +82,7 @@ function SubmitCommand({
   if (status === "loading") {
     return (
       <Box flexDirection="column">
-        <LoadingSpinner message={message} />
+        <Spinner label={message} />
       </Box>
     );
   }
@@ -89,13 +90,13 @@ function SubmitCommand({
   if (status === "error") {
     return (
       <Box flexDirection="column">
-        <Text color="red">✗ 제출 실패: {error}</Text>
+        <Alert variant="error">제출 실패: {error}</Alert>
       </Box>
     );
   }
 
   if (result) {
-    const statusColor =
+    const badgeColor =
       result.status === "AC"
         ? "green"
         : result.status === "WA" ||
@@ -104,7 +105,31 @@ function SubmitCommand({
         ? "red"
         : result.status === "TLE" || result.status === "MLE"
         ? "yellow"
-        : "cyan";
+        : "blue";
+
+    const statusVariant =
+      result.status === "AC"
+        ? "success"
+        : result.status === "WA" ||
+          result.status === "CE" ||
+          result.status === "RE"
+        ? "error"
+        : result.status === "TLE" || result.status === "MLE"
+        ? "warning"
+        : "info";
+
+    const resultDetails = [
+      `문제: ${result.problemId}`,
+      `언어: ${result.language}`,
+      result.time !== null && result.time !== undefined
+        ? `시간: ${result.time}ms`
+        : null,
+      result.memory !== null && result.memory !== undefined
+        ? `메모리: ${result.memory}KB`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" | ");
 
     return (
       <Box flexDirection="column">
@@ -114,28 +139,10 @@ function SubmitCommand({
           </Text>
         </Box>
         <Box flexDirection="column">
-          <Text>
-            문제: <Text bold>{result.problemId}</Text>
-          </Text>
-          <Text>
-            언어: <Text bold>{result.language}</Text>
-          </Text>
-          <Text>
-            상태:{" "}
-            <Text color={statusColor} bold>
-              {result.status}
-            </Text>
-          </Text>
-          {result.time !== null && result.time !== undefined && (
-            <Text>
-              시간: <Text bold>{result.time}ms</Text>
-            </Text>
-          )}
-          {result.memory !== null && result.memory !== undefined && (
-            <Text>
-              메모리: <Text bold>{result.memory}KB</Text>
-            </Text>
-          )}
+          <Box marginBottom={1}>
+            <Badge color={badgeColor}>{result.status}</Badge>
+          </Box>
+          <StatusMessage variant={statusVariant}>{resultDetails}</StatusMessage>
           {result.message && (
             <Box marginTop={1}>
               <Text color="gray">{result.message}</Text>

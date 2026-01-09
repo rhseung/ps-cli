@@ -2,8 +2,13 @@ import React, { useState, useEffect } from "react";
 import { render, Text, Box } from "ink";
 import { mkdir, readFile, writeFile, access } from "fs/promises";
 import { join } from "path";
-import SelectInput from "ink-select-input";
-import TextInput from "ink-text-input";
+import {
+  Select,
+  TextInput,
+  StatusMessage,
+  Alert,
+  ConfirmInput,
+} from "@inkjs/ui";
 import type { CommandDefinition } from "../types/command";
 import {
   getProblemDir,
@@ -42,7 +47,6 @@ function InitCommand({ onComplete }: InitCommandProps) {
   const [currentStep, setCurrentStep] = useState<InitStep>("problem-dir");
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
   const [confirmExit, setConfirmExit] = useState(false);
-  const [exitConfirmInput, setExitConfirmInput] = useState("");
 
   // 프로젝트별 config 파일에서 초기값 로드
   const [initialized, setInitialized] = useState(false);
@@ -70,7 +74,6 @@ function InitCommand({ onComplete }: InitCommandProps) {
 
       // 확인 모드 진입
       setConfirmExit(true);
-      setExitConfirmInput("");
     };
 
     process.on("SIGINT", handleSigInt);
@@ -78,20 +81,6 @@ function InitCommand({ onComplete }: InitCommandProps) {
       process.off("SIGINT", handleSigInt);
     };
   }, [confirmExit, onComplete]);
-
-  // 종료 확인 입력 처리
-  useEffect(() => {
-    if (confirmExit && exitConfirmInput.toLowerCase() === "y") {
-      setCancelled(true);
-      setCurrentStep("cancelled");
-      setTimeout(() => {
-        onComplete();
-      }, 500);
-    } else if (confirmExit && exitConfirmInput.toLowerCase() === "n") {
-      setConfirmExit(false);
-      setExitConfirmInput("");
-    }
-  }, [exitConfirmInput, confirmExit, onComplete]);
 
   // 프로젝트별 config 파일 로드
   useEffect(() => {
@@ -268,59 +257,38 @@ function InitCommand({ onComplete }: InitCommandProps) {
 
   function renderQuestionCard(title: string, children: React.ReactNode) {
     return (
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderColor="yellow"
-        paddingX={1}
-        marginTop={1}
-      >
-        <Box marginBottom={1}>
-          <Text color="yellow" bold>
-            {title}
-          </Text>
+      <Box flexDirection="column" marginTop={1}>
+        <Alert variant="info">{title}</Alert>
+        <Box marginTop={1} flexDirection="column">
+          {children}
         </Box>
-        <Box flexDirection="column">{children}</Box>
       </Box>
     );
   }
 
   function renderStepContent() {
     if (cancelled || currentStep === "cancelled") {
-      return (
-        <Box
-          flexDirection="column"
-          borderStyle="round"
-          borderColor="red"
-          paddingX={1}
-        >
-          <Text color="red" bold>
-            ✗ 초기화가 취소되었습니다.
-          </Text>
-        </Box>
-      );
+      return <Alert variant="error">초기화가 취소되었습니다.</Alert>;
     }
 
     if (confirmExit) {
       return (
         <Box flexDirection="column">
-          <Box
-            flexDirection="column"
-            borderStyle="round"
-            borderColor="red"
-            paddingX={1}
-          >
-            <Text color="red" bold>
-              정말 종료하시겠습니까? (y/n)
-            </Text>
-            <Box marginTop={1}>
-              <TextInput
-                value={exitConfirmInput}
-                onChange={setExitConfirmInput}
-                placeholder=""
-                showCursor={true}
-              />
-            </Box>
+          <Alert variant="error">정말 종료하시겠습니까?</Alert>
+          <Box marginTop={1}>
+            <ConfirmInput
+              onConfirm={() => {
+                setCancelled(true);
+                setCurrentStep("cancelled");
+                setConfirmExit(false);
+                setTimeout(() => {
+                  onComplete();
+                }, 500);
+              }}
+              onCancel={() => {
+                setConfirmExit(false);
+              }}
+            />
           </Box>
         </Box>
       );
@@ -328,27 +296,17 @@ function InitCommand({ onComplete }: InitCommandProps) {
 
     switch (currentStep) {
       case "problem-dir": {
-        const items = [
+        const options = [
           { label: "problems", value: "problems" },
           { label: ". (프로젝트 루트)", value: "." },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
-          <SelectInput
-            items={items}
-            indicatorComponent={() => null}
-            itemComponent={({ label, isSelected }) => (
-              <Box>
-                <Text color={isSelected ? "yellow" : "gray"}>
-                  {isSelected ? "→ " : "  "}
-                  {label}
-                </Text>
-              </Box>
-            )}
-            onSelect={(item) => {
-              setProblemDirValue(item.value);
-              const displayValue =
-                item.value === "." ? "프로젝트 루트" : item.value;
+          <Select
+            options={options}
+            onChange={(value) => {
+              setProblemDirValue(value);
+              const displayValue = value === "." ? "프로젝트 루트" : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
           />
@@ -357,33 +315,24 @@ function InitCommand({ onComplete }: InitCommandProps) {
 
       case "language": {
         const supportedLanguages = getSupportedLanguages();
-        const items = supportedLanguages.map((lang) => ({
+        const options = supportedLanguages.map((lang) => ({
           label: lang,
           value: lang,
         }));
         return renderQuestionCard(
           getStepLabel(currentStep),
-          <SelectInput
-            items={items}
-            indicatorComponent={() => null}
-            itemComponent={({ label, isSelected }) => (
-              <Box>
-                <Text color={isSelected ? "yellow" : "gray"}>
-                  {isSelected ? "→ " : "  "}
-                  {label}
-                </Text>
-              </Box>
-            )}
-            onSelect={(item) => {
-              setLanguage(item.value as string);
-              moveToNextStep(item.value, getStepLabel(currentStep));
+          <Select
+            options={options}
+            onChange={(value) => {
+              setLanguage(value);
+              moveToNextStep(value, getStepLabel(currentStep));
             }}
           />
         );
       }
 
       case "editor": {
-        const items = [
+        const options = [
           { label: "code", value: "code" },
           { label: "cursor", value: "cursor" },
           { label: "vim", value: "vim" },
@@ -391,47 +340,29 @@ function InitCommand({ onComplete }: InitCommandProps) {
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
-          <SelectInput
-            items={items}
-            indicatorComponent={() => null}
-            itemComponent={({ label, isSelected }) => (
-              <Box>
-                <Text color={isSelected ? "yellow" : "gray"}>
-                  {isSelected ? "→ " : "  "}
-                  {label}
-                </Text>
-              </Box>
-            )}
-            onSelect={(item) => {
-              setEditorValue(item.value);
-              moveToNextStep(item.value, getStepLabel(currentStep));
+          <Select
+            options={options}
+            onChange={(value) => {
+              setEditorValue(value);
+              moveToNextStep(value, getStepLabel(currentStep));
             }}
           />
         );
       }
 
       case "auto-open": {
-        const items = [
+        const options = [
           { label: "예", value: "true" },
           { label: "아니오", value: "false" },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
-          <SelectInput
-            items={items}
-            indicatorComponent={() => null}
-            itemComponent={({ label, isSelected }) => (
-              <Box>
-                <Text color={isSelected ? "yellow" : "gray"}>
-                  {isSelected ? "→ " : "  "}
-                  {label}
-                </Text>
-              </Box>
-            )}
-            onSelect={(item) => {
-              setAutoOpen(item.value === "true");
+          <Select
+            options={options}
+            onChange={(value) => {
+              setAutoOpen(value === "true");
               moveToNextStep(
-                item.value === "true" ? "예" : "아니오",
+                value === "true" ? "예" : "아니오",
                 getStepLabel(currentStep)
               );
             }}
@@ -445,10 +376,9 @@ function InitCommand({ onComplete }: InitCommandProps) {
             getStepLabel(currentStep),
             <Box>
               <TextInput
-                value={handle}
                 placeholder="핸들 입력"
-                onChange={setHandle}
                 onSubmit={(value) => {
+                  setHandle(value);
                   setHandleInputMode(false);
                   moveToNextStep(value || "(스킵)", getStepLabel(currentStep));
                 }}
@@ -456,25 +386,16 @@ function InitCommand({ onComplete }: InitCommandProps) {
             </Box>
           );
         }
-        const items = [
+        const options = [
           { label: "설정", value: "set" },
           { label: "스킵", value: "skip" },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
-          <SelectInput
-            items={items}
-            indicatorComponent={() => null}
-            itemComponent={({ label, isSelected }) => (
-              <Box>
-                <Text color={isSelected ? "yellow" : "gray"}>
-                  {isSelected ? "→ " : "  "}
-                  {label}
-                </Text>
-              </Box>
-            )}
-            onSelect={(item) => {
-              if (item.value === "skip") {
+          <Select
+            options={options}
+            onChange={(value) => {
+              if (value === "skip") {
                 setHandle("");
                 moveToNextStep("(스킵)", getStepLabel(currentStep));
               } else {
@@ -486,37 +407,16 @@ function InitCommand({ onComplete }: InitCommandProps) {
       }
 
       case "done": {
+        const createdItemsText =
+          created.length > 0
+            ? `\n생성된 항목:\n${created.map((item) => `• ${item}`).join("\n")}`
+            : "";
         return (
           <Box flexDirection="column">
-            <Box
-              flexDirection="column"
-              borderStyle="round"
-              borderColor="green"
-              paddingX={1}
-              marginTop={1}
-              marginBottom={1}
-            >
-              <Box marginBottom={1}>
-                <Text color="green" bold>
-                  ✓ 프로젝트 초기화 완료
-                </Text>
-              </Box>
-              {created.length > 0 && (
-                <Box flexDirection="column">
-                  <Text color="cyan" bold>
-                    생성된 항목:
-                  </Text>
-                  <Box flexDirection="column" marginTop={0} paddingLeft={1}>
-                    {created.map((item, idx) => (
-                      <Text key={idx} color="white">
-                        • {item}
-                      </Text>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-            </Box>
-            <Box>
+            <Alert variant="success">
+              프로젝트 초기화 완료{createdItemsText}
+            </Alert>
+            <Box marginTop={1}>
               <Text color="gray">
                 이제{" "}
                 <Text bold color="cyan">
@@ -555,13 +455,9 @@ function InitCommand({ onComplete }: InitCommandProps) {
       {completedSteps.length > 0 && (
         <Box flexDirection="column">
           {completedSteps.map((step, idx) => (
-            <Box key={idx} marginBottom={0}>
-              <Text color="green">✓ </Text>
-              <Text color="gray">{step.label}: </Text>
-              <Text color="cyan" bold>
-                {step.value}
-              </Text>
-            </Box>
+            <StatusMessage key={idx} variant="success">
+              {step.label}: {step.value}
+            </StatusMessage>
           ))}
         </Box>
       )}

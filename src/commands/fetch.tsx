@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { render, Text, Box } from "ink";
+import { StatusMessage, Alert } from "@inkjs/ui";
 import { getProblem } from "../services/solved-api";
 import { scrapeProblem } from "../services/scraper";
 import { generateProblemFiles } from "../services/file-generator";
 import { ProblemDashboard } from "../components/problem-dashboard";
-import { LoadingSpinner } from "../components/spinner";
+import { Spinner } from "@inkjs/ui";
 import type { Problem } from "../types/index";
 import type { Language } from "../utils/language";
 import type { CommandDefinition } from "../types/command";
@@ -129,7 +130,7 @@ function FetchCommand({
   if (status === "loading") {
     return (
       <Box flexDirection="column">
-        <LoadingSpinner message={message} />
+        <Spinner label={message} />
         {problem && <ProblemDashboard problem={problem} />}
       </Box>
     );
@@ -138,7 +139,7 @@ function FetchCommand({
   if (status === "error") {
     return (
       <Box flexDirection="column">
-        <Text color="red">✗ 오류 발생: {error}</Text>
+        <Alert variant="error">오류 발생: {error}</Alert>
       </Box>
     );
   }
@@ -150,7 +151,7 @@ function FetchCommand({
           <ProblemDashboard problem={problem} />
         </Box>
       )}
-      <Text color="green">{message}</Text>
+      <StatusMessage variant="success">{message}</StatusMessage>
     </Box>
   );
 }

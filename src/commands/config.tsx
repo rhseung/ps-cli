@@ -1,4 +1,5 @@
 import { render, Text, Box } from "ink";
+import { StatusMessage } from "@inkjs/ui";
 import {
   setBojSessionCookie,
   getBojSessionCookie,
@@ -83,7 +84,9 @@ function ConfigCommand({
     clearConfig();
     return (
       <Box>
-        <Text color="green">✓ 모든 설정이 초기화되었습니다.</Text>
+        <StatusMessage variant="success">
+          모든 설정이 초기화되었습니다.
+        </StatusMessage>
       </Box>
     );
   }
@@ -203,9 +206,9 @@ function ConfigCommand({
 
     return (
       <Box>
-        <Text color="green">
-          ✓ 설정이 저장되었습니다: {configKey} = {value}
-        </Text>
+        <StatusMessage variant="success">
+          설정이 저장되었습니다: {configKey} = {value}
+        </StatusMessage>
       </Box>
     );
   }

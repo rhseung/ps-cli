@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { render, Box, Text } from "ink";
+import { Alert } from "@inkjs/ui";
 import chokidar from "chokidar";
 import { readdir } from "fs/promises";
 import { join } from "path";
@@ -10,7 +11,7 @@ import {
   type Language,
 } from "../utils/language";
 import { runAllTests } from "../services/test-runner";
-import { LoadingSpinner } from "../components/spinner";
+import { Spinner } from "@inkjs/ui";
 import { TestResultView } from "../components/test-result";
 import type { TestResult, TestSummary } from "../types";
 import type { CommandDefinition } from "../types/command";
@@ -114,8 +115,7 @@ function TestCommand({
   if (status === "loading") {
     return (
       <Box flexDirection="column">
-        <Text>테스트 실행 중...</Text>
-        <LoadingSpinner />
+        <Spinner label="테스트 실행 중..." />
       </Box>
     );
   }
@@ -123,8 +123,9 @@ function TestCommand({
   if (status === "error") {
     return (
       <Box flexDirection="column">
-        <Text color="red">✗ 테스트 실행 실패</Text>
-        {error && <Text color="gray">{error}</Text>}
+        <Alert variant="error">
+          테스트 실행 실패{error ? `: ${error}` : ""}
+        </Alert>
       </Box>
     );
   }

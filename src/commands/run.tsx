@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { render, Box, Text } from "ink";
+import { StatusMessage, Alert } from "@inkjs/ui";
 import { readdir } from "fs/promises";
 import { join } from "path";
 import {
@@ -9,7 +10,7 @@ import {
   type Language,
 } from "../utils/language";
 import { runSolution } from "../services/runner";
-import { LoadingSpinner } from "../components/spinner";
+import { Spinner } from "@inkjs/ui";
 import type { CommandDefinition } from "../types/command";
 import {
   getProblemId,
@@ -68,8 +69,7 @@ function RunCommand({
   if (status === "loading") {
     return (
       <Box flexDirection="column">
-        <Text>코드 실행 중...</Text>
-        <LoadingSpinner />
+        <Spinner label="코드 실행 중..." />
       </Box>
     );
   }
@@ -77,8 +77,7 @@ function RunCommand({
   if (status === "error") {
     return (
       <Box flexDirection="column">
-        <Text color="red">✗ 실행 실패</Text>
-        {error && <Text color="gray">{error}</Text>}
+        <Alert variant="error">실행 실패{error ? `: ${error}` : ""}</Alert>
       </Box>
     );
   }
@@ -97,13 +96,15 @@ function RunCommand({
         </Box>
         <Box flexDirection="column" marginTop={1}>
           {result.timedOut ? (
-            <Text color="yellow">⏱ 실행 시간이 초과되었습니다.</Text>
+            <StatusMessage variant="warning">
+              실행 시간이 초과되었습니다.
+            </StatusMessage>
           ) : result.exitCode !== 0 ? (
-            <Text color="red">
-              ✗ 프로그램이 비정상 종료되었습니다 (exit code: {result.exitCode})
-            </Text>
+            <StatusMessage variant="error">
+              프로그램이 비정상 종료되었습니다 (exit code: {result.exitCode})
+            </StatusMessage>
           ) : (
-            <Text color="green">✓ 실행 완료</Text>
+            <StatusMessage variant="success">실행 완료</StatusMessage>
           )}
           {result.stdout && (
             <Box marginTop={1} flexDirection="column">

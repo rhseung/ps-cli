@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { render, Box, Text } from "ink";
+import { Alert } from "@inkjs/ui";
 import { getUserStats } from "../services/solved-api";
-import { LoadingSpinner } from "../components/spinner";
+import { Spinner } from "@inkjs/ui";
 import { getSolvedAcHandle } from "../utils/config";
 import { TIER_COLORS, getTierColor, getTierName } from "../utils/tier";
 import chalk from "chalk";
@@ -42,7 +43,7 @@ function StatsCommand({ handle, onComplete }: StatsCommandProps) {
   if (status === "loading") {
     return (
       <Box flexDirection="column">
-        <LoadingSpinner message="통계를 불러오는 중..." />
+        <Spinner label="통계를 불러오는 중..." />
       </Box>
     );
   }
@@ -50,7 +51,7 @@ function StatsCommand({ handle, onComplete }: StatsCommandProps) {
   if (status === "error") {
     return (
       <Box flexDirection="column">
-        <Text color="red">✗ 통계를 불러올 수 없습니다: {error}</Text>
+        <Alert variant="error">통계를 불러올 수 없습니다: {error}</Alert>
       </Box>
     );
   }
