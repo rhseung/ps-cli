@@ -14,9 +14,9 @@
     "build": "tsup && node scripts/add-shebang.js",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "release:patch": "npm version patch && bun publish",
-    "release:minor": "npm version minor && bun publish",
-    "release:major": "npm version major && bun publish"
+    "release:patch": "npm version patch && bun publish --access=public",
+    "release:minor": "npm version minor && bun publish --access=public",
+    "release:major": "npm version major && bun publish --access=public"
   },
   "keywords": [
     "boj",
