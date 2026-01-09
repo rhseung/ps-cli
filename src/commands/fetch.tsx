@@ -88,7 +88,7 @@ function FetchCommand({
         );
 
         setStatus("success");
-        setMessage(`✓ 문제 파일이 생성되었습니다: ${problemDir}`);
+        setMessage(`문제 파일이 생성되었습니다: ${problemDir}`);
 
         // 에디터 자동 열기 (설정이 활성화된 경우)
         if (getAutoOpenEditor()) {
@@ -100,7 +100,7 @@ function FetchCommand({
               stdio: "ignore",
             });
             setMessage(
-              `✓ 문제 파일이 생성되었습니다: ${problemDir}\n✓ ${editor}로 열었습니다.`
+              `문제 파일이 생성되었습니다: ${problemDir}\n${editor}로 열었습니다.`
             );
           } catch (err) {
             // 에디터 열기 실패해도 계속 진행
