@@ -13,7 +13,10 @@
   "scripts": {
     "build": "tsup && node scripts/add-shebang.js",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release:patch": "npm version patch && bun publish",
+    "release:minor": "npm version minor && bun publish",
+    "release:major": "npm version major && bun publish"
   },
   "keywords": [
     "boj",
