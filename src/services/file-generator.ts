@@ -1,11 +1,12 @@
 import { mkdir, writeFile, readFile } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+
 import type { Problem } from "../types/index";
 import type { Language } from "../utils/language";
 import { getLanguageConfig } from "../utils/language";
-import { getTierName, getTierImageUrl } from "../utils/tier";
 import { getProblemDirPath } from "../utils/problem-id";
+import { getTierName, getTierImageUrl } from "../utils/tier";
 
 function parseTimeLimitToMs(timeLimit?: string): number | undefined {
   if (!timeLimit) return undefined;
@@ -31,7 +32,7 @@ function getProjectRoot(): string {
 
 export async function generateProblemFiles(
   problem: Problem,
-  language: Language = "python"
+  language: Language = "python",
 ): Promise<string> {
   const problemDir = getProblemDirPath(problem.id);
   await mkdir(problemDir, { recursive: true });
@@ -45,12 +46,12 @@ export async function generateProblemFiles(
   try {
     const templateContent = await readFile(templatePath, "utf-8");
     await writeFile(solutionPath, templateContent, "utf-8");
-  } catch (error) {
+  } catch {
     // 템플릿 파일이 없으면 기본 내용 생성
     await writeFile(
       solutionPath,
       `// Problem ${problem.id}: ${problem.title}\n`,
-      "utf-8"
+      "utf-8",
     );
   }
 
@@ -137,7 +138,7 @@ ${tc.input.trimEnd()}
 \`\`\`
 ${tc.output.trimEnd()}
 \`\`\`
-`
+`,
   )
   .join("\n")}
 

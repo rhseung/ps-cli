@@ -1,6 +1,7 @@
-import React from "react";
-import { Box, Text } from "ink";
 import chalk from "chalk";
+import { Box, Text } from "ink";
+import React from "react";
+
 import type { Problem } from "../types/index";
 import { getTierName, getTierColor } from "../utils/tier";
 

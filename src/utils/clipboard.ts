@@ -39,7 +39,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     }
 
     return true;
-  } catch (error) {
+  } catch {
     // 에러는 무시하고 false 반환 (경고만 표시)
     return false;
   }

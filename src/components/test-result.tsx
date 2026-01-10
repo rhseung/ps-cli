@@ -1,6 +1,7 @@
-import React from "react";
-import { Box, Text } from "ink";
 import { Badge, StatusMessage } from "@inkjs/ui";
+import { Box, Text } from "ink";
+import React from "react";
+
 import type { TestResult, TestSummary } from "../types";
 
 interface TestResultProps {
@@ -22,14 +23,14 @@ function ResultRow({ result }: { result: TestResult }) {
     result.status === "pass"
       ? "green"
       : result.status === "fail"
-      ? "red"
-      : "yellow";
+        ? "red"
+        : "yellow";
   const statusText =
     result.status === "pass"
       ? "PASS"
       : result.status === "fail"
-      ? "FAIL"
-      : "ERROR";
+        ? "FAIL"
+        : "ERROR";
 
   return (
     <Box flexDirection="column" marginBottom={1}>

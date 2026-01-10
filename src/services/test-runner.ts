@@ -1,9 +1,11 @@
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
-import type { Language } from "../utils/language";
-import { runSolution } from "./runner";
-import { compareOutput } from "./diff-checker";
+
 import type { TestResult, TestSummary } from "../types";
+import type { Language } from "../utils/language";
+
+import { compareOutput } from "./diff-checker";
+import { runSolution } from "./runner";
 
 export interface RunAllTestsOptions {
   problemDir: string;

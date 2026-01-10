@@ -1,6 +1,7 @@
-import Conf from "conf";
 import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+
+import Conf from "conf";
 
 interface ConfigSchema {
   bojSessionCookie?: string;
@@ -37,11 +38,46 @@ const config = new Conf<ConfigSchema>({
 let projectConfigCache: ProjectConfig | null = null;
 let projectConfigCachePath: string | null = null;
 
+/**
+ * 프로젝트 루트 디렉토리를 찾습니다 (.ps-cli.json 파일이 있는 디렉토리).
+ */
+export function findProjectRoot(
+  startDir: string = process.cwd(),
+): string | null {
+  let currentDir = startDir;
+  const rootPath =
+    process.platform === "win32" ? currentDir.split("\\")[0] + "\\" : "/";
+
+  while (currentDir !== rootPath) {
+    const projectConfigPath = join(currentDir, ".ps-cli.json");
+    if (existsSync(projectConfigPath)) {
+      return currentDir;
+    }
+    const parentDir = dirname(currentDir);
+    // 루트에 도달했거나 더 이상 올라갈 수 없으면 중단
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+  }
+
+  return null;
+}
+
 // 동기적으로 프로젝트 설정 읽기
 function getProjectConfigSync(): ProjectConfig | null {
   try {
     const cwd = process.cwd();
-    const projectConfigPath = join(cwd, ".ps-cli.json");
+
+    // 프로젝트 루트 찾기
+    const projectRoot = findProjectRoot(cwd);
+    if (!projectRoot) {
+      projectConfigCache = null;
+      projectConfigCachePath = null;
+      return null;
+    }
+
+    const projectConfigPath = join(projectRoot, ".ps-cli.json");
 
     // 캐시된 경로와 같으면 캐시 사용
     if (projectConfigCache && projectConfigCachePath === projectConfigPath) {

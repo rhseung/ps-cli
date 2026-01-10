@@ -1,6 +1,6 @@
-import { join, basename, dirname } from "path";
-import { existsSync } from "fs";
-import { getProblemDir } from "./config";
+import { join } from "path";
+
+import { getProblemDir, findProjectRoot } from "./config";
 
 /**
  * 현재 작업 디렉토리 경로에서 문제 번호를 추론합니다.
@@ -14,7 +14,7 @@ import { getProblemDir } from "./config";
  * detectProblemIdFromPath('/path/to/10998') // 10998 (problemDir="."인 경우)
  */
 export function detectProblemIdFromPath(
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
 ): number | null {
   const problemDir = getProblemDir();
   const normalizedPath = cwd.replace(/\\/g, "/");
@@ -86,7 +86,7 @@ export function detectProblemIdFromPath(
  */
 export function getProblemId(
   args: string[],
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
 ): number | null {
   // 인자가 있으면 우선적으로 파싱
   if (args.length > 0 && args[0]) {
@@ -98,35 +98,6 @@ export function getProblemId(
 
   // 인자가 없거나 유효하지 않으면 경로에서 추론
   return detectProblemIdFromPath(cwd);
-}
-
-/**
- * 프로젝트 루트 디렉토리를 찾습니다 (.ps-cli.json 파일이 있는 디렉토리).
- *
- * @param startDir - 검색을 시작할 디렉토리 (기본값: process.cwd())
- * @returns 프로젝트 루트 경로 또는 null (찾지 못한 경우)
- */
-export function findProjectRoot(
-  startDir: string = process.cwd()
-): string | null {
-  let currentDir = startDir;
-  const rootPath =
-    process.platform === "win32" ? currentDir.split("\\")[0] + "\\" : "/";
-
-  while (currentDir !== rootPath) {
-    const projectConfigPath = join(currentDir, ".ps-cli.json");
-    if (existsSync(projectConfigPath)) {
-      return currentDir;
-    }
-    const parentDir = dirname(currentDir);
-    // 루트에 도달했거나 더 이상 올라갈 수 없으면 중단
-    if (parentDir === currentDir) {
-      break;
-    }
-    currentDir = parentDir;
-  }
-
-  return null;
 }
 
 /**
@@ -144,7 +115,7 @@ export function findProjectRoot(
  */
 export function getProblemDirPath(
   problemId: number,
-  cwd: string = process.cwd()
+  cwd: string = process.cwd(),
 ): string {
   const problemDir = getProblemDir();
 

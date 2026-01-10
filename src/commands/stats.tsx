@@ -1,44 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { render, Box, Text } from "ink";
 import { Alert } from "@inkjs/ui";
-import { getUserStats } from "../services/solved-api";
 import { Spinner } from "@inkjs/ui";
-import { getSolvedAcHandle } from "../utils/config";
-import { TIER_COLORS, getTierColor, getTierName } from "../utils/tier";
 import chalk from "chalk";
-import type { SolvedAcUser } from "../types";
-import type { CommandDefinition } from "../types/command";
 import gradient from "gradient-string";
+import { Box, Text } from "ink";
+import React from "react";
 
-interface StatsCommandProps {
+import { Command } from "../core/base-command";
+import { CommandDef, CommandBuilder } from "../core/command-builder";
+import { useUserStats } from "../hooks/use-user-stats";
+import type { CommandFlags } from "../types/command";
+import { getSolvedAcHandle } from "../utils/config";
+import { getTierColor, getTierName } from "../utils/tier";
+
+interface StatsViewProps {
   handle: string;
   onComplete: () => void;
 }
 
-function StatsCommand({ handle, onComplete }: StatsCommandProps) {
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
-  const [user, setUser] = useState<SolvedAcUser | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void getUserStats(handle)
-      .then((userData) => {
-        setUser(userData);
-        setStatus("success");
-        setTimeout(() => {
-          onComplete();
-        }, 5000);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : String(err));
-        setStatus("error");
-        setTimeout(() => {
-          onComplete();
-        }, 3000);
-      });
-  }, [handle, onComplete]);
+function StatsView({ handle, onComplete }: StatsViewProps) {
+  const { status, user, error } = useUserStats({
+    handle,
+    onComplete,
+  });
 
   if (status === "loading") {
     return (
@@ -118,69 +101,48 @@ function StatsCommand({ handle, onComplete }: StatsCommandProps) {
   return null;
 }
 
-async function statsCommand(handle: string) {
-  return new Promise<void>((resolve) => {
-    const { unmount } = render(
-      <StatsCommand
-        handle={handle}
-        onComplete={() => {
-          unmount();
-          resolve();
-        }}
-      />
-    );
-  });
-}
-
-export const statsHelp = `
-  사용법:
-    $ ps stats [핸들] [옵션]
-
-  설명:
-    Solved.ac에서 사용자 통계를 조회합니다.
-    - 티어, 레이팅, 해결한 문제 수 등 표시
-    - 그라데이션으로 시각적으로 표시
-
-  옵션:
-    --handle, -h      Solved.ac 핸들 (설정에 저장된 값 사용 가능)
-
-  예제:
-    $ ps stats myhandle
-    $ ps stats --handle myhandle
-`;
-
-export async function statsExecute(
-  args: string[],
-  flags: { handle?: string; help?: boolean }
-): Promise<void> {
-  if (flags.help) {
-    console.log(statsHelp.trim());
-    process.exit(0);
-    return;
-  }
-
-  // 핸들 결정: 인자 > 플래그 > 설정
-  let handle: string | undefined = args[0] || flags.handle;
-
-  if (!handle) {
-    handle = getSolvedAcHandle();
-  }
-
-  if (!handle) {
-    console.error("오류: Solved.ac 핸들을 입력해주세요.");
-    console.error(`사용법: ps stats <핸들>`);
-    console.error(`도움말: ps stats --help`);
-    console.error(`힌트: 설정에 핸들을 저장하면 매번 입력할 필요가 없습니다.`);
-    process.exit(1);
-  }
-
-  await statsCommand(handle);
-}
-
-const statsCommandDef: CommandDefinition = {
+@CommandDef({
   name: "stats",
-  help: statsHelp,
-  execute: statsExecute,
-};
+  description: `Solved.ac에서 사용자 통계를 조회합니다.
+- 티어, 레이팅, 해결한 문제 수 등 표시
+- 그라데이션으로 시각적으로 표시`,
+  flags: [
+    {
+      name: "handle",
+      options: {
+        shortFlag: "h",
+        description: "Solved.ac 핸들 (설정에 저장된 값 사용 가능)",
+      },
+    },
+  ],
+  autoDetectProblemId: false,
+  examples: ["stats myhandle", "stats --handle myhandle"],
+})
+export class StatsCommand extends Command {
+  async execute(args: string[], flags: CommandFlags): Promise<void> {
+    // 핸들 결정: 인자 > 플래그 > 설정
+    let handle: string | undefined =
+      args[0] || (flags.handle as string | undefined);
 
-export default statsCommandDef;
+    if (!handle) {
+      handle = getSolvedAcHandle();
+    }
+
+    if (!handle) {
+      console.error("오류: Solved.ac 핸들을 입력해주세요.");
+      console.error(`사용법: ps stats <핸들>`);
+      console.error(`도움말: ps stats --help`);
+      console.error(
+        `힌트: 설정에 핸들을 저장하면 매번 입력할 필요가 없습니다.`,
+      );
+      process.exit(1);
+      return;
+    }
+
+    await this.renderView(StatsView, {
+      handle,
+    });
+  }
+}
+
+export default CommandBuilder.fromClass(StatsCommand);

@@ -37,8 +37,6 @@ graph TB
     InkUI --> SelectMenu[Select Menu]
 ```
 
-
-
 ## 기술 스택
 
 ### 핵심 라이브러리
@@ -98,8 +96,6 @@ ps-cli/
 ├── tsup.config.ts
 └── README.md
 ```
-
-
 
 ## 단계별 구현 계획
 
@@ -273,7 +269,5 @@ ps run                     # 코드 실행 (단일 입력)
 ps submit                  # BOJ 제출
 ps stats                   # 통계 보기
 ```
-
-
 
 ### 언어 지원 설정

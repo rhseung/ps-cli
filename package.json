@@ -14,9 +14,12 @@
     "build": "tsup && node scripts/add-shebang.js",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "release:patch": "npm version patch && bun publish --access=public",
-    "release:minor": "npm version minor && bun publish --access=public",
-    "release:major": "npm version major && bun publish --access=public"
+    "lint": "eslint",
+    "format": "prettier",
+    "check": "prettier --write . && eslint --fix",
+    "patch": "npm version patch && bun publish --access=public",
+    "minor": "npm version minor && bun publish --access=public",
+    "major": "npm version major && bun publish --access=public"
   },
   "keywords": [
     "boj",
@@ -36,6 +39,7 @@
     "url": "https://github.com/rhseung/ps-cli/issues"
   },
   "dependencies": {
+    "@inkjs/ui": "^2.0.0",
     "@types/gradient-string": "^1.1.6",
     "chalk": "^5.3.0",
     "cheerio": "^1.0.0",
@@ -44,7 +48,6 @@
     "execa": "^9.4.0",
     "gradient-string": "^2.0.2",
     "ink": "^5.0.1",
-    "@inkjs/ui": "^2.0.0",
     "meow": "^14.0.0",
     "react": "^18.3.1"
   },
@@ -52,7 +55,14 @@
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.12",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.50.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^16.5.0"
   },
   "engines": {
     "node": ">=18.0.0"

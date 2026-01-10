@@ -1,7 +1,8 @@
 import * as cheerio from "cheerio";
+
+import type { SubmitResult, SubmitStatus } from "../types";
 import { getBojSessionCookie, getCodeOpen } from "../utils/config";
 import { getLanguageConfig, type Language } from "../utils/language";
-import type { SubmitResult, SubmitStatus } from "../types";
 
 const BOJ_BASE_URL = "https://www.acmicpc.net";
 
@@ -18,7 +19,7 @@ interface SubmitSolutionParams {
 async function pollSubmitResult(
   problemId: number,
   submitId: number,
-  sessionCookie: string
+  sessionCookie: string,
 ): Promise<SubmitResult> {
   const maxAttempts = 60; // 최대 60번 시도 (약 2분)
   const pollInterval = 2000; // 2초마다 폴링
@@ -35,7 +36,7 @@ async function pollSubmitResult(
             "User-Agent":
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -46,12 +47,12 @@ async function pollSubmitResult(
       const $ = cheerio.load(html);
 
       // 제출 목록에서 해당 제출 ID 찾기
-      let targetRow: cheerio.Cheerio<any> | null = null;
+      let targetRow = null;
       $("table#status-table tbody tr").each((_, element) => {
         const row = $(element);
         const rowSubmitId = parseInt(
           row.find("td:first-child").text().trim(),
-          10
+          10,
         );
         if (rowSubmitId === submitId) {
           targetRow = row;
@@ -84,7 +85,7 @@ async function pollSubmitResult(
           problemId,
           submitId: parseInt(
             targetRow.find("td:first-child").text().trim(),
-            10
+            10,
           ),
           status,
           time,
@@ -93,7 +94,7 @@ async function pollSubmitResult(
           language: languageText,
         };
       }
-    } catch (error) {
+    } catch {
       // 폴링 중 에러는 무시하고 계속 시도
       continue;
     }
@@ -101,7 +102,7 @@ async function pollSubmitResult(
 
   // 타임아웃
   throw new Error(
-    "제출 결과 확인 시간이 초과되었습니다. BOJ 웹사이트에서 직접 확인해주세요."
+    "제출 결과 확인 시간이 초과되었습니다. BOJ 웹사이트에서 직접 확인해주세요.",
   );
 }
 
@@ -170,7 +171,7 @@ function parseMemory(memoryText: string): number | null {
  */
 async function getCsrfToken(
   problemId: number,
-  sessionCookie: string
+  sessionCookie: string,
 ): Promise<string> {
   const response = await fetch(`${BOJ_BASE_URL}/submit/${problemId}`, {
     headers: {
@@ -182,7 +183,7 @@ async function getCsrfToken(
 
   if (!response.ok) {
     throw new Error(
-      `제출 페이지를 불러올 수 없습니다. (HTTP ${response.status})`
+      `제출 페이지를 불러올 수 없습니다. (HTTP ${response.status})`,
     );
   }
 
@@ -237,7 +238,6 @@ async function getCsrfToken(
 
   if (!csrfToken) {
     // 디버깅을 위해 HTML 일부를 출력 (개발 모드에서만)
-    const formHtml = $("form").html()?.substring(0, 500) || "";
     throw new Error(
       "CSRF 토큰을 찾을 수 없습니다. BOJ 페이지 구조가 변경되었을 수 있습니다.\n" +
         "다음 위치들을 확인했습니다:\n" +
@@ -245,7 +245,7 @@ async function getCsrfToken(
         "- meta[name='csrf-token'], meta[name='_csrf']\n" +
         "- JavaScript 변수 (csrf_key, csrf_token)\n" +
         "- 폼 action URL\n\n" +
-        "제출 페이지 HTML 구조를 확인해주세요."
+        "제출 페이지 HTML 구조를 확인해주세요.",
     );
   }
 
@@ -266,7 +266,7 @@ export async function submitSolution({
     const langConfig = getLanguageConfig(language);
     if (!langConfig.bojLangId) {
       throw new Error(
-        `언어 ${language}에 대한 BOJ 언어 ID가 설정되지 않았습니다.`
+        `언어 ${language}에 대한 BOJ 언어 ID가 설정되지 않았습니다.`,
       );
     }
 
@@ -299,14 +299,14 @@ export async function submitSolution({
         "⚙️ 설정 방법:\n" +
         "  export PS_CLI_BOJ_COOKIE='복사한_쿠키_값'\n\n" +
         "예시:\n" +
-        "  export PS_CLI_BOJ_COOKIE='OnlineJudge=abc123; __ga=xyz789; ...'"
+        "  export PS_CLI_BOJ_COOKIE='OnlineJudge=abc123; __ga=xyz789; ...'",
     );
   }
 
   const langConfig = getLanguageConfig(language);
   if (!langConfig.bojLangId) {
     throw new Error(
-      `언어 ${language}에 대한 BOJ 언어 ID가 설정되지 않았습니다.`
+      `언어 ${language}에 대한 BOJ 언어 ID가 설정되지 않았습니다.`,
     );
   }
 
@@ -314,7 +314,7 @@ export async function submitSolution({
   let csrfToken: string | undefined;
   try {
     csrfToken = await getCsrfToken(problemId, sessionCookie);
-  } catch (error) {
+  } catch {
     // CSRF 토큰을 찾지 못해도 제출을 시도 (일부 사이트는 CSRF 토큰이 없을 수 있음)
     console.warn("CSRF 토큰을 찾지 못했습니다. 제출을 계속 시도합니다...");
     csrfToken = undefined;
@@ -359,7 +359,7 @@ export async function submitSolution({
   if (!submitResponse.ok) {
     if (submitResponse.status === 401 || submitResponse.status === 403) {
       throw new Error(
-        "로그인이 필요하거나 세션이 만료되었습니다. 쿠키를 다시 설정해주세요."
+        "로그인이 필요하거나 세션이 만료되었습니다. 쿠키를 다시 설정해주세요.",
       );
     }
     const error =
@@ -395,7 +395,7 @@ export async function submitSolution({
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         },
-      }
+      },
     );
 
     if (statusResponse.ok) {
@@ -417,7 +417,7 @@ export async function submitSolution({
         "- CSRF 토큰이 필요할 수 있습니다\n" +
         "- 로그인 세션이 만료되었을 수 있습니다\n" +
         "- BOJ 페이지 구조가 변경되었을 수 있습니다\n\n" +
-        "브라우저에서 직접 제출해보시고, 문제가 계속되면 이슈를 등록해주세요."
+        "브라우저에서 직접 제출해보시고, 문제가 계속되면 이슈를 등록해주세요.",
     );
   }
 

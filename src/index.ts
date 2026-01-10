@@ -1,8 +1,10 @@
-import meow from "meow";
+import { existsSync } from "fs";
 import { readdir } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { existsSync } from "fs";
+
+import meow from "meow";
+
 import type { CommandDefinition } from "./types/command";
 import { getSupportedLanguagesString } from "./utils/language";
 
@@ -47,7 +49,7 @@ async function loadCommands(): Promise<Map<string, CommandDefinition>> {
         const baseUrl = new URL(import.meta.url);
         const commandsUrl = new URL(
           isDist ? `./commands/${commandName}.js` : `./commands/${commandName}`,
-          baseUrl
+          baseUrl,
         );
         const module = await import(commandsUrl.href);
 
@@ -57,13 +59,13 @@ async function loadCommands(): Promise<Map<string, CommandDefinition>> {
           // name이 일치하는지 확인 (선택사항)
           if (commandDef.name && commandDef.name !== commandName) {
             console.warn(
-              `명령어 파일명(${commandName})과 정의된 이름(${commandDef.name})이 일치하지 않습니다.`
+              `명령어 파일명(${commandName})과 정의된 이름(${commandDef.name})이 일치하지 않습니다.`,
             );
           }
           commandMap.set(commandName, commandDef);
         } else {
           console.warn(
-            `명령어 ${commandName}: export default를 찾을 수 없습니다.`
+            `명령어 ${commandName}: export default를 찾을 수 없습니다.`,
           );
         }
       } catch (error) {
@@ -74,7 +76,7 @@ async function loadCommands(): Promise<Map<string, CommandDefinition>> {
   } catch (error) {
     console.error(
       `commands 디렉토리를 읽을 수 없습니다: ${commandsDir}`,
-      error
+      error,
     );
     throw error;
   }
@@ -145,7 +147,7 @@ const cli = meow(
         default: false,
       },
     },
-  }
+  },
 );
 
 async function main() {
@@ -177,7 +179,7 @@ async function main() {
   if (!commandDef) {
     console.error(`오류: 알 수 없는 명령어: ${command}`);
     console.error(
-      `사용 가능한 명령어: ${Array.from(commands.keys()).join(", ")}, help`
+      `사용 가능한 명령어: ${Array.from(commands.keys()).join(", ")}, help`,
     );
     process.exit(1);
     return;

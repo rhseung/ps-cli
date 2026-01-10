@@ -1,4 +1,6 @@
 import * as cheerio from "cheerio";
+import type { Element } from "domhandler";
+
 import type { ScrapedProblem, TestCase } from "../types/index";
 
 const BOJ_BASE_URL = "https://www.acmicpc.net";
@@ -9,7 +11,7 @@ const BOJ_BASE_URL = "https://www.acmicpc.net";
  */
 function htmlToMarkdown(
   $: cheerio.CheerioAPI,
-  element: cheerio.Cheerio<any>
+  element: cheerio.Cheerio<Element>,
 ): string {
   if (element.length === 0) return "";
 
@@ -21,7 +23,7 @@ function htmlToMarkdown(
     return element.text().trim();
   }
 
-  contents.each((_, node: any) => {
+  contents.each((_, node) => {
     if (node.type === "text") {
       const text = node.data || "";
       if (text.trim()) {
@@ -49,30 +51,33 @@ function htmlToMarkdown(
         case "br":
           result += "\n";
           break;
-        case "p":
+        case "p": {
           const pContent = htmlToMarkdown($, $node);
           if (pContent) {
             result += pContent + "\n\n";
           }
           break;
-        case "div":
+        }
+        case "div": {
           const divContent = htmlToMarkdown($, $node);
           if (divContent) {
             result += divContent + "\n";
           }
           break;
+        }
         case "span":
           result += htmlToMarkdown($, $node);
           break;
         case "code":
           result += `\`${htmlToMarkdown($, $node)}\``;
           break;
-        case "pre":
+        case "pre": {
           const preContent = htmlToMarkdown($, $node);
           if (preContent) {
             result += `\n\`\`\`\n${preContent}\n\`\`\`\n`;
           }
           break;
+        }
         case "ul":
         case "ol":
           $node.find("li").each((i, li) => {
@@ -85,7 +90,7 @@ function htmlToMarkdown(
         case "li":
           result += htmlToMarkdown($, $node);
           break;
-        case "img":
+        case "img": {
           const imgSrc = $node.attr("src") || "";
           const imgAlt = $node.attr("alt") || "";
           if (imgSrc) {
@@ -103,6 +108,7 @@ function htmlToMarkdown(
             result += `![${imgAlt}](${imageUrl})`;
           }
           break;
+        }
         default:
           result += htmlToMarkdown($, $node);
       }
@@ -113,7 +119,7 @@ function htmlToMarkdown(
 }
 
 export async function scrapeProblem(
-  problemId: number
+  problemId: number,
 ): Promise<ScrapedProblem> {
   const url = `${BOJ_BASE_URL}/problem/${problemId}`;
 
@@ -288,13 +294,13 @@ export async function scrapeProblem(
   // 필수 데이터 검증
   if (!title) {
     throw new Error(
-      `문제 ${problemId}의 제목을 찾을 수 없습니다. BOJ 페이지 구조가 변경되었거나 문제가 존재하지 않을 수 있습니다.`
+      `문제 ${problemId}의 제목을 찾을 수 없습니다. BOJ 페이지 구조가 변경되었거나 문제가 존재하지 않을 수 있습니다.`,
     );
   }
 
   if (!description && !inputFormat && !outputFormat) {
     throw new Error(
-      `문제 ${problemId}의 내용을 가져올 수 없습니다. BOJ 페이지 구조가 변경되었거나 API 제한에 걸렸을 수 있습니다. 잠시 후 다시 시도해주세요.`
+      `문제 ${problemId}의 내용을 가져올 수 없습니다. BOJ 페이지 구조가 변경되었거나 API 제한에 걸렸을 수 있습니다. 잠시 후 다시 시도해주세요.`,
     );
   }
 

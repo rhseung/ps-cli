@@ -6,7 +6,7 @@ const USER_AGENT = "ps-cli/1.0.0";
 async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  maxRetries = 3
+  maxRetries = 3,
 ): Promise<Response> {
   let lastError: Error | null = null;
 
@@ -39,7 +39,7 @@ async function fetchWithRetry(
       lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt < maxRetries - 1) {
         await new Promise((resolve) =>
-          setTimeout(resolve, (attempt + 1) * 1000)
+          setTimeout(resolve, (attempt + 1) * 1000),
         );
       }
     }

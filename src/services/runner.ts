@@ -1,6 +1,8 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
+
 import { execa, execaCommand } from "execa";
+
 import type { Language } from "../utils/language";
 import { getLanguageConfig } from "../utils/language";
 
@@ -61,7 +63,13 @@ export async function runSolution({
   } catch (error) {
     const durationMs = Date.now() - start;
     if (error instanceof Error && "timedOut" in error) {
-      const err = error as any;
+      const err = error as Error & {
+        timedOut?: boolean;
+        stdout?: string;
+        stderr?: string;
+        shortMessage?: string;
+        exitCode?: number | null;
+      };
       return {
         stdout: err.stdout ?? "",
         stderr: err.stderr ?? err.shortMessage ?? err.message,
