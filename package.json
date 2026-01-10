@@ -15,7 +15,7 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
-    "format": "prettier",
+    "format": "prettier --check .",
     "check": "prettier --write . && eslint --fix",
     "patch": "npm version patch && bun publish --access=public",
     "minor": "npm version minor && bun publish --access=public",

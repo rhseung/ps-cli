@@ -113,3 +113,18 @@ export interface SubmitResult {
   language: string;
   message?: string;
 }
+
+export interface SearchResult {
+  problemId: number;
+  title: string;
+  level?: number; // 티어 레벨 (1-31)
+  solvedCount?: number;
+  averageTries?: number;
+  isSolved?: boolean; // 사용자가 해결한 문제인지 여부
+}
+
+export interface SearchResults {
+  problems: SearchResult[];
+  currentPage: number;
+  totalPages: number;
+}

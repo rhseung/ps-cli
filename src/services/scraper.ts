@@ -1,9 +1,15 @@
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
 
-import type { ScrapedProblem, TestCase } from "../types/index";
+import type {
+  ScrapedProblem,
+  TestCase,
+  SearchResult,
+  SearchResults,
+} from "../types/index";
 
 const BOJ_BASE_URL = "https://www.acmicpc.net";
+const SOLVED_AC_BASE_URL = "https://solved.ac";
 
 /**
  * HTML 요소를 Markdown으로 변환
@@ -316,5 +322,140 @@ export async function scrapeProblem(
     accepted,
     acceptedUsers,
     acceptedRate,
+  };
+}
+
+/**
+ * solved.ac 검색 결과를 스크래핑합니다.
+ * @param query - 검색 쿼리 (예: "*g1...g5", "#dp", "tier:g3 tag:dp")
+ * @param page - 페이지 번호 (기본값: 1)
+ * @returns 검색 결과 (문제 목록 및 페이지네이션 정보)
+ */
+export async function searchProblems(
+  query: string,
+  page: number = 1,
+): Promise<SearchResults> {
+  const url = `${SOLVED_AC_BASE_URL}/problems?query=${encodeURIComponent(query)}&page=${page}`;
+
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch search results: HTTP ${response.status}`);
+  }
+
+  const html = await response.text();
+  const $ = cheerio.load(html);
+
+  const problems: SearchResult[] = [];
+
+  // 테이블에서 문제 목록 추출
+  // DOM Path: tbody.c.-1d9xc1d > tr.c.-1ojb0xa
+  const rows = $("tbody tr");
+
+  rows.each((_, row) => {
+    const $row = $(row);
+    const cells = $row.find("td");
+
+    if (cells.length >= 2) {
+      // 첫 번째 td: 문제 번호
+      const problemIdText = $(cells[0]).text().trim();
+      const problemId = parseInt(problemIdText, 10);
+
+      // 두 번째 td: 제목
+      const title = $(cells[1]).text().trim();
+
+      if (!isNaN(problemId) && title) {
+        // 티어 레벨 추출
+        // solved.ac에서는 첫 번째 셀의 img 태그 src에서 티어 레벨을 확인할 수 있음
+        // 예: <img src="https://static.solved.ac/tier_small/13.svg" alt="Gold III" />
+        let level: number | undefined;
+        const firstCell = $(cells[0]);
+        const tierImg = firstCell.find("img[src*='tier_small']");
+
+        if (tierImg.length > 0) {
+          const imgSrc = tierImg.attr("src");
+          if (imgSrc) {
+            // URL에서 티어 레벨 추출: tier_small/{level}.svg
+            const match = imgSrc.match(/tier_small\/(\d+)\.svg/);
+            if (match && match[1]) {
+              const parsedLevel = parseInt(match[1], 10);
+              if (
+                !isNaN(parsedLevel) &&
+                parsedLevel >= 0 &&
+                parsedLevel <= 31
+              ) {
+                level = parsedLevel;
+              }
+            }
+          }
+        }
+
+        // 세 번째 td: 푼 사람 수 (선택적)
+        let solvedCount: number | undefined;
+        if (cells.length >= 3) {
+          const solvedCountText = $(cells[2]).text().trim();
+          // 쉼표 제거 후 숫자로 변환
+          const parsed = parseInt(solvedCountText.replace(/,/g, ""), 10);
+          if (!isNaN(parsed)) {
+            solvedCount = parsed;
+          }
+        }
+
+        // 네 번째 td: 평균 시도 횟수 (선택적)
+        let averageTries: number | undefined;
+        if (cells.length >= 4) {
+          const averageTriesText = $(cells[3]).text().trim();
+          const parsed = parseFloat(averageTriesText);
+          if (!isNaN(parsed)) {
+            averageTries = parsed;
+          }
+        }
+
+        problems.push({
+          problemId,
+          title,
+          level,
+          solvedCount,
+          averageTries,
+        });
+      }
+    }
+  });
+
+  // 페이지네이션 정보 추출
+  // 총 페이지 수 찾기 (페이지네이션 버튼에서 마지막 페이지 번호 추출)
+  let totalPages = 1;
+  const paginationLinks = $('a[href*="page="]');
+  const pageNumbers: number[] = [];
+
+  paginationLinks.each((_, link) => {
+    const href = $(link).attr("href");
+    if (href) {
+      const match = href.match(/page=(\d+)/);
+      if (match) {
+        const pageNum = parseInt(match[1], 10);
+        if (!isNaN(pageNum)) {
+          pageNumbers.push(pageNum);
+        }
+      }
+    }
+  });
+
+  if (pageNumbers.length > 0) {
+    totalPages = Math.max(...pageNumbers);
+  } else {
+    // 페이지네이션 링크가 없으면 결과가 있으면 1페이지, 없으면 0페이지
+    totalPages = problems.length > 0 ? 1 : 0;
+  }
+
+  return {
+    problems,
+    currentPage: page,
+    totalPages,
   };
 }
