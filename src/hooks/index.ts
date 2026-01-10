@@ -48,3 +48,6 @@ export type {
   InitStep,
   CompletedStep,
 } from "./use-init";
+
+export { useSolve } from "./use-solve";
+export type { UseSolveParams, UseSolveReturn } from "./use-solve";

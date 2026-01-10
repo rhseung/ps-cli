@@ -28,6 +28,7 @@ function InitView({ onComplete }: InitViewProps) {
     created,
     cancelled,
     setProblemDirValue,
+    setSolvingDirValue,
     setLanguage,
     setEditorValue,
     setAutoOpen,
@@ -92,6 +93,24 @@ function InitView({ onComplete }: InitViewProps) {
             options={options}
             onChange={(value) => {
               setProblemDirValue(value);
+              const displayValue = value === "." ? "프로젝트 루트" : value;
+              moveToNextStep(displayValue, getStepLabel(currentStep));
+            }}
+          />,
+        );
+      }
+
+      case "solving-dir": {
+        const options = [
+          { label: "solving", value: "solving" },
+          { label: ". (프로젝트 루트)", value: "." },
+        ];
+        return renderQuestionCard(
+          getStepLabel(currentStep),
+          <Select
+            options={options}
+            onChange={(value) => {
+              setSolvingDirValue(value);
               const displayValue = value === "." ? "프로젝트 루트" : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}

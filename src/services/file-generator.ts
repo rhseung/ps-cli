@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import type { Problem } from "../types/index";
 import type { Language } from "../utils/language";
 import { getLanguageConfig } from "../utils/language";
-import { getProblemDirPath } from "../utils/problem-id";
+import { getSolvingDirPath } from "../utils/problem-id";
 import { getTierName, getTierImageUrl } from "../utils/tier";
 
 function parseTimeLimitToMs(timeLimit?: string): number | undefined {
@@ -34,7 +34,7 @@ export async function generateProblemFiles(
   problem: Problem,
   language: Language = "python",
 ): Promise<string> {
-  const problemDir = getProblemDirPath(problem.id);
+  const problemDir = getSolvingDirPath(problem.id);
   await mkdir(problemDir, { recursive: true });
 
   const langConfig = getLanguageConfig(language);

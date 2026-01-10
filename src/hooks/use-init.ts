@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 
 import {
   getProblemDir,
+  getSolvingDir,
   getDefaultLanguage,
   getEditor,
   getAutoOpenEditor,
@@ -14,6 +15,7 @@ import {
 
 export type InitStep =
   | "problem-dir"
+  | "solving-dir"
   | "language"
   | "editor"
   | "auto-open"
@@ -37,6 +39,7 @@ export interface UseInitReturn {
   confirmExit: boolean;
   initialized: boolean;
   problemDir: string;
+  solvingDir: string;
   language: string;
   editor: string;
   autoOpen: boolean;
@@ -45,6 +48,7 @@ export interface UseInitReturn {
   created: string[];
   cancelled: boolean;
   setProblemDirValue: (value: string) => void;
+  setSolvingDirValue: (value: string) => void;
   setLanguage: (value: string) => void;
   setEditorValue: (value: string) => void;
   setAutoOpen: (value: boolean) => void;
@@ -66,6 +70,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   // 프로젝트별 config 파일에서 초기값 로드
   const [initialized, setInitialized] = useState(false);
   const [problemDir, setProblemDirValue] = useState<string>(getProblemDir());
+  const [solvingDir, setSolvingDirValue] = useState<string>(getSolvingDir());
   const [language, setLanguage] = useState<string>(getDefaultLanguage());
   const [editor, setEditorValue] = useState<string>(getEditor());
   const [autoOpen, setAutoOpen] = useState<boolean>(getAutoOpenEditor());
@@ -109,6 +114,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
         if (projectConfig.problemDir)
           setProblemDirValue(projectConfig.problemDir);
+        if (projectConfig.solvingDir)
+          setSolvingDirValue(projectConfig.solvingDir);
         if (projectConfig.defaultLanguage)
           setLanguage(projectConfig.defaultLanguage);
         if (projectConfig.editor) setEditorValue(projectConfig.editor);
@@ -128,7 +135,9 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   const getStepLabel = useCallback((step: InitStep): string => {
     switch (step) {
       case "problem-dir":
-        return "문제 디렉토리 설정";
+        return "문제 디렉토리 설정 (아카이브된 문제)";
+      case "solving-dir":
+        return "Solving 디렉토리 설정 (푸는 중인 문제)";
       case "language":
         return "기본 언어 설정";
       case "editor":
@@ -147,6 +156,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       switch (step) {
         case "problem-dir":
           return problemDir === "." ? "프로젝트 루트" : problemDir;
+        case "solving-dir":
+          return solvingDir === "." ? "프로젝트 루트" : solvingDir;
         case "language":
           return language;
         case "editor":
@@ -159,7 +170,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           return "";
       }
     },
-    [problemDir, language, editor, autoOpen, handle],
+    [problemDir, solvingDir, language, editor, autoOpen, handle],
   );
 
   const executeInit = useCallback(async () => {
@@ -170,6 +181,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       const projectConfigPath = join(cwd, ".ps-cli.json");
       const projectConfig = {
         problemDir,
+        solvingDir,
         defaultLanguage: language,
         editor,
         autoOpenEditor: autoOpen,
@@ -194,28 +206,56 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
             throw err;
           }
         }
+      }
 
-        // .gitignore 업데이트
-        const gitignorePath = join(cwd, ".gitignore");
-        const gitignorePattern = `${problemDir}/`;
+      // solvingDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
+      if (solvingDir !== "." && solvingDir !== "") {
+        const solvingDirPath = join(cwd, solvingDir);
+        try {
+          await mkdir(solvingDirPath, { recursive: true });
+          setCreated((prev) => [...prev, `${solvingDir}/`]);
+        } catch (err) {
+          const error = err as NodeJS.ErrnoException;
+          if (error.code !== "EEXIST") {
+            throw err;
+          }
+        }
+      }
+
+      // .gitignore 업데이트
+      const gitignorePath = join(cwd, ".gitignore");
+      const gitignorePatterns: string[] = [];
+      if (problemDir !== "." && problemDir !== "") {
+        gitignorePatterns.push(`${problemDir}/`);
+      }
+      if (solvingDir !== "." && solvingDir !== "") {
+        gitignorePatterns.push(`${solvingDir}/`);
+      }
+
+      if (gitignorePatterns.length > 0) {
         try {
           const gitignoreContent = await readFile(gitignorePath, "utf-8");
-          if (!gitignoreContent.includes(gitignorePattern)) {
-            const updatedContent =
-              gitignoreContent.trim() +
-              (gitignoreContent.trim() ? "\n" : "") +
-              `\n# ps-cli 문제 디렉토리\n${gitignorePattern}\n`;
-            await writeFile(gitignorePath, updatedContent, "utf-8");
+          let updatedContent = gitignoreContent.trim();
+          let hasChanges = false;
+
+          for (const pattern of gitignorePatterns) {
+            if (!gitignoreContent.includes(pattern)) {
+              updatedContent +=
+                (updatedContent ? "\n" : "") +
+                `# ps-cli 문제 디렉토리\n${pattern}`;
+              hasChanges = true;
+            }
+          }
+
+          if (hasChanges) {
+            await writeFile(gitignorePath, updatedContent + "\n", "utf-8");
             setCreated((prev) => [...prev, ".gitignore 업데이트"]);
           }
         } catch (err) {
           const error = err as NodeJS.ErrnoException;
           if (error.code === "ENOENT") {
-            await writeFile(
-              gitignorePath,
-              `# ps-cli 문제 디렉토리\n${gitignorePattern}\n`,
-              "utf-8",
-            );
+            const content = `# ps-cli 문제 디렉토리\n${gitignorePatterns.join("\n")}\n`;
+            await writeFile(gitignorePath, content, "utf-8");
             setCreated((prev) => [...prev, ".gitignore 생성"]);
           } else {
             console.warn(".gitignore 업데이트 실패:", error.message);
@@ -285,7 +325,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         onComplete();
       }, 2000);
     }
-  }, [problemDir, language, editor, autoOpen, handle, onComplete]);
+  }, [problemDir, solvingDir, language, editor, autoOpen, handle, onComplete]);
 
   const moveToNextStep = useCallback(
     (selectedValue: string, stepLabel: string) => {
@@ -297,6 +337,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
       const stepOrder: InitStep[] = [
         "problem-dir",
+        "solving-dir",
         "language",
         "editor",
         "auto-open",
@@ -323,6 +364,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     confirmExit,
     initialized,
     problemDir,
+    solvingDir,
     language,
     editor,
     autoOpen,
@@ -331,6 +373,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     created,
     cancelled,
     setProblemDirValue,
+    setSolvingDirValue,
     setLanguage,
     setEditorValue,
     setAutoOpen,
