@@ -1,8 +1,7 @@
 import { Alert } from "@inkjs/ui";
 import { Spinner } from "@inkjs/ui";
 import chalk from "chalk";
-import gradient from "gradient-string";
-import { Box, Text } from "ink";
+import { Box, Text, Transform } from "ink";
 import React from "react";
 
 import { Command } from "../core/base-command";
@@ -10,11 +9,39 @@ import { CommandDef, CommandBuilder } from "../core/command-builder";
 import { useUserStats } from "../hooks/use-user-stats";
 import type { CommandFlags } from "../types/command";
 import { getSolvedAcHandle } from "../utils/config";
-import { getTierColor, getTierName } from "../utils/tier";
+import {
+  calculateTierProgress,
+  getNextTierMinRating,
+  getTierColor,
+  getTierName,
+} from "../utils/tier";
 
 interface StatsViewProps {
   handle: string;
   onComplete: () => void;
+}
+
+interface ProgressBarWithColorProps {
+  value: number;
+  colorFn: (text: string) => string;
+}
+
+function ProgressBarWithColor({ value, colorFn }: ProgressBarWithColorProps) {
+  const width = process.stdout.columns || 40;
+  const barWidth = Math.max(10, Math.min(30, width - 20)); // 최소 10칸, 최대 30칸
+
+  const filled = Math.round((value / 100) * barWidth);
+  const empty = barWidth - filled;
+
+  const filledBar = "█".repeat(filled);
+  const emptyBar = "░".repeat(empty);
+  const barText = filledBar + emptyBar;
+
+  return (
+    <Transform transform={(output) => colorFn(output)}>
+      <Text>{barText}</Text>
+    </Transform>
+  );
 }
 
 function StatsView({ handle, onComplete }: StatsViewProps) {
@@ -41,14 +68,16 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
 
   if (user) {
     const tierName = getTierName(user.tier);
-    const tierDisplay =
-      user.tier === 31
-        ? gradient([
-            { r: 255, g: 124, b: 168 },
-            { r: 180, g: 145, b: 255 },
-            { r: 124, g: 249, b: 255 },
-          ])(tierName)
-        : chalk.hex(getTierColor(user.tier))(tierName);
+    const tierColor = getTierColor(user.tier);
+    const tierColorFn =
+      typeof tierColor === "string"
+        ? chalk.hex(tierColor)
+        : tierColor.multiline;
+
+    // 티어 승급 프로그레스 계산
+    const nextTierMin = getNextTierMinRating(user.tier);
+    const progress =
+      user.tier === 31 ? 100 : calculateTierProgress(user.rating, user.tier);
 
     return (
       <Box flexDirection="column">
@@ -59,6 +88,22 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
           </Text>
         </Box>
 
+        {/* 티어 정보 (박스 밖) */}
+        <Box marginBottom={1} flexDirection="row" gap={1}>
+          <Text>
+            {tierColorFn(tierName)}{" "}
+            <Text bold>{tierColorFn(user.rating.toLocaleString())}</Text>
+            {nextTierMin !== null && (
+              <Text bold>{" / " + nextTierMin.toLocaleString()}</Text>
+            )}
+          </Text>
+        </Box>
+
+        {/* 프로그레스 바 */}
+        <Box flexDirection="column" marginBottom={1}>
+          <ProgressBarWithColor value={progress} colorFn={tierColorFn} />
+        </Box>
+
         {/* 통계 정보 */}
         <Box
           flexDirection="column"
@@ -67,9 +112,6 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
           alignSelf="flex-start"
         >
           <Box paddingX={1} paddingY={0} flexDirection="column">
-            <Text>
-              {tierDisplay} <Text bold>{user.rating.toLocaleString()}</Text>
-            </Text>
             <Text>
               해결한 문제:{" "}
               <Text bold color="green">
