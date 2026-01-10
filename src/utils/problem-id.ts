@@ -1,4 +1,5 @@
 import { join, basename, dirname } from "path";
+import { existsSync } from "fs";
 import { getProblemDir } from "./config";
 
 /**
@@ -100,11 +101,41 @@ export function getProblemId(
 }
 
 /**
+ * 프로젝트 루트 디렉토리를 찾습니다 (.ps-cli.json 파일이 있는 디렉토리).
+ *
+ * @param startDir - 검색을 시작할 디렉토리 (기본값: process.cwd())
+ * @returns 프로젝트 루트 경로 또는 null (찾지 못한 경우)
+ */
+export function findProjectRoot(
+  startDir: string = process.cwd()
+): string | null {
+  let currentDir = startDir;
+  const rootPath =
+    process.platform === "win32" ? currentDir.split("\\")[0] + "\\" : "/";
+
+  while (currentDir !== rootPath) {
+    const projectConfigPath = join(currentDir, ".ps-cli.json");
+    if (existsSync(projectConfigPath)) {
+      return currentDir;
+    }
+    const parentDir = dirname(currentDir);
+    // 루트에 도달했거나 더 이상 올라갈 수 없으면 중단
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+  }
+
+  return null;
+}
+
+/**
  * 문제 번호에 해당하는 디렉토리 경로를 반환합니다.
  * config의 problemDir 설정에 따라 경로가 결정됩니다.
+ * 프로젝트 루트를 기준으로 생성하므로, 문제 디렉토리 안에서 실행해도 올바른 위치에 생성됩니다.
  *
  * @param problemId - 문제 번호
- * @param cwd - 현재 작업 디렉토리 (기본값: process.cwd())
+ * @param cwd - 현재 작업 디렉토리 (기본값: process.cwd(), 프로젝트 루트를 찾기 위해 사용)
  * @returns 문제 디렉토리 경로
  *
  * @example
@@ -117,11 +148,15 @@ export function getProblemDirPath(
 ): string {
   const problemDir = getProblemDir();
 
+  // 프로젝트 루트 찾기
+  const projectRoot = findProjectRoot(cwd);
+  const baseDir = projectRoot || cwd;
+
   // problemDir가 "." 또는 ""인 경우 프로젝트 루트에 직접 생성
   if (problemDir === "." || problemDir === "") {
-    return join(cwd, problemId.toString());
+    return join(baseDir, problemId.toString());
   }
 
   // 그 외의 경우 해당 디렉토리 아래에 생성
-  return join(cwd, problemDir, problemId.toString());
+  return join(baseDir, problemDir, problemId.toString());
 }
