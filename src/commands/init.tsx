@@ -9,6 +9,7 @@ import {
   Alert,
   ConfirmInput,
 } from "@inkjs/ui";
+import { execaCommand } from "execa";
 import type { CommandDefinition } from "../types/command";
 import {
   getProblemDir,
@@ -225,6 +226,55 @@ function InitCommand({ onComplete }: InitCommandProps) {
             console.warn(".gitignore 업데이트 실패:", error.message);
           }
         }
+      }
+
+      // Git 저장소 초기화 및 커밋
+      try {
+        const gitDir = join(cwd, ".git");
+        let isGitRepo = false;
+        try {
+          await access(gitDir);
+          isGitRepo = true;
+        } catch {
+          // .git 디렉토리가 없으면 새로 초기화
+        }
+
+        if (!isGitRepo) {
+          // Git 저장소 초기화
+          await execaCommand("git init", { cwd });
+          setCreated((prev) => [...prev, "Git 저장소 초기화"]);
+        }
+
+        // .ps-cli.json과 .gitignore를 스테이징
+        const filesToAdd: string[] = [".ps-cli.json"];
+        const gitignorePath = join(cwd, ".gitignore");
+        try {
+          await access(gitignorePath);
+          filesToAdd.push(".gitignore");
+        } catch {
+          // .gitignore가 없으면 스킵
+        }
+
+        if (filesToAdd.length > 0) {
+          await execaCommand(`git add ${filesToAdd.join(" ")}`, { cwd });
+
+          // 초기 커밋 생성 (이미 커밋이 있는지 확인)
+          try {
+            await execaCommand("git rev-parse --verify HEAD", { cwd });
+            // HEAD가 있으면 커밋 스킵 (이미 커밋이 있는 경우)
+          } catch {
+            // HEAD가 없으면 초기 커밋 생성
+            await execaCommand(
+              'git commit -m "chore: ps-cli 프로젝트 초기화"',
+              { cwd }
+            );
+            setCreated((prev) => [...prev, "초기 커밋 생성"]);
+          }
+        }
+      } catch (err) {
+        // Git 연동 실패해도 계속 진행 (경고만 표시)
+        const error = err as NodeJS.ErrnoException;
+        console.warn("Git 연동 실패:", error.message);
       }
 
       setTimeout(() => {
