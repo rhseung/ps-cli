@@ -357,19 +357,88 @@ export async function searchProblems(
   // DOM Path: tbody.c.-1d9xc1d > tr.c.-1ojb0xa
   const rows = $('tbody tr');
 
-  rows.each((_, row) => {
+  rows.each((index, row) => {
     const $row = $(row);
     const cells = $row.find('td');
 
+    // td가 2개 이상인지 확인 (헤더 행은 th를 사용할 수 있음)
     if (cells.length >= 2) {
       // 첫 번째 td: 문제 번호
-      const problemIdText = $(cells[0]).text().trim();
-      const problemId = parseInt(problemIdText, 10);
+      // 이미지나 다른 요소가 있을 수 있으므로 모든 텍스트를 가져온 후 숫자만 추출
+      const firstCell = $(cells[0]);
+      const firstCellText = firstCell.text().trim();
+
+      // 숫자만 추출 (이미지 alt 텍스트나 다른 텍스트가 섞여있을 수 있음)
+      // 첫 번째로 나타나는 숫자 시퀀스를 문제 번호로 사용
+      // 4자리 이상의 숫자를 우선적으로 찾음 (문제 번호는 보통 4자리 이상)
+      const problemIdMatches = firstCellText.match(/\d{4,}/g);
+      let problemId: number;
+
+      if (problemIdMatches && problemIdMatches.length > 0) {
+        // 가장 긴 숫자 시퀀스를 문제 번호로 사용
+        problemId = parseInt(problemIdMatches[0], 10);
+      } else {
+        // 4자리 이상이 없으면 첫 번째 숫자 시퀀스 사용
+        const problemIdMatch = firstCellText.match(/\d+/);
+        if (problemIdMatch) {
+          problemId = parseInt(problemIdMatch[0], 10);
+        } else {
+          // 숫자가 없으면 전체 텍스트를 숫자로 변환 시도
+          problemId = parseInt(firstCellText, 10);
+        }
+      }
+
+      // 문제 번호가 유효하지 않으면 스킵 (헤더 행일 수 있음)
+      if (isNaN(problemId) || problemId <= 0) {
+        return;
+      }
 
       // 두 번째 td: 제목
-      const title = $(cells[1]).text().trim();
+      // 링크가 있으면 링크의 텍스트만 사용, 없으면 전체 텍스트에서 불필요한 부분 제거
+      const titleCell = $(cells[1]);
 
-      if (!isNaN(problemId) && title) {
+      // 먼저 링크에서 제목 추출 시도
+      const linkElement = titleCell.find('a').first();
+      let title = linkElement.length > 0 ? linkElement.text().trim() : '';
+
+      // 링크가 없거나 빈 문자열이면 전체 텍스트 사용하되, 배지/스타일 정보 제거
+      if (!title) {
+        // 자식 요소(배지, 스타일 등)를 제거하고 순수 텍스트만 추출
+        const clonedCell = titleCell.clone();
+        // 배지나 스타일 관련 요소 제거 (span, div, 그리고 css-로 시작하는 클래스를 가진 요소)
+        clonedCell.find('span, div').remove();
+        clonedCell.find('[class*="css-"]').remove();
+        title = clonedCell.text().trim();
+
+        // "STANDARD", "CLASS", "NORMAL" 같은 배지 텍스트 제거
+        title = title.replace(
+          /\s+(STANDARD|CLASS|NORMAL|EASY|MEDIUM|HARD|EXPERT|MASTER|CLASSIC)\s*$/i,
+          '',
+        );
+        // CSS 클래스명 같은 것들 제거 (예: .css-xxx 같은 패턴)
+        title = title.replace(/\s*\.css-[a-z0-9-]+\s*/g, '');
+        // 추가로 남은 공백 정리
+        title = title.trim();
+      }
+
+      // 여전히 제목이 없으면 원본 텍스트에서 직접 추출 시도
+      if (!title || title.length === 0) {
+        title = titleCell.text().trim();
+        // "STANDARD", "CLASS", "NORMAL" 같은 배지 텍스트 제거
+        title = title.replace(
+          /\s+(STANDARD|CLASS|NORMAL|EASY|MEDIUM|HARD|EXPERT|MASTER|CLASSIC)\s*$/i,
+          '',
+        );
+        title = title.trim();
+      }
+
+      // 문제 번호가 유효하면 추가 (제목이 없어도 문제 번호만으로 추가 가능)
+      // 단, 문제 번호가 0보다 커야 함
+      if (!isNaN(problemId) && problemId > 0) {
+        // 제목이 없으면 문제 번호를 제목으로 사용
+        if (!title || title.length === 0) {
+          title = `문제 ${problemId}`;
+        }
         // 티어 레벨 추출
         // solved.ac에서는 첫 번째 셀의 img 태그 src에서 티어 레벨을 확인할 수 있음
         // 예: <img src="https://static.solved.ac/tier_small/13.svg" alt="Gold III" />
