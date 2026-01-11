@@ -129,9 +129,4 @@ export interface SearchResults {
   totalPages: number;
 }
 
-export type {
-  Workbook,
-  WorkbookProblem,
-  WorkbookProgress,
-  ProblemStatus,
-} from './workbook';
+export type { Workbook, WorkbookProblem } from './workbook';

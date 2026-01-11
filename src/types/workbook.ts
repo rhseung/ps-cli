@@ -11,18 +11,3 @@ export interface Workbook {
   problems: WorkbookProblem[];
   createdAt: Date;
 }
-
-export type ProblemStatus = 'unsolved' | 'solved' | 'failed';
-
-export interface WorkbookProgress {
-  workbookId: number;
-  problems: Record<
-    number,
-    {
-      status: ProblemStatus;
-      lastAttemptedAt?: Date;
-      attemptCount: number;
-    }
-  >;
-  updatedAt: Date;
-}

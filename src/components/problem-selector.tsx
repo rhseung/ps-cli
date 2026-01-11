@@ -3,7 +3,6 @@ import chalk from 'chalk';
 import { Box, Text } from 'ink';
 import React from 'react';
 
-import type { ProblemStatus } from '../types/workbook';
 import { getTierName, getTierColor } from '../utils/tier';
 
 export interface ProblemSelectorProblem {
@@ -14,7 +13,6 @@ export interface ProblemSelectorProblem {
   averageTries?: number;
   isSolved?: boolean; // 로컬에 파일이 있는지
   order?: number; // 문제집 내 순서 (workbook용)
-  status?: ProblemStatus; // workbook 진행 상황 (workbook용)
 }
 
 export interface ProblemSelectorProps {
@@ -52,22 +50,6 @@ export function ProblemSelector({
     // 해결된 문제 표시
     const solvedMark = problem.isSolved ? ' ✓' : '';
 
-    // workbook 상태 표시
-    let statusMark = '';
-    if (problem.status) {
-      switch (problem.status) {
-        case 'solved':
-          statusMark = ' ✅';
-          break;
-        case 'failed':
-          statusMark = ' ❌';
-          break;
-        case 'unsolved':
-          // 미해결은 표시하지 않음
-          break;
-      }
-    }
-
     // 티어 표시 (색상 적용)
     let tierText = '';
     if (problem.level) {
@@ -86,7 +68,7 @@ export function ProblemSelector({
     const problemText = `${problem.problemId} - ${problem.title}`;
 
     options.push({
-      label: `${tierText} ${problemText}${solvedMark}${statusMark}${suffix}`,
+      label: `${tierText} ${problemText}${solvedMark}${suffix}`,
       value: `problem:${problem.problemId}`,
     });
   });
