@@ -1,8 +1,8 @@
-import { mkdir, readFile, writeFile, access } from "fs/promises";
-import { join } from "path";
+import { mkdir, readFile, writeFile, access } from 'fs/promises';
+import { join } from 'path';
 
-import { execaCommand, execa } from "execa";
-import { useEffect, useState, useCallback } from "react";
+import { execaCommand, execa } from 'execa';
+import { useEffect, useState, useCallback } from 'react';
 
 import {
   getProblemDir,
@@ -11,18 +11,18 @@ import {
   getEditor,
   getAutoOpenEditor,
   getSolvedAcHandle,
-} from "../utils/config";
+} from '../utils/config';
 
 export type InitStep =
-  | "problem-dir"
-  | "solving-dir"
-  | "language"
-  | "editor"
-  | "auto-open"
-  | "handle"
-  | "done"
-  | "cancelled"
-  | "confirm-exit";
+  | 'problem-dir'
+  | 'solving-dir'
+  | 'language'
+  | 'editor'
+  | 'auto-open'
+  | 'handle'
+  | 'done'
+  | 'cancelled'
+  | 'confirm-exit';
 
 export interface CompletedStep {
   label: string;
@@ -63,7 +63,7 @@ export interface UseInitReturn {
 }
 
 export function useInit({ onComplete }: UseInitParams): UseInitReturn {
-  const [currentStep, setCurrentStep] = useState<InitStep>("problem-dir");
+  const [currentStep, setCurrentStep] = useState<InitStep>('problem-dir');
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
   const [confirmExit, setConfirmExit] = useState(false);
 
@@ -74,7 +74,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   const [language, setLanguage] = useState<string>(getDefaultLanguage());
   const [editor, setEditorValue] = useState<string>(getEditor());
   const [autoOpen, setAutoOpen] = useState<boolean>(getAutoOpenEditor());
-  const [handle, setHandle] = useState<string>(getSolvedAcHandle() || "");
+  const [handle, setHandle] = useState<string>(getSolvedAcHandle() || '');
   const [handleInputMode, setHandleInputMode] = useState<boolean>(false);
   const [created, setCreated] = useState<string[]>([]);
   const [cancelled, setCancelled] = useState(false);
@@ -85,7 +85,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       if (confirmExit) {
         // 이미 확인 모드인 경우 즉시 종료
         setCancelled(true);
-        setCurrentStep("cancelled");
+        setCurrentStep('cancelled');
         setTimeout(() => {
           onComplete();
         }, 500);
@@ -96,9 +96,9 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       setConfirmExit(true);
     };
 
-    process.on("SIGINT", handleSigInt);
+    process.on('SIGINT', handleSigInt);
     return () => {
-      process.off("SIGINT", handleSigInt);
+      process.off('SIGINT', handleSigInt);
     };
   }, [confirmExit, onComplete]);
 
@@ -107,9 +107,9 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     async function loadProjectConfig() {
       try {
         const cwd = process.cwd();
-        const projectConfigPath = join(cwd, ".ps-cli.json");
+        const projectConfigPath = join(cwd, '.ps-cli.json');
         await access(projectConfigPath);
-        const configContent = await readFile(projectConfigPath, "utf-8");
+        const configContent = await readFile(projectConfigPath, 'utf-8');
         const projectConfig = JSON.parse(configContent);
 
         if (projectConfig.problemDir)
@@ -134,40 +134,40 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
   const getStepLabel = useCallback((step: InitStep): string => {
     switch (step) {
-      case "problem-dir":
-        return "문제 디렉토리 설정 (아카이브된 문제)";
-      case "solving-dir":
-        return "Solving 디렉토리 설정 (푸는 중인 문제)";
-      case "language":
-        return "기본 언어 설정";
-      case "editor":
-        return "에디터 설정";
-      case "auto-open":
-        return "자동 에디터 열기";
-      case "handle":
-        return "Solved.ac 핸들 (선택)";
+      case 'problem-dir':
+        return '문제 디렉토리 설정 (아카이브된 문제)';
+      case 'solving-dir':
+        return 'Solving 디렉토리 설정 (푸는 중인 문제)';
+      case 'language':
+        return '기본 언어 설정';
+      case 'editor':
+        return '에디터 설정';
+      case 'auto-open':
+        return '자동 에디터 열기';
+      case 'handle':
+        return 'Solved.ac 핸들 (선택)';
       default:
-        return "";
+        return '';
     }
   }, []);
 
   const getStepValue = useCallback(
     (step: InitStep): string => {
       switch (step) {
-        case "problem-dir":
-          return problemDir === "." ? "프로젝트 루트" : problemDir;
-        case "solving-dir":
-          return solvingDir === "." ? "프로젝트 루트" : solvingDir;
-        case "language":
+        case 'problem-dir':
+          return problemDir === '.' ? '프로젝트 루트' : problemDir;
+        case 'solving-dir':
+          return solvingDir === '.' ? '프로젝트 루트' : solvingDir;
+        case 'language':
           return language;
-        case "editor":
+        case 'editor':
           return editor;
-        case "auto-open":
-          return autoOpen ? "예" : "아니오";
-        case "handle":
-          return handle || "(스킵)";
+        case 'auto-open':
+          return autoOpen ? '예' : '아니오';
+        case 'handle':
+          return handle || '(스킵)';
         default:
-          return "";
+          return '';
       }
     },
     [problemDir, solvingDir, language, editor, autoOpen, handle],
@@ -178,7 +178,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       const cwd = process.cwd();
 
       // 프로젝트별 메타데이터 파일 생성 (.ps-cli.json)
-      const projectConfigPath = join(cwd, ".ps-cli.json");
+      const projectConfigPath = join(cwd, '.ps-cli.json');
       const projectConfig = {
         problemDir,
         solvingDir,
@@ -190,82 +190,82 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       await writeFile(
         projectConfigPath,
         JSON.stringify(projectConfig, null, 2),
-        "utf-8",
+        'utf-8',
       );
-      setCreated((prev) => [...prev, ".ps-cli.json"]);
+      setCreated((prev) => [...prev, '.ps-cli.json']);
 
       // problemDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-      if (problemDir !== "." && problemDir !== "") {
+      if (problemDir !== '.' && problemDir !== '') {
         const problemDirPath = join(cwd, problemDir);
         try {
           await mkdir(problemDirPath, { recursive: true });
           setCreated((prev) => [...prev, `${problemDir}/`]);
         } catch (err) {
           const error = err as NodeJS.ErrnoException;
-          if (error.code !== "EEXIST") {
+          if (error.code !== 'EEXIST') {
             throw err;
           }
         }
       }
 
       // solvingDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-      if (solvingDir !== "." && solvingDir !== "") {
+      if (solvingDir !== '.' && solvingDir !== '') {
         const solvingDirPath = join(cwd, solvingDir);
         try {
           await mkdir(solvingDirPath, { recursive: true });
           setCreated((prev) => [...prev, `${solvingDir}/`]);
         } catch (err) {
           const error = err as NodeJS.ErrnoException;
-          if (error.code !== "EEXIST") {
+          if (error.code !== 'EEXIST') {
             throw err;
           }
         }
       }
 
       // .gitignore 업데이트
-      const gitignorePath = join(cwd, ".gitignore");
+      const gitignorePath = join(cwd, '.gitignore');
       const gitignorePatterns: string[] = [];
-      if (problemDir !== "." && problemDir !== "") {
+      if (problemDir !== '.' && problemDir !== '') {
         gitignorePatterns.push(`${problemDir}/`);
       }
-      if (solvingDir !== "." && solvingDir !== "") {
+      if (solvingDir !== '.' && solvingDir !== '') {
         gitignorePatterns.push(`${solvingDir}/`);
       }
 
       if (gitignorePatterns.length > 0) {
         try {
-          const gitignoreContent = await readFile(gitignorePath, "utf-8");
+          const gitignoreContent = await readFile(gitignorePath, 'utf-8');
           let updatedContent = gitignoreContent.trim();
           let hasChanges = false;
 
           for (const pattern of gitignorePatterns) {
             if (!gitignoreContent.includes(pattern)) {
               updatedContent +=
-                (updatedContent ? "\n" : "") +
+                (updatedContent ? '\n' : '') +
                 `# ps-cli 문제 디렉토리\n${pattern}`;
               hasChanges = true;
             }
           }
 
           if (hasChanges) {
-            await writeFile(gitignorePath, updatedContent + "\n", "utf-8");
-            setCreated((prev) => [...prev, ".gitignore 업데이트"]);
+            await writeFile(gitignorePath, updatedContent + '\n', 'utf-8');
+            setCreated((prev) => [...prev, '.gitignore 업데이트']);
           }
         } catch (err) {
           const error = err as NodeJS.ErrnoException;
-          if (error.code === "ENOENT") {
-            const content = `# ps-cli 문제 디렉토리\n${gitignorePatterns.join("\n")}\n`;
-            await writeFile(gitignorePath, content, "utf-8");
-            setCreated((prev) => [...prev, ".gitignore 생성"]);
+          if (error.code === 'ENOENT') {
+            const content = `# ps-cli 문제 디렉토리\n${gitignorePatterns.join('\n')}\n`;
+            await writeFile(gitignorePath, content, 'utf-8');
+            setCreated((prev) => [...prev, '.gitignore 생성']);
           } else {
-            console.warn(".gitignore 업데이트 실패:", error.message);
+            console.warn('.gitignore 업데이트 실패:', error.message);
           }
         }
       }
 
       // Git 저장소 초기화 및 커밋
       try {
-        const gitDir = join(cwd, ".git");
+        const gitDir = join(cwd, '.git');
         let isGitRepo = false;
         try {
           await access(gitDir);
@@ -276,41 +276,41 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
         if (!isGitRepo) {
           // Git 저장소 초기화
-          await execaCommand("git init", { cwd });
-          setCreated((prev) => [...prev, "Git 저장소 초기화"]);
+          await execaCommand('git init', { cwd });
+          setCreated((prev) => [...prev, 'Git 저장소 초기화']);
         }
 
         // .ps-cli.json과 .gitignore를 스테이징
-        const filesToAdd: string[] = [".ps-cli.json"];
-        const gitignorePath = join(cwd, ".gitignore");
+        const filesToAdd: string[] = ['.ps-cli.json'];
+        const gitignorePath = join(cwd, '.gitignore');
         try {
           await access(gitignorePath);
-          filesToAdd.push(".gitignore");
+          filesToAdd.push('.gitignore');
         } catch {
           // .gitignore가 없으면 스킵
         }
 
         if (filesToAdd.length > 0) {
-          await execa("git", ["add", ...filesToAdd], { cwd });
+          await execa('git', ['add', ...filesToAdd], { cwd });
 
           // 초기 커밋 생성 (이미 커밋이 있는지 확인)
           try {
-            await execa("git", ["rev-parse", "--verify", "HEAD"], { cwd });
+            await execa('git', ['rev-parse', '--verify', 'HEAD'], { cwd });
             // HEAD가 있으면 커밋 스킵 (이미 커밋이 있는 경우)
           } catch {
             // HEAD가 없으면 초기 커밋 생성
             await execa(
-              "git",
-              ["commit", "-m", "chore: ps-cli 프로젝트 초기화"],
+              'git',
+              ['commit', '-m', 'chore: ps-cli 프로젝트 초기화'],
               { cwd },
             );
-            setCreated((prev) => [...prev, "초기 커밋 생성"]);
+            setCreated((prev) => [...prev, '초기 커밋 생성']);
           }
         }
       } catch (err) {
         // Git 연동 실패해도 계속 진행 (경고만 표시)
         const error = err as NodeJS.ErrnoException;
-        console.warn("Git 연동 실패:", error.message);
+        console.warn('Git 연동 실패:', error.message);
       }
 
       setTimeout(() => {
@@ -318,9 +318,9 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       }, 3000);
     } catch (err) {
       const error = err as Error;
-      console.error("초기화 중 오류 발생:", error.message);
+      console.error('초기화 중 오류 발생:', error.message);
       setCancelled(true);
-      setCurrentStep("cancelled");
+      setCurrentStep('cancelled');
       setTimeout(() => {
         onComplete();
       }, 2000);
@@ -336,13 +336,13 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       ]);
 
       const stepOrder: InitStep[] = [
-        "problem-dir",
-        "solving-dir",
-        "language",
-        "editor",
-        "auto-open",
-        "handle",
-        "done",
+        'problem-dir',
+        'solving-dir',
+        'language',
+        'editor',
+        'auto-open',
+        'handle',
+        'done',
       ];
       const currentIndex = stepOrder.indexOf(currentStep);
       if (currentIndex < stepOrder.length - 1) {
@@ -350,7 +350,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         setCurrentStep(nextStep);
 
         // 다음 step이 "done"이면 초기화 실행
-        if (nextStep === "done") {
+        if (nextStep === 'done') {
           void executeInit();
         }
       }

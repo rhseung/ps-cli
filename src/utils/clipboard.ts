@@ -1,4 +1,4 @@
-import { execa, execaCommand } from "execa";
+import { execa, execaCommand } from 'execa';
 
 /**
  * 플랫폼별로 소스 코드를 클립보드에 복사합니다.
@@ -7,15 +7,15 @@ import { execa, execaCommand } from "execa";
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {
-    if (process.platform === "win32") {
+    if (process.platform === 'win32') {
       // Windows: clip 명령어 사용
-      await execaCommand("clip", {
+      await execaCommand('clip', {
         shell: true,
         input: text,
       });
-    } else if (process.platform === "darwin") {
+    } else if (process.platform === 'darwin') {
       // macOS: pbcopy 사용
-      await execaCommand("pbcopy", {
+      await execaCommand('pbcopy', {
         shell: false,
         input: text,
       });
@@ -23,12 +23,12 @@ export async function copyToClipboard(text: string): Promise<boolean> {
       // Linux: xclip 또는 xsel 사용
       // 먼저 xclip을 시도하고, 없으면 xsel 시도
       try {
-        await execa("xclip", ["-selection", "clipboard"], {
+        await execa('xclip', ['-selection', 'clipboard'], {
           input: text,
         });
       } catch {
         try {
-          await execa("xsel", ["--clipboard", "--input"], {
+          await execa('xsel', ['--clipboard', '--input'], {
             input: text,
           });
         } catch {

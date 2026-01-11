@@ -1,19 +1,19 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from 'react';
 
-import { getProblem } from "../services/solved-api";
-import { scrapeWorkbook } from "../services/workbook-scraper";
+import { getProblem } from '../services/solved-api';
+import { scrapeWorkbook } from '../services/workbook-scraper';
 import {
   getWorkbookProgress,
   updateProblemStatus,
-} from "../services/workbook-storage";
-import type { ProblemStatus } from "../types/workbook";
+} from '../services/workbook-storage';
+import type { ProblemStatus } from '../types/workbook';
 import type {
   Workbook,
   WorkbookProblem,
   WorkbookProgress,
-} from "../types/workbook";
+} from '../types/workbook';
 
-export type WorkbookMode = "sequential" | "failed" | "unsolved";
+export type WorkbookMode = 'sequential' | 'failed' | 'unsolved';
 
 export interface UseWorkbookParams {
   workbookId: number | null;
@@ -22,7 +22,7 @@ export interface UseWorkbookParams {
 }
 
 export interface UseWorkbookReturn {
-  status: "loading" | "ready" | "error";
+  status: 'loading' | 'ready' | 'error';
   workbook: Workbook | null;
   progress: WorkbookProgress | null;
   enrichedProblems: Array<WorkbookProblem & { status?: ProblemStatus }>;
@@ -82,10 +82,10 @@ async function enrichProblemsWithTiers(
 
 export function useWorkbook({
   workbookId,
-  mode = "sequential",
+  mode = 'sequential',
 }: UseWorkbookParams): UseWorkbookReturn {
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading",
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
+    'loading',
   );
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
   const [progress, setProgress] = useState<WorkbookProgress | null>(null);
@@ -93,58 +93,60 @@ export function useWorkbook({
     Array<WorkbookProblem & { status?: ProblemStatus }>
   >([]);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState("문제집을 로드하는 중...");
-
-  const loadWorkbook = useCallback(async (id: number) => {
-    try {
-      setStatus("loading");
-      setError(null);
-      setMessage("문제집 정보를 가져오는 중...");
-
-      // 문제집 스크래핑
-      const scrapedWorkbook = await scrapeWorkbook(id);
-      setWorkbook(scrapedWorkbook);
-
-      // 진행 상황 로드
-      setMessage("진행 상황을 로드하는 중...");
-      const workbookProgress = await getWorkbookProgress(id);
-      setProgress(workbookProgress);
-
-      // 티어 정보 추가
-      setMessage("티어 정보를 가져오는 중...");
-      const enriched = await enrichProblemsWithTiers(scrapedWorkbook.problems);
-
-      // 진행 상황과 병합
-      const problemsWithStatus = enriched.map((problem) => {
-        const problemProgress = workbookProgress.problems[problem.problemId];
-        return {
-          ...problem,
-          status: problemProgress?.status,
-        };
-      });
-
-      setEnrichedProblems(problemsWithStatus);
-      setStatus("ready");
-      setMessage("준비 완료");
-    } catch (err) {
-      setStatus("error");
-      setError(err instanceof Error ? err.message : String(err));
-      setMessage("로드 실패");
-    }
-  }, []);
+  const [message, setMessage] = useState('문제집을 로드하는 중...');
 
   useEffect(() => {
     if (workbookId !== null) {
-      void loadWorkbook(workbookId);
+      // useEffect 내부에서 비동기 함수를 정의하고 즉시 호출
+      void (async () => {
+        try {
+          setStatus('loading');
+          setError(null);
+          setMessage('문제집 정보를 가져오는 중...');
+
+          // 문제집 스크래핑
+          const scrapedWorkbook = await scrapeWorkbook(workbookId);
+          setWorkbook(scrapedWorkbook);
+
+          // 진행 상황 로드
+          setMessage('진행 상황을 로드하는 중...');
+          const workbookProgress = await getWorkbookProgress(workbookId);
+          setProgress(workbookProgress);
+
+          // 티어 정보 추가
+          setMessage('티어 정보를 가져오는 중...');
+          const enriched = await enrichProblemsWithTiers(
+            scrapedWorkbook.problems,
+          );
+
+          // 진행 상황과 병합
+          const problemsWithStatus = enriched.map((problem) => {
+            const problemProgress =
+              workbookProgress.problems[problem.problemId];
+            return {
+              ...problem,
+              status: problemProgress?.status,
+            };
+          });
+
+          setEnrichedProblems(problemsWithStatus);
+          setStatus('ready');
+          setMessage('준비 완료');
+        } catch (err) {
+          setStatus('error');
+          setError(err instanceof Error ? err.message : String(err));
+          setMessage('로드 실패');
+        }
+      })();
     } else {
       // 비동기로 상태 업데이트하여 경고 방지
       const timer = setTimeout(() => {
-        setStatus("ready");
-        setMessage("문제집 ID를 입력해주세요.");
+        setStatus('ready');
+        setMessage('문제집 ID를 입력해주세요.');
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [workbookId, loadWorkbook]);
+  }, [workbookId]);
 
   // 다음 문제 선택
   const getNextProblem = (): WorkbookProblem | null => {
@@ -155,18 +157,18 @@ export function useWorkbook({
     let candidates: Array<WorkbookProblem & { status?: ProblemStatus }> = [];
 
     switch (mode) {
-      case "sequential": {
+      case 'sequential': {
         // 순서대로, 아직 풀지 않은 문제
         candidates = enrichedProblems.filter(
-          (p) => !p.status || p.status === "unsolved",
+          (p) => !p.status || p.status === 'unsolved',
         );
         // 순서대로 정렬
         candidates.sort((a, b) => a.order - b.order);
         break;
       }
-      case "failed": {
+      case 'failed': {
         // 틀린 문제만
-        candidates = enrichedProblems.filter((p) => p.status === "failed");
+        candidates = enrichedProblems.filter((p) => p.status === 'failed');
         // 최근 시도한 순서대로 정렬
         candidates.sort((a, b) => {
           const aProgress = progress?.problems[a.problemId];
@@ -183,10 +185,10 @@ export function useWorkbook({
         });
         break;
       }
-      case "unsolved": {
+      case 'unsolved': {
         // 미해결 문제만
         candidates = enrichedProblems.filter(
-          (p) => !p.status || p.status === "unsolved",
+          (p) => !p.status || p.status === 'unsolved',
         );
         // 순서대로 정렬
         candidates.sort((a, b) => a.order - b.order);
@@ -209,7 +211,7 @@ export function useWorkbook({
     newStatus: ProblemStatus,
   ): Promise<void> => {
     if (!workbook) {
-      throw new Error("문제집이 로드되지 않았습니다.");
+      throw new Error('문제집이 로드되지 않았습니다.');
     }
 
     await updateProblemStatus(workbook.id, problemId, newStatus);
@@ -229,7 +231,43 @@ export function useWorkbook({
   // 새로고침
   const refresh = async (): Promise<void> => {
     if (workbookId !== null) {
-      await loadWorkbook(workbookId);
+      try {
+        setStatus('loading');
+        setError(null);
+        setMessage('문제집 정보를 가져오는 중...');
+
+        // 문제집 스크래핑
+        const scrapedWorkbook = await scrapeWorkbook(workbookId);
+        setWorkbook(scrapedWorkbook);
+
+        // 진행 상황 로드
+        setMessage('진행 상황을 로드하는 중...');
+        const workbookProgress = await getWorkbookProgress(workbookId);
+        setProgress(workbookProgress);
+
+        // 티어 정보 추가
+        setMessage('티어 정보를 가져오는 중...');
+        const enriched = await enrichProblemsWithTiers(
+          scrapedWorkbook.problems,
+        );
+
+        // 진행 상황과 병합
+        const problemsWithStatus = enriched.map((problem) => {
+          const problemProgress = workbookProgress.problems[problem.problemId];
+          return {
+            ...problem,
+            status: problemProgress?.status,
+          };
+        });
+
+        setEnrichedProblems(problemsWithStatus);
+        setStatus('ready');
+        setMessage('준비 완료');
+      } catch (err) {
+        setStatus('error');
+        setError(err instanceof Error ? err.message : String(err));
+        setMessage('로드 실패');
+      }
     }
   };
 

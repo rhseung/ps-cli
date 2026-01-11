@@ -1,10 +1,10 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
-import { execa, execaCommand } from "execa";
+import { execa, execaCommand } from 'execa';
 
-import type { Language } from "../utils/language";
-import { getLanguageConfig } from "../utils/language";
+import type { Language } from '../utils/language';
+import { getLanguageConfig } from '../utils/language';
 
 export interface RunSolutionParams {
   problemDir: string;
@@ -31,7 +31,7 @@ export async function runSolution({
   const solutionFile = `solution.${langConfig.extension}`;
   const solutionPath = join(problemDir, solutionFile);
 
-  const input = await readFile(inputPath, "utf-8");
+  const input = await readFile(inputPath, 'utf-8');
   const start = Date.now();
 
   try {
@@ -62,7 +62,7 @@ export async function runSolution({
     };
   } catch (error) {
     const durationMs = Date.now() - start;
-    if (error instanceof Error && "timedOut" in error) {
+    if (error instanceof Error && 'timedOut' in error) {
       const err = error as Error & {
         timedOut?: boolean;
         stdout?: string;
@@ -71,7 +71,7 @@ export async function runSolution({
         exitCode?: number | null;
       };
       return {
-        stdout: err.stdout ?? "",
+        stdout: err.stdout ?? '',
         stderr: err.stderr ?? err.shortMessage ?? err.message,
         exitCode: err.exitCode ?? null,
         timedOut: Boolean(err.timedOut),
@@ -80,7 +80,7 @@ export async function runSolution({
     }
 
     return {
-      stdout: "",
+      stdout: '',
       stderr: error instanceof Error ? error.message : String(error),
       exitCode: null,
       timedOut: false,

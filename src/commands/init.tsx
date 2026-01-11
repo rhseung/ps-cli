@@ -4,15 +4,15 @@ import {
   StatusMessage,
   Alert,
   ConfirmInput,
-} from "@inkjs/ui";
-import { Text, Box } from "ink";
-import React from "react";
+} from '@inkjs/ui';
+import { Text, Box } from 'ink';
+import React from 'react';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useInit } from "../hooks/use-init";
-import type { CommandFlags } from "../types/command";
-import { getSupportedLanguages } from "../utils/language";
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useInit } from '../hooks/use-init';
+import type { CommandFlags } from '../types/command';
+import { getSupportedLanguages } from '../utils/language';
 
 interface InitViewProps {
   onComplete: () => void;
@@ -54,7 +54,7 @@ function InitView({ onComplete }: InitViewProps) {
   }
 
   function renderStepContent() {
-    if (cancelled || currentStep === "cancelled") {
+    if (cancelled || currentStep === 'cancelled') {
       return <Alert variant="error">초기화가 취소되었습니다.</Alert>;
     }
 
@@ -66,7 +66,7 @@ function InitView({ onComplete }: InitViewProps) {
             <ConfirmInput
               onConfirm={() => {
                 setCancelled(true);
-                setCurrentStep("cancelled");
+                setCurrentStep('cancelled');
                 setConfirmExit(false);
                 setTimeout(() => {
                   onComplete();
@@ -82,10 +82,10 @@ function InitView({ onComplete }: InitViewProps) {
     }
 
     switch (currentStep) {
-      case "problem-dir": {
+      case 'problem-dir': {
         const options = [
-          { label: "problems", value: "problems" },
-          { label: ". (프로젝트 루트)", value: "." },
+          { label: 'problems', value: 'problems' },
+          { label: '. (프로젝트 루트)', value: '.' },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
@@ -93,17 +93,17 @@ function InitView({ onComplete }: InitViewProps) {
             options={options}
             onChange={(value) => {
               setProblemDirValue(value);
-              const displayValue = value === "." ? "프로젝트 루트" : value;
+              const displayValue = value === '.' ? '프로젝트 루트' : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
           />,
         );
       }
 
-      case "solving-dir": {
+      case 'solving-dir': {
         const options = [
-          { label: "solving", value: "solving" },
-          { label: ". (프로젝트 루트)", value: "." },
+          { label: 'solving', value: 'solving' },
+          { label: '. (프로젝트 루트)', value: '.' },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
@@ -111,14 +111,14 @@ function InitView({ onComplete }: InitViewProps) {
             options={options}
             onChange={(value) => {
               setSolvingDirValue(value);
-              const displayValue = value === "." ? "프로젝트 루트" : value;
+              const displayValue = value === '.' ? '프로젝트 루트' : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
           />,
         );
       }
 
-      case "language": {
+      case 'language': {
         const supportedLanguages = getSupportedLanguages();
         const options = supportedLanguages.map((lang) => ({
           label: lang,
@@ -136,12 +136,12 @@ function InitView({ onComplete }: InitViewProps) {
         );
       }
 
-      case "editor": {
+      case 'editor': {
         const options = [
-          { label: "code", value: "code" },
-          { label: "cursor", value: "cursor" },
-          { label: "vim", value: "vim" },
-          { label: "nano", value: "nano" },
+          { label: 'code', value: 'code' },
+          { label: 'cursor', value: 'cursor' },
+          { label: 'vim', value: 'vim' },
+          { label: 'nano', value: 'nano' },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
@@ -155,19 +155,19 @@ function InitView({ onComplete }: InitViewProps) {
         );
       }
 
-      case "auto-open": {
+      case 'auto-open': {
         const options = [
-          { label: "예", value: "true" },
-          { label: "아니오", value: "false" },
+          { label: '예', value: 'true' },
+          { label: '아니오', value: 'false' },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
           <Select
             options={options}
             onChange={(value) => {
-              setAutoOpen(value === "true");
+              setAutoOpen(value === 'true');
               moveToNextStep(
-                value === "true" ? "예" : "아니오",
+                value === 'true' ? '예' : '아니오',
                 getStepLabel(currentStep),
               );
             }}
@@ -175,7 +175,7 @@ function InitView({ onComplete }: InitViewProps) {
         );
       }
 
-      case "handle": {
+      case 'handle': {
         if (handleInputMode) {
           return renderQuestionCard(
             getStepLabel(currentStep),
@@ -185,24 +185,24 @@ function InitView({ onComplete }: InitViewProps) {
                 onSubmit={(value) => {
                   setHandle(value);
                   setHandleInputMode(false);
-                  moveToNextStep(value || "(스킵)", getStepLabel(currentStep));
+                  moveToNextStep(value || '(스킵)', getStepLabel(currentStep));
                 }}
               />
             </Box>,
           );
         }
         const options = [
-          { label: "설정", value: "set" },
-          { label: "스킵", value: "skip" },
+          { label: '설정', value: 'set' },
+          { label: '스킵', value: 'skip' },
         ];
         return renderQuestionCard(
           getStepLabel(currentStep),
           <Select
             options={options}
             onChange={(value) => {
-              if (value === "skip") {
-                setHandle("");
-                moveToNextStep("(스킵)", getStepLabel(currentStep));
+              if (value === 'skip') {
+                setHandle('');
+                moveToNextStep('(스킵)', getStepLabel(currentStep));
               } else {
                 setHandleInputMode(true);
               }
@@ -211,11 +211,11 @@ function InitView({ onComplete }: InitViewProps) {
         );
       }
 
-      case "done": {
+      case 'done': {
         const createdItemsText =
           created.length > 0
-            ? `\n생성된 항목:\n${created.map((item) => `• ${item}`).join("\n")}`
-            : "";
+            ? `\n생성된 항목:\n${created.map((item) => `• ${item}`).join('\n')}`
+            : '';
         return (
           <Box flexDirection="column">
             <Box marginTop={1}>
@@ -225,10 +225,10 @@ function InitView({ onComplete }: InitViewProps) {
             </Box>
             <Box marginTop={1}>
               <Text color="gray">
-                이제{" "}
+                이제{' '}
                 <Text bold color="cyan">
                   ps help
-                </Text>{" "}
+                </Text>{' '}
                 명령어를 통해 더 자세한 정보를 확인할 수 있습니다.
               </Text>
             </Box>
@@ -276,12 +276,12 @@ function InitView({ onComplete }: InitViewProps) {
 }
 
 @CommandDef({
-  name: "init",
+  name: 'init',
   description: `현재 디렉토리를 ps-cli 프로젝트로 대화형으로 초기화합니다.
 - 단계별로 설정을 물어봅니다
 - 문제 디렉토리, 기본 언어, 에디터 등을 설정할 수 있습니다`,
   autoDetectProblemId: false,
-  examples: ["init"],
+  examples: ['init'],
 })
 export class InitCommand extends Command {
   async execute(_args: string[], _flags: CommandFlags): Promise<void> {

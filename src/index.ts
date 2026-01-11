@@ -1,12 +1,12 @@
-import { existsSync } from "fs";
-import { readdir } from "fs/promises";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { existsSync } from 'fs';
+import { readdir } from 'fs/promises';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-import meow from "meow";
+import meow from 'meow';
 
-import type { CommandDefinition } from "./types/command";
-import { getSupportedLanguagesString } from "./utils/language";
+import type { CommandDefinition } from './types/command';
+import { getSupportedLanguagesString } from './utils/language';
 
 // commands 디렉토리 경로 찾기 (개발/빌드 환경 모두 지원)
 function getCommandsDir(): string {
@@ -14,11 +14,11 @@ function getCommandsDir(): string {
   const __dirname = dirname(__filename);
 
   // dist에서 실행되는 경우
-  if (__dirname.includes("dist")) {
-    return join(__dirname, "commands");
+  if (__dirname.includes('dist')) {
+    return join(__dirname, 'commands');
   }
   // src에서 실행되는 경우 (개발 모드)
-  return join(__dirname, "commands");
+  return join(__dirname, 'commands');
 }
 
 // commands 디렉토리에서 모든 명령어 동적으로 로드
@@ -32,20 +32,20 @@ async function loadCommands(): Promise<Map<string, CommandDefinition>> {
     for (const file of files) {
       // .tsx, .ts, .js 파일만 처리 (index 파일 제외)
       if (
-        (!file.endsWith(".ts") &&
-          !file.endsWith(".tsx") &&
-          !file.endsWith(".js")) ||
-        file === "index.ts" ||
-        file === "index.tsx" ||
-        file === "index.js"
+        (!file.endsWith('.ts') &&
+          !file.endsWith('.tsx') &&
+          !file.endsWith('.js')) ||
+        file === 'index.ts' ||
+        file === 'index.tsx' ||
+        file === 'index.js'
       ) {
         continue;
       }
 
-      const commandName = file.replace(/\.(ts|tsx|js)$/, "");
+      const commandName = file.replace(/\.(ts|tsx|js)$/, '');
       try {
         // 동적 import (import.meta.url 기준 상대 경로)
-        const isDist = commandsDir.includes("dist");
+        const isDist = commandsDir.includes('dist');
         const baseUrl = new URL(import.meta.url);
         const commandsUrl = new URL(
           isDist ? `./commands/${commandName}.js` : `./commands/${commandName}`,
@@ -91,7 +91,7 @@ let commands: Map<string, CommandDefinition> | null = null;
 function generateHelpText(commands: Map<string, CommandDefinition>): string {
   const commandList = Array.from(commands.values())
     .map((cmd) => `    ${cmd.name}`)
-    .join("\n");
+    .join('\n');
 
   return `
   사용법:
@@ -132,18 +132,18 @@ const cli = meow(
     importMeta: import.meta,
     flags: {
       language: {
-        type: "string",
-        shortFlag: "l",
-        default: "python",
+        type: 'string',
+        shortFlag: 'l',
+        default: 'python',
       },
       watch: {
-        type: "boolean",
-        shortFlag: "w",
+        type: 'boolean',
+        shortFlag: 'w',
         default: false,
       },
       help: {
-        type: "boolean",
-        shortFlag: "h",
+        type: 'boolean',
+        shortFlag: 'h',
         default: false,
       },
     },
@@ -159,7 +159,7 @@ async function main() {
   const [command, ...args] = cli.input;
 
   // help 명령어 처리 또는 명령어 없이 --help 플래그
-  if (command === "help" || (!command && cli.flags.help)) {
+  if (command === 'help' || (!command && cli.flags.help)) {
     const helpText = generateHelpText(commands);
     console.log(helpText.trim());
     process.exit(0);
@@ -179,23 +179,23 @@ async function main() {
   if (!commandDef) {
     console.error(`오류: 알 수 없는 명령어: ${command}`);
     console.error(
-      `사용 가능한 명령어: ${Array.from(commands.keys()).join(", ")}, help`,
+      `사용 가능한 명령어: ${Array.from(commands.keys()).join(', ')}, help`,
     );
     process.exit(1);
     return;
   }
 
   // init 명령어는 예외 (프로젝트 초기화 명령어)
-  if (command !== "init") {
+  if (command !== 'init') {
     // 프로젝트 폴더 확인 (.ps-cli.json 파일 존재 여부)
     // 현재 디렉토리부터 상위 디렉토리로 올라가면서 찾기
     let currentDir = process.cwd();
     let found = false;
     const rootPath =
-      process.platform === "win32" ? currentDir.split("\\")[0] + "\\" : "/";
+      process.platform === 'win32' ? currentDir.split('\\')[0] + '\\' : '/';
 
     while (currentDir !== rootPath && !found) {
-      const projectConfigPath = join(currentDir, ".ps-cli.json");
+      const projectConfigPath = join(currentDir, '.ps-cli.json');
       if (existsSync(projectConfigPath)) {
         found = true;
         break;
@@ -209,9 +209,9 @@ async function main() {
     }
 
     if (!found) {
-      console.error("오류: 현재 디렉토리가 ps-cli 프로젝트가 아닙니다.");
-      console.error("프로젝트를 초기화하려면 다음 명령어를 실행하세요:");
-      console.error("  $ ps init");
+      console.error('오류: 현재 디렉토리가 ps-cli 프로젝트가 아닙니다.');
+      console.error('프로젝트를 초기화하려면 다음 명령어를 실행하세요:');
+      console.error('  $ ps init');
       process.exit(1);
       return;
     }
@@ -221,6 +221,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("오류:", error.message);
+  console.error('오류:', error.message);
   process.exit(1);
 });

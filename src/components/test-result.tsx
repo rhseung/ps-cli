@@ -1,15 +1,15 @@
-import { Badge, StatusMessage } from "@inkjs/ui";
-import { Box, Text } from "ink";
-import React from "react";
+import { Badge, StatusMessage } from '@inkjs/ui';
+import { Box, Text } from 'ink';
+import React from 'react';
 
-import type { TestResult, TestSummary } from "../types";
+import type { TestResult, TestSummary } from '../types';
 
 interface TestResultProps {
   summary: TestSummary;
   results: TestResult[];
 }
 
-function truncate(text = "", max = 200) {
+function truncate(text = '', max = 200) {
   return text.length > max ? `${text.slice(0, max)}...` : text;
 }
 
@@ -20,17 +20,17 @@ function formatDuration(ms: number): string {
 
 function ResultRow({ result }: { result: TestResult }) {
   const badgeColor =
-    result.status === "pass"
-      ? "green"
-      : result.status === "fail"
-        ? "red"
-        : "yellow";
+    result.status === 'pass'
+      ? 'green'
+      : result.status === 'fail'
+        ? 'red'
+        : 'yellow';
   const statusText =
-    result.status === "pass"
-      ? "PASS"
-      : result.status === "fail"
-        ? "FAIL"
-        : "ERROR";
+    result.status === 'pass'
+      ? 'PASS'
+      : result.status === 'fail'
+        ? 'FAIL'
+        : 'ERROR';
 
   return (
     <Box flexDirection="column" marginBottom={1}>
@@ -45,21 +45,21 @@ function ResultRow({ result }: { result: TestResult }) {
           </>
         )}
       </Box>
-      {result.status === "fail" && (
+      {result.status === 'fail' && (
         <Box flexDirection="column" marginLeft={3} marginTop={1}>
           <Box flexDirection="column" marginBottom={1}>
             <Text color="gray">기대값:</Text>
-            <Text>{truncate(result.expected ?? "")}</Text>
+            <Text>{truncate(result.expected ?? '')}</Text>
           </Box>
           <Box flexDirection="column">
             <Text color="gray">실제값:</Text>
-            <Text>{truncate(result.actual ?? "")}</Text>
+            <Text>{truncate(result.actual ?? '')}</Text>
           </Box>
         </Box>
       )}
-      {result.status === "error" && (
+      {result.status === 'error' && (
         <Box flexDirection="column" marginLeft={3} marginTop={1}>
-          <Text color="yellow">{result.error ?? "알 수 없는 오류"}</Text>
+          <Text color="yellow">{result.error ?? '알 수 없는 오류'}</Text>
           {result.stderr && (
             <Text color="gray" dimColor>
               {truncate(result.stderr)}
@@ -73,11 +73,11 @@ function ResultRow({ result }: { result: TestResult }) {
 
 export function TestResultView({ summary, results }: TestResultProps) {
   const allPassed = summary.failed === 0 && summary.errored === 0;
-  const summaryVariant = allPassed ? "success" : "error";
+  const summaryVariant = allPassed ? 'success' : 'error';
 
   const summaryText = `총 ${summary.total}개 | Pass ${summary.passed}${
-    summary.failed > 0 ? ` | Fail ${summary.failed}` : ""
-  }${summary.errored > 0 ? ` | Error ${summary.errored}` : ""}`;
+    summary.failed > 0 ? ` | Fail ${summary.failed}` : ''
+  }${summary.errored > 0 ? ` | Error ${summary.errored}` : ''}`;
 
   return (
     <Box flexDirection="column">

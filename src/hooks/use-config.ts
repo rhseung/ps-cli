@@ -1,14 +1,14 @@
-import { existsSync } from "fs";
-import { readFile, writeFile, unlink } from "fs/promises";
-import { join } from "path";
+import { existsSync } from 'fs';
+import { readFile, writeFile, unlink } from 'fs/promises';
+import { join } from 'path';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
   type Language,
-} from "../utils/language";
+} from '../utils/language';
 
 export interface ProjectConfig {
   problemDir?: string;
@@ -19,7 +19,7 @@ export interface ProjectConfig {
 }
 
 function getProjectConfigPath(): string {
-  return join(process.cwd(), ".ps-cli.json");
+  return join(process.cwd(), '.ps-cli.json');
 }
 
 async function readProjectConfig(): Promise<ProjectConfig | null> {
@@ -28,7 +28,7 @@ async function readProjectConfig(): Promise<ProjectConfig | null> {
     return null;
   }
   try {
-    const content = await readFile(configPath, "utf-8");
+    const content = await readFile(configPath, 'utf-8');
     return JSON.parse(content) as ProjectConfig;
   } catch {
     return null;
@@ -37,7 +37,7 @@ async function readProjectConfig(): Promise<ProjectConfig | null> {
 
 async function writeProjectConfig(config: ProjectConfig): Promise<void> {
   const configPath = getProjectConfigPath();
-  await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
+  await writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
 }
 
 export interface UseConfigParams {
@@ -97,7 +97,7 @@ export function useConfig({
         const updatedConfig: ProjectConfig = { ...currentConfig };
 
         switch (configKey) {
-          case "default-language": {
+          case 'default-language': {
             const supportedLanguages = getSupportedLanguages();
             if (!supportedLanguages.includes(value as Language)) {
               console.error(
@@ -108,16 +108,16 @@ export function useConfig({
             updatedConfig.defaultLanguage = value;
             break;
           }
-          case "editor":
+          case 'editor':
             updatedConfig.editor = value;
             break;
-          case "auto-open-editor":
-            updatedConfig.autoOpenEditor = value === "true";
+          case 'auto-open-editor':
+            updatedConfig.autoOpenEditor = value === 'true';
             break;
-          case "solved-ac-handle":
+          case 'solved-ac-handle':
             updatedConfig.solvedAcHandle = value;
             break;
-          case "problem-dir":
+          case 'problem-dir':
             updatedConfig.problemDir = value;
             break;
           default:

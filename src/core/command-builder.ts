@@ -3,18 +3,18 @@ import type {
   CommandMetadata,
   CommandFlags,
   FlagDefinition,
-} from "../types/command";
+} from '../types/command';
 import {
   resolveProblemContext,
   resolveLanguage,
-} from "../utils/execution-context";
+} from '../utils/execution-context';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
   type Language,
-} from "../utils/language";
+} from '../utils/language';
 
-import { type Command } from "./base-command";
+import { type Command } from './base-command';
 
 /**
  * Command 메타데이터를 저장하는 맵
@@ -43,7 +43,7 @@ export function Flag(
   _name: string,
   _options?: {
     shortFlag?: string;
-    type?: "string" | "boolean" | "number";
+    type?: 'string' | 'boolean' | 'number';
     default?: string | boolean | number;
     description?: string;
   },
@@ -78,7 +78,7 @@ export class CommandBuilder {
 
     if (!finalMetadata) {
       throw new Error(
-        "Command 메타데이터가 필요합니다. @Command() 데코레이터를 사용하거나 metadata를 제공하세요.",
+        'Command 메타데이터가 필요합니다. @Command() 데코레이터를 사용하거나 metadata를 제공하세요.',
       );
     }
 
@@ -137,18 +137,18 @@ export class CommandBuilder {
     lines.push(`  사용법:`);
     lines.push(
       `    $ ps ${metadata.name}${
-        metadata.requireProblemId ? " <문제번호>" : " [문제번호]"
+        metadata.requireProblemId ? ' <문제번호>' : ' [문제번호]'
       } [옵션]`,
     );
-    lines.push("");
+    lines.push('');
 
     // 설명
     lines.push(`  설명:`);
-    const descriptionLines = metadata.description.split("\n");
+    const descriptionLines = metadata.description.split('\n');
     for (const line of descriptionLines) {
       lines.push(`    ${line}`);
     }
-    lines.push("");
+    lines.push('');
 
     // 옵션
     if (metadata.flags && metadata.flags.length > 0) {
@@ -162,9 +162,9 @@ export class CommandBuilder {
         if (flag.options?.description) {
           flagLine.push(`      ${flag.options.description}`);
         }
-        lines.push(flagLine.join(""));
+        lines.push(flagLine.join(''));
       }
-      lines.push("");
+      lines.push('');
     }
 
     // 예제
@@ -175,7 +175,7 @@ export class CommandBuilder {
       }
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   /**
@@ -227,7 +227,7 @@ export class CommandBuilder {
     const instance = new (CommandClass as new () => T)();
     const execute = instance.execute.bind(instance);
 
-    if (typeof execute !== "function") {
+    if (typeof execute !== 'function') {
       throw new Error(
         `Command 클래스에 execute 메서드가 없습니다: ${CommandClass.name}`,
       );

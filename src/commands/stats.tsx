@@ -1,20 +1,20 @@
-import { Alert } from "@inkjs/ui";
-import { Spinner } from "@inkjs/ui";
-import chalk from "chalk";
-import { Box, Text, Transform } from "ink";
-import React from "react";
+import { Alert } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
+import chalk from 'chalk';
+import { Box, Text, Transform } from 'ink';
+import React from 'react';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useUserStats } from "../hooks/use-user-stats";
-import type { CommandFlags } from "../types/command";
-import { getSolvedAcHandle } from "../utils/config";
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useUserStats } from '../hooks/use-user-stats';
+import type { CommandFlags } from '../types/command';
+import { getSolvedAcHandle } from '../utils/config';
 import {
   calculateTierProgress,
   getNextTierMinRating,
   getTierColor,
   getTierName,
-} from "../utils/tier";
+} from '../utils/tier';
 
 interface StatsViewProps {
   handle: string;
@@ -33,8 +33,8 @@ function ProgressBarWithColor({ value, colorFn }: ProgressBarWithColorProps) {
   const filled = Math.round((value / 100) * barWidth);
   const empty = barWidth - filled;
 
-  const filledBar = "█".repeat(filled);
-  const emptyBar = "░".repeat(empty);
+  const filledBar = '█'.repeat(filled);
+  const emptyBar = '░'.repeat(empty);
   const barText = filledBar + emptyBar;
 
   return (
@@ -50,7 +50,7 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
     onComplete,
   });
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Box flexDirection="column">
         <Spinner label="통계를 불러오는 중..." />
@@ -58,7 +58,7 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
     );
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <Box flexDirection="column">
         <Alert variant="error">통계를 불러올 수 없습니다: {error}</Alert>
@@ -70,7 +70,7 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
     const tierName = getTierName(user.tier);
     const tierColor = getTierColor(user.tier);
     const tierColorFn =
-      typeof tierColor === "string"
+      typeof tierColor === 'string'
         ? chalk.hex(tierColor)
         : tierColor.multiline;
 
@@ -91,10 +91,10 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
         {/* 티어 정보 (박스 밖) */}
         <Box marginBottom={1} flexDirection="row" gap={1}>
           <Text>
-            {tierColorFn(tierName)}{" "}
+            {tierColorFn(tierName)}{' '}
             <Text bold>{tierColorFn(user.rating.toLocaleString())}</Text>
             {nextTierMin !== null && (
-              <Text bold>{" / " + nextTierMin.toLocaleString()}</Text>
+              <Text bold>{' / ' + nextTierMin.toLocaleString()}</Text>
             )}
           </Text>
         </Box>
@@ -113,7 +113,7 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
         >
           <Box paddingX={1} paddingY={0} flexDirection="column">
             <Text>
-              해결한 문제:{" "}
+              해결한 문제:{' '}
               <Text bold color="green">
                 {user.solvedCount.toLocaleString()}
               </Text>
@@ -124,7 +124,7 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
             </Text>
             {user.maxStreak > 0 && (
               <Text>
-                최대 연속 해결:{" "}
+                최대 연속 해결:{' '}
                 <Text bold color="cyan">
                   {user.maxStreak}
                 </Text>
@@ -144,21 +144,21 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
 }
 
 @CommandDef({
-  name: "stats",
+  name: 'stats',
   description: `Solved.ac에서 사용자 통계를 조회합니다.
 - 티어, 레이팅, 해결한 문제 수 등 표시
 - 그라데이션으로 시각적으로 표시`,
   flags: [
     {
-      name: "handle",
+      name: 'handle',
       options: {
-        shortFlag: "h",
-        description: "Solved.ac 핸들 (설정에 저장된 값 사용 가능)",
+        shortFlag: 'h',
+        description: 'Solved.ac 핸들 (설정에 저장된 값 사용 가능)',
       },
     },
   ],
   autoDetectProblemId: false,
-  examples: ["stats myhandle", "stats --handle myhandle"],
+  examples: ['stats myhandle', 'stats --handle myhandle'],
 })
 export class StatsCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
@@ -171,7 +171,7 @@ export class StatsCommand extends Command {
     }
 
     if (!handle) {
-      console.error("오류: Solved.ac 핸들을 입력해주세요.");
+      console.error('오류: Solved.ac 핸들을 입력해주세요.');
       console.error(`사용법: ps stats <핸들>`);
       console.error(`도움말: ps stats --help`);
       console.error(

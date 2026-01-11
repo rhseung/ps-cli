@@ -1,19 +1,19 @@
-import { StatusMessage, Alert } from "@inkjs/ui";
-import { Spinner } from "@inkjs/ui";
-import { Box } from "ink";
-import React from "react";
+import { StatusMessage, Alert } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
+import { Box } from 'ink';
+import React from 'react';
 
-import { ProblemDashboard } from "../components/problem-dashboard";
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useFetchProblem } from "../hooks/use-fetch-problem";
-import type { CommandFlags } from "../types/command";
-import type { Language } from "../utils/language";
+import { ProblemDashboard } from '../components/problem-dashboard';
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useFetchProblem } from '../hooks/use-fetch-problem';
+import type { CommandFlags } from '../types/command';
+import type { Language } from '../utils/language';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
-} from "../utils/language";
-import { getProblemId } from "../utils/problem-id";
+} from '../utils/language';
+import { getProblemId } from '../utils/problem-id';
 
 interface FetchViewProps {
   problemId: number;
@@ -23,7 +23,7 @@ interface FetchViewProps {
 
 function FetchView({
   problemId,
-  language = "python",
+  language = 'python',
   onComplete,
 }: FetchViewProps) {
   const { status, problem, error, message } = useFetchProblem({
@@ -32,7 +32,7 @@ function FetchView({
     onComplete,
   });
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Box flexDirection="column">
         <Spinner label={message} />
@@ -41,7 +41,7 @@ function FetchView({
     );
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <Box flexDirection="column">
         <Alert variant="error">오류 발생: {error}</Alert>
@@ -62,7 +62,7 @@ function FetchView({
 }
 
 @CommandDef({
-  name: "fetch",
+  name: 'fetch',
   description: `백준 문제를 가져와서 로컬에 파일을 생성합니다.
 - Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
 - 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
@@ -70,9 +70,9 @@ function FetchView({
 - README.md에 문제 정보, 통계, 태그 등 포함`,
   flags: [
     {
-      name: "language",
+      name: 'language',
       options: {
-        shortFlag: "l",
+        shortFlag: 'l',
         description: `언어 선택 (${getSupportedLanguagesString()})
                         기본값: python`,
       },
@@ -80,14 +80,14 @@ function FetchView({
   ],
   autoDetectProblemId: false,
   requireProblemId: true,
-  examples: ["fetch 1000", "fetch 1000 --language python", "fetch 1000 -l cpp"],
+  examples: ['fetch 1000', 'fetch 1000 --language python', 'fetch 1000 -l cpp'],
 })
 export class FetchCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
     const problemId = getProblemId(args);
 
     if (problemId === null) {
-      console.error("오류: 문제 번호를 입력해주세요.");
+      console.error('오류: 문제 번호를 입력해주세요.');
       console.error(`사용법: ps fetch <문제번호> [옵션]`);
       console.error(`도움말: ps fetch --help`);
       console.error(
@@ -109,7 +109,7 @@ export class FetchCommand extends Command {
 
     await this.renderView(FetchView, {
       problemId,
-      language: language || "python",
+      language: language || 'python',
     });
   }
 }

@@ -1,7 +1,7 @@
-import type { SolvedAcProblem, SolvedAcUser } from "../types/index";
+import type { SolvedAcProblem, SolvedAcUser } from '../types/index';
 
-const BASE_URL = "https://solved.ac/api/v3";
-const USER_AGENT = "ps-cli/1.0.0";
+const BASE_URL = 'https://solved.ac/api/v3';
+const USER_AGENT = 'ps-cli/1.0.0';
 
 async function fetchWithRetry(
   url: string,
@@ -15,14 +15,14 @@ async function fetchWithRetry(
       const response = await fetch(url, {
         ...options,
         headers: {
-          "User-Agent": USER_AGENT,
+          'User-Agent': USER_AGENT,
           ...options.headers,
         },
       });
 
       // Rate limit 처리
       if (response.status === 429) {
-        const retryAfter = response.headers.get("Retry-After");
+        const retryAfter = response.headers.get('Retry-After');
         const waitTime = retryAfter
           ? parseInt(retryAfter, 10) * 1000
           : (attempt + 1) * 1000;
@@ -45,7 +45,7 @@ async function fetchWithRetry(
     }
   }
 
-  throw lastError || new Error("Request failed after retries");
+  throw lastError || new Error('Request failed after retries');
 }
 
 export async function getProblem(problemId: number): Promise<SolvedAcProblem> {

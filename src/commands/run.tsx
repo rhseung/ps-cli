@@ -1,20 +1,20 @@
-import { readdir } from "fs/promises";
-import { join } from "path";
+import { readdir } from 'fs/promises';
+import { join } from 'path';
 
-import { StatusMessage, Alert } from "@inkjs/ui";
-import { Spinner } from "@inkjs/ui";
-import { Box, Text } from "ink";
+import { StatusMessage, Alert } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
+import { Box, Text } from 'ink';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useRunSolution } from "../hooks/use-run-solution";
-import type { CommandFlags } from "../types/command";
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useRunSolution } from '../hooks/use-run-solution';
+import type { CommandFlags } from '../types/command';
 import {
   resolveProblemContext,
   resolveLanguage,
-} from "../utils/execution-context";
-import { getSupportedLanguagesString, type Language } from "../utils/language";
-import { getProblemId } from "../utils/problem-id";
+} from '../utils/execution-context';
+import { getSupportedLanguagesString, type Language } from '../utils/language';
+import { getProblemId } from '../utils/problem-id';
 
 interface RunViewProps {
   problemDir: string;
@@ -36,7 +36,7 @@ function RunView({
     onComplete,
   });
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Box flexDirection="column">
         <Spinner label="코드 실행 중..." />
@@ -44,10 +44,10 @@ function RunView({
     );
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <Box flexDirection="column">
-        <Alert variant="error">실행 실패{error ? `: ${error}` : ""}</Alert>
+        <Alert variant="error">실행 실패{error ? `: ${error}` : ''}</Alert>
       </Box>
     );
   }
@@ -61,7 +61,7 @@ function RunView({
           </Text>
           <Text color="gray">
             {problemDir} • {language}
-            {result.timedOut && " • 타임아웃"}
+            {result.timedOut && ' • 타임아웃'}
           </Text>
         </Box>
         <Box flexDirection="column" marginTop={1}>
@@ -104,7 +104,7 @@ function RunView({
 }
 
 @CommandDef({
-  name: "run",
+  name: 'run',
   description: `코드를 실행합니다 (테스트 없이).
 - 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
 - solution.* 파일을 자동으로 찾아 언어 감지
@@ -112,28 +112,28 @@ function RunView({
 - 테스트 케이스 검증 없이 단순 실행`,
   flags: [
     {
-      name: "language",
+      name: 'language',
       options: {
-        shortFlag: "l",
+        shortFlag: 'l',
         description: `언어 선택 (지정 시 자동 감지 무시)
                         지원 언어: ${getSupportedLanguagesString()}`,
       },
     },
     {
-      name: "input",
+      name: 'input',
       options: {
-        shortFlag: "i",
-        description: "입력 파일 지정 (기본값: input.txt 또는 input1.txt)",
+        shortFlag: 'i',
+        description: '입력 파일 지정 (기본값: input.txt 또는 input1.txt)',
       },
     },
   ],
   autoDetectProblemId: true,
   autoDetectLanguage: true,
   examples: [
-    "run                    # 현재 디렉토리에서 실행",
-    "run 1000               # 1000번 문제 실행",
-    "run --language python  # Python으로 실행",
-    "run --input input2.txt # 특정 입력 파일 사용",
+    'run                    # 현재 디렉토리에서 실행',
+    'run 1000               # 1000번 문제 실행',
+    'run --language python  # Python으로 실행',
+    'run --input input2.txt # 특정 입력 파일 사용',
   ],
 })
 export class RunCommand extends Command {
@@ -168,10 +168,10 @@ export class RunCommand extends Command {
     const files = await readdir(problemDir);
     // input1.txt, input.txt 순서로 찾기
     const inputFile =
-      files.find((f) => f === "input1.txt") ||
-      files.find((f) => f === "input.txt");
+      files.find((f) => f === 'input1.txt') ||
+      files.find((f) => f === 'input.txt');
     if (!inputFile) {
-      throw new Error("input.txt 또는 input1.txt 파일을 찾을 수 없습니다.");
+      throw new Error('input.txt 또는 input1.txt 파일을 찾을 수 없습니다.');
     }
     return join(problemDir, inputFile);
   }

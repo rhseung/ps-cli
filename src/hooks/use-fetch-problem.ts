@@ -1,13 +1,13 @@
-import { execaCommand } from "execa";
-import { useEffect, useState } from "react";
+import { execaCommand } from 'execa';
+import { useEffect, useState } from 'react';
 
-import { generateProblemFiles } from "../services/file-generator";
-import { scrapeProblem } from "../services/scraper";
-import { getProblem } from "../services/solved-api";
-import type { Problem } from "../types/index";
-import { getAutoOpenEditor, getEditor } from "../utils/config";
-import type { Language } from "../utils/language";
-import { getTierName } from "../utils/tier";
+import { generateProblemFiles } from '../services/file-generator';
+import { scrapeProblem } from '../services/scraper';
+import { getProblem } from '../services/solved-api';
+import type { Problem } from '../types/index';
+import { getAutoOpenEditor, getEditor } from '../utils/config';
+import type { Language } from '../utils/language';
+import { getTierName } from '../utils/tier';
 
 export interface UseFetchProblemParams {
   problemId: number;
@@ -16,7 +16,7 @@ export interface UseFetchProblemParams {
 }
 
 export interface UseFetchProblemReturn {
-  status: "loading" | "success" | "error";
+  status: 'loading' | 'success' | 'error';
   problem: Problem | null;
   error: string | null;
   message: string;
@@ -27,22 +27,22 @@ export function useFetchProblem({
   language,
   onComplete,
 }: UseFetchProblemParams): UseFetchProblemReturn {
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading",
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    'loading',
   );
   const [problem, setProblem] = useState<Problem | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState("문제 정보를 가져오는 중...");
+  const [message, setMessage] = useState('문제 정보를 가져오는 중...');
 
   useEffect(() => {
     async function fetchProblem() {
       try {
         // Solved.ac API 호출
-        setMessage("Solved.ac에서 문제 정보를 가져오는 중...");
+        setMessage('Solved.ac에서 문제 정보를 가져오는 중...');
         const solvedAcData = await getProblem(problemId);
 
         // BOJ 페이지 크롤링
-        setMessage("BOJ에서 문제 상세 정보를 가져오는 중...");
+        setMessage('BOJ에서 문제 상세 정보를 가져오는 중...');
         const scrapedData = await scrapeProblem(problemId);
 
         // 필수 데이터 검증
@@ -60,7 +60,7 @@ export function useFetchProblem({
           tier: getTierName(solvedAcData.level),
           tags: solvedAcData.tags.map(
             (tag) =>
-              tag.displayNames.find((d) => d.language === "ko")?.name ||
+              tag.displayNames.find((d) => d.language === 'ko')?.name ||
               tag.displayNames[0]?.name ||
               tag.key,
           ),
@@ -79,13 +79,13 @@ export function useFetchProblem({
         setProblem(combinedProblem);
 
         // 파일 생성
-        setMessage("파일을 생성하는 중...");
+        setMessage('파일을 생성하는 중...');
         const problemDir = await generateProblemFiles(
           combinedProblem,
           language,
         );
 
-        setStatus("success");
+        setStatus('success');
         setMessage(`문제 파일이 생성되었습니다: ${problemDir}`);
 
         // 에디터 자동 열기 (설정이 활성화된 경우)
@@ -95,7 +95,7 @@ export function useFetchProblem({
             await execaCommand(`${editor} ${problemDir}`, {
               shell: true,
               detached: true,
-              stdio: "ignore",
+              stdio: 'ignore',
             });
             setMessage(
               `문제 파일이 생성되었습니다: ${problemDir}\n${editor}로 열었습니다.`,
@@ -114,7 +114,7 @@ export function useFetchProblem({
           onComplete?.();
         }, 2000);
       } catch (err) {
-        setStatus("error");
+        setStatus('error');
         setError(err instanceof Error ? err.message : String(err));
         setTimeout(() => {
           onComplete?.();

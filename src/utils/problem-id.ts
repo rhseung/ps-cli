@@ -1,6 +1,6 @@
-import { join } from "path";
+import { join } from 'path';
 
-import { getProblemDir, getSolvingDir, findProjectRoot } from "./config";
+import { getProblemDir, getSolvingDir, findProjectRoot } from './config';
 
 /**
  * 현재 작업 디렉토리 경로에서 문제 번호를 추론합니다.
@@ -19,17 +19,17 @@ export function detectProblemIdFromPath(
 ): number | null {
   const problemDir = getProblemDir();
   const solvingDir = getSolvingDir();
-  const normalizedPath = cwd.replace(/\\/g, "/");
+  const normalizedPath = cwd.replace(/\\/g, '/');
 
   // 디렉토리 목록 (problemDir, solvingDir 순서로 확인)
   const dirsToCheck = [problemDir, solvingDir].filter(
-    (dir) => dir && dir !== "." && dir !== "",
+    (dir) => dir && dir !== '.' && dir !== '',
   );
 
   // problemDir나 solvingDir가 "." 또는 ""인 경우 프로젝트 루트에서 직접 추론
   if (dirsToCheck.length === 0) {
     // 현재 경로의 마지막 세그먼트가 숫자인지 확인
-    const segments = normalizedPath.split("/").filter(Boolean);
+    const segments = normalizedPath.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];
 
     if (lastSegment) {
@@ -60,7 +60,7 @@ export function detectProblemIdFromPath(
     }
 
     // 첫 번째 경로 세그먼트 추출 (문제 번호가 될 부분)
-    const firstSegment = afterDir.split("/")[0];
+    const firstSegment = afterDir.split('/')[0];
     if (!firstSegment) {
       continue;
     }
@@ -135,7 +135,7 @@ export function getProblemDirPath(
   const baseDir = projectRoot || cwd;
 
   // problemDir가 "." 또는 ""인 경우 프로젝트 루트에 직접 생성
-  if (problemDir === "." || problemDir === "") {
+  if (problemDir === '.' || problemDir === '') {
     return join(baseDir, problemId.toString());
   }
 
@@ -167,7 +167,7 @@ export function getSolvingDirPath(
   const baseDir = projectRoot || cwd;
 
   // solvingDir가 "." 또는 ""인 경우 프로젝트 루트에 직접 생성
-  if (solvingDir === "." || solvingDir === "") {
+  if (solvingDir === '.' || solvingDir === '') {
     return join(baseDir, problemId.toString());
   }
 

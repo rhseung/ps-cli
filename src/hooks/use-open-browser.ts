@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { openBrowser } from "../utils/browser";
+import { openBrowser } from '../utils/browser';
 
-const BOJ_BASE_URL = "https://www.acmicpc.net";
+const BOJ_BASE_URL = 'https://www.acmicpc.net';
 
 export interface UseOpenBrowserParams {
   problemId: number;
@@ -10,7 +10,7 @@ export interface UseOpenBrowserParams {
 }
 
 export interface UseOpenBrowserReturn {
-  status: "loading" | "success" | "error";
+  status: 'loading' | 'success' | 'error';
   error: string | null;
   url: string;
 }
@@ -19,11 +19,11 @@ export function useOpenBrowser({
   problemId,
   onComplete,
 }: UseOpenBrowserParams): UseOpenBrowserReturn {
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading",
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    'loading',
   );
   const [error, setError] = useState<string | null>(null);
-  const [url, setUrl] = useState<string>("");
+  const [url, setUrl] = useState<string>('');
 
   useEffect(() => {
     async function handleOpenBrowser() {
@@ -34,12 +34,12 @@ export function useOpenBrowser({
         // 브라우저 열기
         await openBrowser(problemUrl);
 
-        setStatus("success");
+        setStatus('success');
         setTimeout(() => {
           onComplete?.();
         }, 1500);
       } catch (err) {
-        setStatus("error");
+        setStatus('error');
         setError(err instanceof Error ? err.message : String(err));
         setTimeout(() => {
           onComplete?.();

@@ -1,18 +1,18 @@
-import { readdir } from "fs/promises";
-import { join } from "path";
+import { readdir } from 'fs/promises';
+import { join } from 'path';
 
-import type { ProblemContext } from "../types/execution";
+import type { ProblemContext } from '../types/execution';
 
 import {
   detectLanguageFromFile,
   getSupportedLanguages,
   type Language,
-} from "./language";
+} from './language';
 import {
   getProblemId,
   detectProblemIdFromPath,
   getProblemDirPath,
-} from "./problem-id";
+} from './problem-id';
 
 export interface ResolveProblemContextOptions {
   /** Problem ID가 필수인지 여부 */
@@ -41,7 +41,7 @@ export async function resolveProblemContext(
   // Problem ID 검증
   if (requireId && problemId === null) {
     throw new Error(
-      "문제 번호를 찾을 수 없습니다. 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행해주세요.",
+      '문제 번호를 찾을 수 없습니다. 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행해주세요.',
     );
   }
 
@@ -77,7 +77,7 @@ export async function resolveLanguage(
     if (!validLanguages.includes(override)) {
       throw new Error(
         `지원하지 않는 언어입니다: ${override}\n지원 언어: ${validLanguages.join(
-          ", ",
+          ', ',
         )}`,
       );
     }
@@ -86,7 +86,7 @@ export async function resolveLanguage(
 
   // 자동 감지
   const solutionFilePath = await findSolutionFile(problemDir);
-  const solutionFileName = solutionFilePath.split(/[/\\]/).pop() || "";
+  const solutionFileName = solutionFilePath.split(/[/\\]/).pop() || '';
   const detectedLanguage = detectLanguageFromFile(solutionFileName);
   if (!detectedLanguage) {
     throw new Error(`지원하지 않는 언어입니다: ${solutionFileName}`);
@@ -103,9 +103,9 @@ export async function resolveLanguage(
  */
 export async function findSolutionFile(problemDir: string): Promise<string> {
   const files = await readdir(problemDir);
-  const solutionFile = files.find((f) => f.startsWith("solution."));
+  const solutionFile = files.find((f) => f.startsWith('solution.'));
   if (!solutionFile) {
-    throw new Error("solution.* 파일을 찾을 수 없습니다.");
+    throw new Error('solution.* 파일을 찾을 수 없습니다.');
   }
   return join(problemDir, solutionFile);
 }

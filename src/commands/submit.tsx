@@ -1,19 +1,19 @@
-import { Badge, StatusMessage, Alert } from "@inkjs/ui";
-import { Spinner } from "@inkjs/ui";
-import { Text, Box } from "ink";
-import React from "react";
+import { Badge, StatusMessage, Alert } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
+import { Text, Box } from 'ink';
+import React from 'react';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useSubmit } from "../hooks/use-submit";
-import type { CommandFlags } from "../types/command";
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useSubmit } from '../hooks/use-submit';
+import type { CommandFlags } from '../types/command';
 import {
   resolveProblemContext,
   resolveLanguage,
   findSolutionFile,
-} from "../utils/execution-context";
-import { getSupportedLanguagesString, type Language } from "../utils/language";
-import { getProblemId, detectProblemIdFromPath } from "../utils/problem-id";
+} from '../utils/execution-context';
+import { getSupportedLanguagesString, type Language } from '../utils/language';
+import { getProblemId, detectProblemIdFromPath } from '../utils/problem-id';
 
 interface SubmitViewProps {
   problemId: number;
@@ -42,7 +42,7 @@ function SubmitView({
     onComplete,
   });
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Box flexDirection="column">
         <Spinner label={message} />
@@ -53,7 +53,7 @@ function SubmitView({
     );
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <Box flexDirection="column">
         <Alert variant="error">오류 발생: {error}</Alert>
@@ -81,19 +81,19 @@ function SubmitView({
         <Text>
           <Text color="cyan" bold>
             문제 번호:
-          </Text>{" "}
+          </Text>{' '}
           {problemId}
         </Text>
         <Text>
           <Text color="cyan" bold>
             언어:
-          </Text>{" "}
+          </Text>{' '}
           <Text color="gray">{language}</Text>
         </Text>
         <Text>
           <Text color="cyan" bold>
             URL:
-          </Text>{" "}
+          </Text>{' '}
           <Text color="blue" underline>
             {submitUrl}
           </Text>
@@ -116,7 +116,7 @@ function SubmitView({
 }
 
 @CommandDef({
-  name: "submit",
+  name: 'submit',
   description: `백준 제출 페이지를 브라우저로 열고 소스 코드를 클립보드에 복사합니다.
 - 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론
 - solution.* 파일을 자동으로 찾아 언어 감지
@@ -124,9 +124,9 @@ function SubmitView({
 - 제출 페이지를 브라우저로 자동 열기`,
   flags: [
     {
-      name: "language",
+      name: 'language',
       options: {
-        shortFlag: "l",
+        shortFlag: 'l',
         description: `언어 선택 (지정 시 자동 감지 무시)
                         지원 언어: ${getSupportedLanguagesString()}`,
       },
@@ -136,9 +136,9 @@ function SubmitView({
   autoDetectLanguage: true,
   requireProblemId: true,
   examples: [
-    "submit                    # 현재 디렉토리에서 제출",
-    "submit 1000                # 1000번 문제 제출",
-    "submit --language python   # Python으로 제출",
+    'submit                    # 현재 디렉토리에서 제출',
+    'submit 1000                # 1000번 문제 제출',
+    'submit --language python   # Python으로 제출',
   ],
 })
 export class SubmitCommand extends Command {
@@ -169,7 +169,7 @@ export class SubmitCommand extends Command {
 
     if (finalProblemId === null) {
       throw new Error(
-        "문제 번호를 찾을 수 없습니다. 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행해주세요.",
+        '문제 번호를 찾을 수 없습니다. 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행해주세요.',
       );
     }
 

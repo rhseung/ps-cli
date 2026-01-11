@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { readFileSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
 
-import Conf from "conf";
+import Conf from 'conf';
 
 interface ConfigSchema {
   bojSessionCookie?: string;
@@ -24,16 +24,16 @@ interface ProjectConfig {
 }
 
 const config = new Conf<ConfigSchema>({
-  projectName: "ps-cli",
+  projectName: 'ps-cli',
   defaults: {
     bojSessionCookie: undefined,
-    defaultLanguage: "python",
+    defaultLanguage: 'python',
     codeOpen: false,
-    editor: "code", // 기본값: VS Code
+    editor: 'code', // 기본값: VS Code
     autoOpenEditor: false, // 기본값: 자동 열기 비활성화
     solvedAcHandle: undefined,
-    problemDir: "problems", // 기본값: problems 디렉토리
-    solvingDir: "solving", // 기본값: solving 디렉토리
+    problemDir: 'problems', // 기본값: problems 디렉토리
+    solvingDir: 'solving', // 기본값: solving 디렉토리
   },
 });
 
@@ -49,10 +49,10 @@ export function findProjectRoot(
 ): string | null {
   let currentDir = startDir;
   const rootPath =
-    process.platform === "win32" ? currentDir.split("\\")[0] + "\\" : "/";
+    process.platform === 'win32' ? currentDir.split('\\')[0] + '\\' : '/';
 
   while (currentDir !== rootPath) {
-    const projectConfigPath = join(currentDir, ".ps-cli.json");
+    const projectConfigPath = join(currentDir, '.ps-cli.json');
     if (existsSync(projectConfigPath)) {
       return currentDir;
     }
@@ -80,7 +80,7 @@ function getProjectConfigSync(): ProjectConfig | null {
       return null;
     }
 
-    const projectConfigPath = join(projectRoot, ".ps-cli.json");
+    const projectConfigPath = join(projectRoot, '.ps-cli.json');
 
     // 캐시된 경로와 같으면 캐시 사용
     if (projectConfigCache && projectConfigCachePath === projectConfigPath) {
@@ -96,7 +96,7 @@ function getProjectConfigSync(): ProjectConfig | null {
 
     // 파일 읽기
     try {
-      const content = readFileSync(projectConfigPath, "utf-8");
+      const content = readFileSync(projectConfigPath, 'utf-8');
       const projectConfig = JSON.parse(content) as ProjectConfig;
       projectConfigCache = projectConfig;
       projectConfigCachePath = projectConfigPath;
@@ -119,11 +119,11 @@ export function getBojSessionCookie(): string | undefined {
     return envCookie;
   }
   // 설정 파일에서 확인
-  return config.get("bojSessionCookie");
+  return config.get('bojSessionCookie');
 }
 
 export function setBojSessionCookie(cookie: string): void {
-  config.set("bojSessionCookie", cookie);
+  config.set('bojSessionCookie', cookie);
 }
 
 export function getDefaultLanguage(): string {
@@ -131,19 +131,19 @@ export function getDefaultLanguage(): string {
   if (projectConfig?.defaultLanguage) {
     return projectConfig.defaultLanguage;
   }
-  return config.get("defaultLanguage") ?? "python";
+  return config.get('defaultLanguage') ?? 'python';
 }
 
 export function setDefaultLanguage(language: string): void {
-  config.set("defaultLanguage", language);
+  config.set('defaultLanguage', language);
 }
 
 export function getCodeOpen(): boolean {
-  return config.get("codeOpen") ?? false;
+  return config.get('codeOpen') ?? false;
 }
 
 export function setCodeOpen(open: boolean): void {
-  config.set("codeOpen", open);
+  config.set('codeOpen', open);
 }
 
 export function getEditor(): string {
@@ -151,11 +151,11 @@ export function getEditor(): string {
   if (projectConfig?.editor) {
     return projectConfig.editor;
   }
-  return config.get("editor") ?? "code";
+  return config.get('editor') ?? 'code';
 }
 
 export function setEditor(editor: string): void {
-  config.set("editor", editor);
+  config.set('editor', editor);
 }
 
 export function getAutoOpenEditor(): boolean {
@@ -163,11 +163,11 @@ export function getAutoOpenEditor(): boolean {
   if (projectConfig?.autoOpenEditor !== undefined) {
     return projectConfig.autoOpenEditor;
   }
-  return config.get("autoOpenEditor") ?? false;
+  return config.get('autoOpenEditor') ?? false;
 }
 
 export function setAutoOpenEditor(enabled: boolean): void {
-  config.set("autoOpenEditor", enabled);
+  config.set('autoOpenEditor', enabled);
 }
 
 export function getSolvedAcHandle(): string | undefined {
@@ -175,11 +175,11 @@ export function getSolvedAcHandle(): string | undefined {
   if (projectConfig?.solvedAcHandle) {
     return projectConfig.solvedAcHandle;
   }
-  return config.get("solvedAcHandle");
+  return config.get('solvedAcHandle');
 }
 
 export function setSolvedAcHandle(handle: string): void {
-  config.set("solvedAcHandle", handle);
+  config.set('solvedAcHandle', handle);
 }
 
 export function getProblemDir(): string {
@@ -187,11 +187,11 @@ export function getProblemDir(): string {
   if (projectConfig?.problemDir !== undefined) {
     return projectConfig.problemDir;
   }
-  return config.get("problemDir") ?? "problems";
+  return config.get('problemDir') ?? 'problems';
 }
 
 export function setProblemDir(dir: string): void {
-  config.set("problemDir", dir);
+  config.set('problemDir', dir);
 }
 
 export function getSolvingDir(): string {
@@ -199,11 +199,11 @@ export function getSolvingDir(): string {
   if (projectConfig?.solvingDir !== undefined) {
     return projectConfig.solvingDir;
   }
-  return config.get("solvingDir") ?? "solving";
+  return config.get('solvingDir') ?? 'solving';
 }
 
 export function setSolvingDir(dir: string): void {
-  config.set("solvingDir", dir);
+  config.set('solvingDir', dir);
 }
 
 export function clearConfig(): void {

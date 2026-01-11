@@ -1,22 +1,22 @@
-import { StatusMessage, Select, TextInput, Alert } from "@inkjs/ui";
-import { render, Text, Box } from "ink";
-import React from "react";
+import { StatusMessage, Select, TextInput, Alert } from '@inkjs/ui';
+import { render, Text, Box } from 'ink';
+import React from 'react';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useConfig } from "../hooks/use-config";
-import type { CommandFlags } from "../types/command";
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useConfig } from '../hooks/use-config';
+import type { CommandFlags } from '../types/command';
 import {
   getDefaultLanguage,
   getEditor,
   getAutoOpenEditor,
   getSolvedAcHandle,
   getProblemDir,
-} from "../utils/config";
+} from '../utils/config';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
-} from "../utils/language";
+} from '../utils/language';
 
 export function getConfigHelp(): string {
   return `
@@ -60,11 +60,11 @@ export function getConfigHelp(): string {
 export const configHelp = getConfigHelp();
 
 const CONFIG_KEYS = [
-  { label: "default-language", value: "default-language" },
-  { label: "editor", value: "editor" },
-  { label: "auto-open-editor", value: "auto-open-editor" },
-  { label: "solved-ac-handle", value: "solved-ac-handle" },
-  { label: "problem-dir", value: "problem-dir" },
+  { label: 'default-language', value: 'default-language' },
+  { label: 'editor', value: 'editor' },
+  { label: 'auto-open-editor', value: 'auto-open-editor' },
+  { label: 'solved-ac-handle', value: 'solved-ac-handle' },
+  { label: 'problem-dir', value: 'problem-dir' },
 ];
 
 interface ConfigViewProps {
@@ -146,15 +146,15 @@ function ConfigView({
           <Box marginBottom={1}>
             <Text color="gray">auto-open-editor:</Text>
             <Text> </Text>
-            <Text bold color={autoOpen ? "green" : "gray"}>
-              {autoOpen ? "true" : "false"}
+            <Text bold color={autoOpen ? 'green' : 'gray'}>
+              {autoOpen ? 'true' : 'false'}
             </Text>
           </Box>
           <Box marginBottom={1}>
             <Text color="gray">solved-ac-handle:</Text>
             <Text> </Text>
-            <Text bold color={handle ? "cyan" : "gray"}>
-              {handle || "설정 안 됨"}
+            <Text bold color={handle ? 'cyan' : 'gray'}>
+              {handle || '설정 안 됨'}
             </Text>
           </Box>
           <Box marginBottom={1}>
@@ -170,22 +170,22 @@ function ConfigView({
   if (get && configKey) {
     let configValue: string | undefined;
     switch (configKey) {
-      case "default-language":
+      case 'default-language':
         configValue = config?.defaultLanguage ?? getDefaultLanguage();
         break;
-      case "editor":
+      case 'editor':
         configValue = config?.editor ?? getEditor();
         break;
-      case "auto-open-editor":
+      case 'auto-open-editor':
         configValue =
           config?.autoOpenEditor !== undefined
             ? String(config.autoOpenEditor)
             : String(getAutoOpenEditor());
         break;
-      case "solved-ac-handle":
+      case 'solved-ac-handle':
         configValue = config?.solvedAcHandle ?? getSolvedAcHandle();
         break;
-      case "problem-dir":
+      case 'problem-dir':
         configValue = config?.problemDir ?? getProblemDir();
         break;
       default:
@@ -198,8 +198,8 @@ function ConfigView({
         <Box>
           <Text color="gray">{configKey}:</Text>
           <Text> </Text>
-          <Text bold color={configValue ? "cyan" : "gray"}>
-            {configValue || "(설정 안 됨)"}
+          <Text bold color={configValue ? 'cyan' : 'gray'}>
+            {configValue || '(설정 안 됨)'}
           </Text>
         </Box>
       </Box>
@@ -230,17 +230,17 @@ function ConfigView({
 }
 
 @CommandDef({
-  name: "config",
+  name: 'config',
   description: `프로젝트 설정 파일(.ps-cli.json)을 관리합니다.
 설정은 현재 프로젝트의 .ps-cli.json 파일에 저장됩니다.`,
   autoDetectProblemId: false,
   examples: [
-    "config get                         # 대화형으로 키 선택 후 값 조회",
-    "config get default-language         # default-language 값 조회",
-    "config set                         # 대화형으로 키 선택 후 값 설정",
-    "config set editor cursor            # editor를 cursor로 설정",
-    "config list                         # 모든 설정 조회",
-    "config clear                        # .ps-cli.json 파일 삭제",
+    'config get                         # 대화형으로 키 선택 후 값 조회',
+    'config get default-language         # default-language 값 조회',
+    'config set                         # 대화형으로 키 선택 후 값 설정',
+    'config set editor cursor            # editor를 cursor로 설정',
+    'config list                         # 모든 설정 조회',
+    'config clear                        # .ps-cli.json 파일 삭제',
   ],
 })
 export class ConfigCommand extends Command {
@@ -248,7 +248,7 @@ export class ConfigCommand extends Command {
     const command = args[0];
 
     // clear 명령어 처리
-    if (command === "clear") {
+    if (command === 'clear') {
       await this.renderView(ConfigView, {
         clear: true,
       });
@@ -256,7 +256,7 @@ export class ConfigCommand extends Command {
     }
 
     // list 명령어 처리
-    if (command === "list" || flags.list) {
+    if (command === 'list' || flags.list) {
       await this.renderView(ConfigView, {
         list: true,
       });
@@ -264,7 +264,7 @@ export class ConfigCommand extends Command {
     }
 
     // get 명령어 처리
-    if (command === "get") {
+    if (command === 'get') {
       const key = args[1];
       if (key) {
         // 키가 있으면 바로 조회
@@ -288,7 +288,7 @@ export class ConfigCommand extends Command {
     }
 
     // set 명령어 처리
-    if (command === "set") {
+    if (command === 'set') {
       const key = args[1];
       if (key) {
         // 키가 있으면 바로 값 입력
@@ -323,17 +323,17 @@ export class ConfigCommand extends Command {
 
     // 명령어가 없거나 알 수 없는 명령어
     if (!command) {
-      console.error("오류: 명령어를 입력해주세요.");
-      console.error("사용법: ps config <명령어>");
-      console.error("명령어: get, set, list, clear");
-      console.error("도움말: ps config --help");
+      console.error('오류: 명령어를 입력해주세요.');
+      console.error('사용법: ps config <명령어>');
+      console.error('명령어: get, set, list, clear');
+      console.error('도움말: ps config --help');
       process.exit(1);
       return;
     }
 
     console.error(`오류: 알 수 없는 명령어: ${command}`);
-    console.error("사용 가능한 명령어: get, set, list, clear");
-    console.error("도움말: ps config --help");
+    console.error('사용 가능한 명령어: get, set, list, clear');
+    console.error('도움말: ps config --help');
     process.exit(1);
   }
 
@@ -402,48 +402,48 @@ export class ConfigCommand extends Command {
   }) => {
     const getPlaceholder = () => {
       switch (configKey) {
-        case "default-language":
+        case 'default-language':
           return `언어 입력 (${getSupportedLanguagesString()})`;
-        case "editor":
-          return "에디터 명령어 입력";
-        case "auto-open-editor":
-          return "true 또는 false 입력";
-        case "solved-ac-handle":
-          return "Solved.ac 핸들 입력";
-        case "problem-dir":
-          return "문제 디렉토리 경로 입력";
+        case 'editor':
+          return '에디터 명령어 입력';
+        case 'auto-open-editor':
+          return 'true 또는 false 입력';
+        case 'solved-ac-handle':
+          return 'Solved.ac 핸들 입력';
+        case 'problem-dir':
+          return '문제 디렉토리 경로 입력';
         default:
-          return "값 입력";
+          return '값 입력';
       }
     };
 
     const getDescription = () => {
       switch (configKey) {
-        case "default-language":
+        case 'default-language':
           return `지원 언어: ${getSupportedLanguagesString()}`;
-        case "editor":
-          return "예: code, cursor, vim, nano";
-        case "auto-open-editor":
-          return "fetch 후 자동으로 에디터를 열지 여부";
-        case "solved-ac-handle":
-          return "Solved.ac 사용자 핸들";
-        case "problem-dir":
+        case 'editor':
+          return '예: code, cursor, vim, nano';
+        case 'auto-open-editor':
+          return 'fetch 후 자동으로 에디터를 열지 여부';
+        case 'solved-ac-handle':
+          return 'Solved.ac 사용자 핸들';
+        case 'problem-dir':
           return '문제 디렉토리 경로 (기본값: "problems", 프로젝트 루트: ".")';
         default:
-          return "";
+          return '';
       }
     };
 
     const getSuggestions = (): string[] => {
       switch (configKey) {
-        case "default-language":
+        case 'default-language':
           return getSupportedLanguages();
-        case "editor":
-          return ["code", "cursor", "vim", "nano"];
-        case "auto-open-editor":
-          return ["true", "false"];
-        case "problem-dir":
-          return ["problems", ".", ""];
+        case 'editor':
+          return ['code', 'cursor', 'vim', 'nano'];
+        case 'auto-open-editor':
+          return ['true', 'false'];
+        case 'problem-dir':
+          return ['problems', '.', ''];
         default:
           return [];
       }

@@ -1,15 +1,15 @@
-import * as cheerio from "cheerio";
-import type { Element } from "domhandler";
+import * as cheerio from 'cheerio';
+import type { Element } from 'domhandler';
 
 import type {
   ScrapedProblem,
   TestCase,
   SearchResult,
   SearchResults,
-} from "../types/index";
+} from '../types/index';
 
-const BOJ_BASE_URL = "https://www.acmicpc.net";
-const SOLVED_AC_BASE_URL = "https://solved.ac";
+const BOJ_BASE_URL = 'https://www.acmicpc.net';
+const SOLVED_AC_BASE_URL = 'https://solved.ac';
 
 /**
  * HTML 요소를 Markdown으로 변환
@@ -19,9 +19,9 @@ function htmlToMarkdown(
   $: cheerio.CheerioAPI,
   element: cheerio.Cheerio<Element>,
 ): string {
-  if (element.length === 0) return "";
+  if (element.length === 0) return '';
 
-  let result = "";
+  let result = '';
   const contents = element.contents();
 
   // contents가 비어있으면 텍스트만 반환
@@ -30,83 +30,83 @@ function htmlToMarkdown(
   }
 
   contents.each((_, node) => {
-    if (node.type === "text") {
-      const text = node.data || "";
+    if (node.type === 'text') {
+      const text = node.data || '';
       if (text.trim()) {
         result += text;
       }
-    } else if (node.type === "tag") {
+    } else if (node.type === 'tag') {
       const tagName = node.name.toLowerCase();
       const $node = $(node);
 
       switch (tagName) {
-        case "sup":
+        case 'sup':
           result += `^${htmlToMarkdown($, $node)}`;
           break;
-        case "sub":
+        case 'sub':
           result += `<sub>${htmlToMarkdown($, $node)}</sub>`;
           break;
-        case "strong":
-        case "b":
+        case 'strong':
+        case 'b':
           result += `**${htmlToMarkdown($, $node)}**`;
           break;
-        case "em":
-        case "i":
+        case 'em':
+        case 'i':
           result += `*${htmlToMarkdown($, $node)}*`;
           break;
-        case "br":
-          result += "\n";
+        case 'br':
+          result += '\n';
           break;
-        case "p": {
+        case 'p': {
           const pContent = htmlToMarkdown($, $node);
           if (pContent) {
-            result += pContent + "\n\n";
+            result += pContent + '\n\n';
           }
           break;
         }
-        case "div": {
+        case 'div': {
           const divContent = htmlToMarkdown($, $node);
           if (divContent) {
-            result += divContent + "\n";
+            result += divContent + '\n';
           }
           break;
         }
-        case "span":
+        case 'span':
           result += htmlToMarkdown($, $node);
           break;
-        case "code":
+        case 'code':
           result += `\`${htmlToMarkdown($, $node)}\``;
           break;
-        case "pre": {
+        case 'pre': {
           const preContent = htmlToMarkdown($, $node);
           if (preContent) {
             result += `\n\`\`\`\n${preContent}\n\`\`\`\n`;
           }
           break;
         }
-        case "ul":
-        case "ol":
-          $node.find("li").each((i, li) => {
+        case 'ul':
+        case 'ol':
+          $node.find('li').each((i, li) => {
             const liContent = htmlToMarkdown($, $(li));
             if (liContent) {
               result += `- ${liContent}\n`;
             }
           });
           break;
-        case "li":
+        case 'li':
           result += htmlToMarkdown($, $node);
           break;
-        case "img": {
-          const imgSrc = $node.attr("src") || "";
-          const imgAlt = $node.attr("alt") || "";
+        case 'img': {
+          const imgSrc = $node.attr('src') || '';
+          const imgAlt = $node.attr('alt') || '';
           if (imgSrc) {
             // 상대 경로를 절대 URL로 변환
             let imageUrl = imgSrc;
-            if (imgSrc.startsWith("/")) {
+            if (imgSrc.startsWith('/')) {
               imageUrl = `${BOJ_BASE_URL}${imgSrc}`;
             } else if (
-              !imgSrc.startsWith("http") &&
-              !imgSrc.startsWith("data:")
+              !imgSrc.startsWith('http') &&
+              !imgSrc.startsWith('data:')
             ) {
               // 상대 경로인 경우
               imageUrl = `${BOJ_BASE_URL}/${imgSrc}`;
@@ -131,8 +131,8 @@ export async function scrapeProblem(
 
   const response = await fetch(url, {
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     },
   });
 
@@ -144,11 +144,11 @@ export async function scrapeProblem(
   const $ = cheerio.load(html);
 
   // 제목 추출
-  const title = $("#problem_title").text().trim();
+  const title = $('#problem_title').text().trim();
 
   // 문제 설명 추출 (HTML을 Markdown으로 변환)
-  const descriptionEl = $("#problem_description");
-  let description = "";
+  const descriptionEl = $('#problem_description');
+  let description = '';
   if (descriptionEl.length > 0) {
     description = htmlToMarkdown($, descriptionEl).trim();
     // htmlToMarkdown이 빈 문자열을 반환하면 텍스트로 fallback
@@ -164,8 +164,8 @@ export async function scrapeProblem(
   }
 
   // 입력 형식 추출 (HTML을 Markdown으로 변환)
-  const inputEl = $("#problem_input");
-  let inputFormat = "";
+  const inputEl = $('#problem_input');
+  let inputFormat = '';
   if (inputEl.length > 0) {
     inputFormat = htmlToMarkdown($, inputEl).trim();
     // htmlToMarkdown이 빈 문자열을 반환하면 텍스트로 fallback
@@ -181,8 +181,8 @@ export async function scrapeProblem(
   }
 
   // 출력 형식 추출 (HTML을 Markdown으로 변환)
-  const outputEl = $("#problem_output");
-  let outputFormat = "";
+  const outputEl = $('#problem_output');
+  let outputFormat = '';
   if (outputEl.length > 0) {
     outputFormat = htmlToMarkdown($, outputEl).trim();
     // htmlToMarkdown이 빈 문자열을 반환하면 텍스트로 fallback
@@ -201,24 +201,24 @@ export async function scrapeProblem(
   const problemInfo: Record<string, string> = {};
 
   // table#problem-info 또는 .table-responsive 안의 table 찾기
-  const problemInfoTable = $("#problem-info");
-  const tableInResponsive = $(".table-responsive table");
+  const problemInfoTable = $('#problem-info');
+  const tableInResponsive = $('.table-responsive table');
 
   const targetTable =
     problemInfoTable.length > 0 ? problemInfoTable : tableInResponsive;
 
   if (targetTable.length > 0) {
     // 테이블 구조: thead에 헤더(th), tbody에 데이터(td)
-    const headerRow = targetTable.find("thead tr");
-    const dataRow = targetTable.find("tbody tr");
+    const headerRow = targetTable.find('thead tr');
+    const dataRow = targetTable.find('tbody tr');
 
     if (headerRow.length > 0 && dataRow.length > 0) {
       const headers = headerRow
-        .find("th")
+        .find('th')
         .map((_, th) => $(th).text().trim())
         .get();
       const values = dataRow
-        .find("td")
+        .find('td')
         .map((_, td) => $(td).text().trim())
         .get();
 
@@ -230,8 +230,8 @@ export async function scrapeProblem(
       });
     } else {
       // 대체 방법: 각 행이 하나의 정보를 담고 있는 경우
-      targetTable.find("tr").each((_, row) => {
-        const tds = $(row).find("td");
+      targetTable.find('tr').each((_, row) => {
+        const tds = $(row).find('td');
         if (tds.length >= 2) {
           const label = $(tds[0]).text().trim();
           const value = $(tds[1]).text().trim();
@@ -242,25 +242,25 @@ export async function scrapeProblem(
   }
 
   const timeLimit =
-    problemInfo["시간 제한"] || problemInfo["Time Limit"] || undefined;
+    problemInfo['시간 제한'] || problemInfo['Time Limit'] || undefined;
   const memoryLimit =
-    problemInfo["메모리 제한"] || problemInfo["Memory Limit"] || undefined;
-  const submissions = problemInfo["제출"] || problemInfo["Submit"] || undefined;
-  const accepted = problemInfo["정답"] || problemInfo["Accepted"] || undefined;
+    problemInfo['메모리 제한'] || problemInfo['Memory Limit'] || undefined;
+  const submissions = problemInfo['제출'] || problemInfo['Submit'] || undefined;
+  const accepted = problemInfo['정답'] || problemInfo['Accepted'] || undefined;
   const acceptedUsers =
-    problemInfo["맞힌 사람"] || problemInfo["Accepted Users"] || undefined;
+    problemInfo['맞힌 사람'] || problemInfo['Accepted Users'] || undefined;
   const acceptedRate =
-    problemInfo["정답 비율"] || problemInfo["Accepted Rate"] || undefined;
+    problemInfo['정답 비율'] || problemInfo['Accepted Rate'] || undefined;
 
   // 예제 입력/출력 추출
   const testCases: TestCase[] = [];
-  const sampleInputs = $(".sampledata").filter((_, el) => {
-    const id = $(el).attr("id");
-    return id?.startsWith("sample-input-") ?? false;
+  const sampleInputs = $('.sampledata').filter((_, el) => {
+    const id = $(el).attr('id');
+    return id?.startsWith('sample-input-') ?? false;
   });
 
   sampleInputs.each((_, el) => {
-    const inputId = $(el).attr("id");
+    const inputId = $(el).attr('id');
     if (!inputId) return;
 
     const match = inputId.match(/sample-input-(\d+)/);
@@ -281,12 +281,12 @@ export async function scrapeProblem(
   // 예제가 없으면 빈 배열 반환
   if (testCases.length === 0) {
     // 대체 방법: pre 태그에서 찾기
-    $("pre").each((_, el) => {
+    $('pre').each((_, el) => {
       const text = $(el).text().trim();
       const prevText = $(el).prev().text().toLowerCase();
 
-      if (prevText.includes("입력") || prevText.includes("input")) {
-        const nextPre = $(el).next("pre");
+      if (prevText.includes('입력') || prevText.includes('input')) {
+        const nextPre = $(el).next('pre');
         if (nextPre.length > 0) {
           testCases.push({
             input: text,
@@ -339,8 +339,8 @@ export async function searchProblems(
 
   const response = await fetch(url, {
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     },
   });
 
@@ -355,11 +355,11 @@ export async function searchProblems(
 
   // 테이블에서 문제 목록 추출
   // DOM Path: tbody.c.-1d9xc1d > tr.c.-1ojb0xa
-  const rows = $("tbody tr");
+  const rows = $('tbody tr');
 
   rows.each((_, row) => {
     const $row = $(row);
-    const cells = $row.find("td");
+    const cells = $row.find('td');
 
     if (cells.length >= 2) {
       // 첫 번째 td: 문제 번호
@@ -378,7 +378,7 @@ export async function searchProblems(
         const tierImg = firstCell.find("img[src*='tier_small']");
 
         if (tierImg.length > 0) {
-          const imgSrc = tierImg.attr("src");
+          const imgSrc = tierImg.attr('src');
           if (imgSrc) {
             // URL에서 티어 레벨 추출: tier_small/{level}.svg
             const match = imgSrc.match(/tier_small\/(\d+)\.svg/);
@@ -400,7 +400,7 @@ export async function searchProblems(
         if (cells.length >= 3) {
           const solvedCountText = $(cells[2]).text().trim();
           // 쉼표 제거 후 숫자로 변환
-          const parsed = parseInt(solvedCountText.replace(/,/g, ""), 10);
+          const parsed = parseInt(solvedCountText.replace(/,/g, ''), 10);
           if (!isNaN(parsed)) {
             solvedCount = parsed;
           }
@@ -434,7 +434,7 @@ export async function searchProblems(
   const pageNumbers: number[] = [];
 
   paginationLinks.each((_, link) => {
-    const href = $(link).attr("href");
+    const href = $(link).attr('href');
     if (href) {
       const match = href.match(/page=(\d+)/);
       if (match) {

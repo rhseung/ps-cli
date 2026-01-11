@@ -1,14 +1,14 @@
-import { StatusMessage, Alert } from "@inkjs/ui";
-import { Spinner } from "@inkjs/ui";
-import { Text, Box } from "ink";
-import React from "react";
+import { StatusMessage, Alert } from '@inkjs/ui';
+import { Spinner } from '@inkjs/ui';
+import { Text, Box } from 'ink';
+import React from 'react';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useOpenBrowser } from "../hooks/use-open-browser";
-import type { CommandFlags } from "../types/command";
-import { resolveProblemContext } from "../utils/execution-context";
-import { getProblemId } from "../utils/problem-id";
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useOpenBrowser } from '../hooks/use-open-browser';
+import type { CommandFlags } from '../types/command';
+import { resolveProblemContext } from '../utils/execution-context';
+import { getProblemId } from '../utils/problem-id';
 
 interface OpenViewProps {
   problemId: number;
@@ -21,7 +21,7 @@ function OpenView({ problemId, onComplete }: OpenViewProps) {
     onComplete,
   });
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Box flexDirection="column">
         <Spinner label="브라우저를 여는 중..." />
@@ -32,7 +32,7 @@ function OpenView({ problemId, onComplete }: OpenViewProps) {
     );
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <Box flexDirection="column">
         <Alert variant="error">브라우저를 열 수 없습니다: {error}</Alert>
@@ -52,13 +52,13 @@ function OpenView({ problemId, onComplete }: OpenViewProps) {
         <Text>
           <Text color="cyan" bold>
             문제 번호:
-          </Text>{" "}
+          </Text>{' '}
           {problemId}
         </Text>
         <Text>
           <Text color="cyan" bold>
             URL:
-          </Text>{" "}
+          </Text>{' '}
           <Text color="blue" underline>
             {url}
           </Text>
@@ -69,16 +69,16 @@ function OpenView({ problemId, onComplete }: OpenViewProps) {
 }
 
 @CommandDef({
-  name: "open",
+  name: 'open',
   description: `백준 문제 페이지를 브라우저로 엽니다.
 - 문제 번호를 인자로 전달하거나
 - 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론합니다.`,
   autoDetectProblemId: true,
   requireProblemId: true,
   examples: [
-    "open 1000                    # 1000번 문제 열기",
-    "open                         # 문제 디렉토리에서 실행 시 자동 추론",
-    "open --help                  # 도움말 표시",
+    'open 1000                    # 1000번 문제 열기',
+    'open                         # 문제 디렉토리에서 실행 시 자동 추론',
+    'open --help                  # 도움말 표시',
   ],
 })
 export class OpenCommand extends Command {
@@ -92,7 +92,7 @@ export class OpenCommand extends Command {
     );
 
     if (context.problemId === null) {
-      console.error("오류: 문제 번호를 입력해주세요.");
+      console.error('오류: 문제 번호를 입력해주세요.');
       console.error(`사용법: ps open <문제번호>`);
       console.error(`도움말: ps open --help`);
       console.error(

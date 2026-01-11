@@ -1,8 +1,8 @@
-import { Box, Text } from "ink";
-import React from "react";
+import { Box, Text } from 'ink';
+import React from 'react';
 
-import type { Problem } from "../types/index";
-import { getTierName, getTierColor } from "../utils/tier";
+import type { Problem } from '../types/index';
+import { getTierName, getTierColor } from '../utils/tier';
 
 interface ProblemDashboardProps {
   problem: Problem;
@@ -13,7 +13,7 @@ export function ProblemDashboard({ problem }: ProblemDashboardProps) {
   const tierColor = getTierColor(problem.level);
   // borderColor는 string이 필요하므로 첫 번째 색상 사용
   const borderColorString =
-    typeof tierColor === "string" ? tierColor : "#ff7ca8";
+    typeof tierColor === 'string' ? tierColor : '#ff7ca8';
   // 텍스트 색상도 동일하게 사용
   const textColorString = borderColorString;
 
@@ -26,7 +26,7 @@ export function ProblemDashboard({ problem }: ProblemDashboardProps) {
       alignSelf="flex-start"
     >
       <Text bold color={textColorString}>
-        {tierName}{" "}
+        {tierName}{' '}
         <Text color="white">
           #{problem.id}: {problem.title}
         </Text>

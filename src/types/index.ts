@@ -71,7 +71,7 @@ export interface ScrapedProblem {
   acceptedRate?: string;
 }
 
-export type TestStatus = "pass" | "fail" | "error";
+export type TestStatus = 'pass' | 'fail' | 'error';
 
 export interface TestResult {
   caseId: number;
@@ -92,16 +92,16 @@ export interface TestSummary {
 }
 
 export type SubmitStatus =
-  | "AC"
-  | "WA"
-  | "TLE"
-  | "MLE"
-  | "RE"
-  | "CE"
-  | "OLE"
-  | "PE"
-  | "WAITING"
-  | "JUDGING";
+  | 'AC'
+  | 'WA'
+  | 'TLE'
+  | 'MLE'
+  | 'RE'
+  | 'CE'
+  | 'OLE'
+  | 'PE'
+  | 'WAITING'
+  | 'JUDGING';
 
 export interface SubmitResult {
   problemId: number;

@@ -18,7 +18,7 @@ export interface FlagOptions {
   /** 짧은 플래그 (예: "l" -> -l) */
   shortFlag?: string;
   /** 플래그 타입 */
-  type?: "string" | "boolean" | "number";
+  type?: 'string' | 'boolean' | 'number';
   /** 기본값 */
   default?: string | boolean | number;
   /** 설명 */

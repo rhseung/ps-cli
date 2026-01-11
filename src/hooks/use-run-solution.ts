@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
-import { runSolution } from "../services/runner";
-import type { Language } from "../utils/language";
+import { runSolution } from '../services/runner';
+import type { Language } from '../utils/language';
 
 export interface UseRunSolutionParams {
   problemDir: string;
@@ -19,7 +19,7 @@ export interface RunResult {
 }
 
 export interface UseRunSolutionReturn {
-  status: "loading" | "ready" | "error";
+  status: 'loading' | 'ready' | 'error';
   result: RunResult | null;
   error: string | null;
 }
@@ -30,8 +30,8 @@ export function useRunSolution({
   inputFile,
   onComplete,
 }: UseRunSolutionParams): UseRunSolutionReturn {
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading",
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
+    'loading',
   );
   const [result, setResult] = useState<RunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,14 +45,14 @@ export function useRunSolution({
     })
       .then((runResult) => {
         setResult(runResult);
-        setStatus("ready");
+        setStatus('ready');
         setTimeout(() => {
           onComplete();
         }, 100);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : String(err));
-        setStatus("error");
+        setStatus('error');
         setTimeout(() => {
           onComplete();
         }, 2000);

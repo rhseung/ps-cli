@@ -1,13 +1,13 @@
-import { join } from "path";
+import { join } from 'path';
 
-import chokidar from "chokidar";
-import { useEffect, useState, useCallback } from "react";
+import chokidar from 'chokidar';
+import { useEffect, useState, useCallback } from 'react';
 
-import { runAllTests } from "../services/test-runner";
-import type { TestResult, TestSummary } from "../types";
-import type { Language } from "../utils/language";
+import { runAllTests } from '../services/test-runner';
+import type { TestResult, TestSummary } from '../types';
+import type { Language } from '../utils/language';
 
-type Status = "loading" | "ready" | "error";
+type Status = 'loading' | 'ready' | 'error';
 
 export interface UseTestRunnerParams {
   problemDir: string;
@@ -31,7 +31,7 @@ export function useTestRunner({
   timeoutMs,
   onComplete,
 }: UseTestRunnerParams): UseTestRunnerReturn {
-  const [status, setStatus] = useState<Status>("loading");
+  const [status, setStatus] = useState<Status>('loading');
   const [results, setResults] = useState<TestResult[]>([]);
   const [summary, setSummary] = useState<TestSummary>({
     total: 0,
@@ -47,7 +47,7 @@ export function useTestRunner({
       if (isWatchTrigger && watch) {
         console.clear();
       }
-      setStatus("loading");
+      setStatus('loading');
       void runAllTests({
         problemDir,
         language,
@@ -56,11 +56,11 @@ export function useTestRunner({
         .then(({ results, summary }) => {
           setResults(results);
           setSummary(summary);
-          setStatus("ready");
+          setStatus('ready');
         })
         .catch((err) => {
           setError(err instanceof Error ? err.message : String(err));
-          setStatus("error");
+          setStatus('error');
         });
     },
     [problemDir, language, timeoutMs, watch],
@@ -82,16 +82,16 @@ export function useTestRunner({
 
     const watcher = chokidar.watch(
       [
-        join(problemDir, "solution.*"),
-        join(problemDir, "input*.txt"),
-        join(problemDir, "output*.txt"),
+        join(problemDir, 'solution.*'),
+        join(problemDir, 'input*.txt'),
+        join(problemDir, 'output*.txt'),
       ],
       {
         ignoreInitial: true,
       },
     );
 
-    watcher.on("change", () => {
+    watcher.on('change', () => {
       runTests(true);
     });
 
@@ -101,7 +101,7 @@ export function useTestRunner({
   }, [problemDir, watch, runTests]);
 
   useEffect(() => {
-    if (!watch && status === "ready") {
+    if (!watch && status === 'ready') {
       const timer = setTimeout(() => onComplete(), 200);
       return () => clearTimeout(timer);
     }

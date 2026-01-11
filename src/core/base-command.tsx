@@ -1,7 +1,7 @@
-import { render } from "ink";
-import React from "react";
+import { render } from 'ink';
+import React from 'react';
 
-import type { CommandFlags } from "../types/command";
+import type { CommandFlags } from '../types/command';
 
 /**
  * 모든 Command 클래스의 베이스 클래스
@@ -24,7 +24,7 @@ export abstract class Command {
     Component:
       | React.ComponentType<TProps>
       | ((props: TProps) => React.ReactElement),
-    props: Omit<TProps, "onComplete">,
+    props: Omit<TProps, 'onComplete'>,
   ): Promise<void> {
     return new Promise<void>((resolve) => {
       const componentProps = {

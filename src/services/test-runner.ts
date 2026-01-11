@@ -1,11 +1,11 @@
-import { readdir, readFile } from "fs/promises";
-import { join } from "path";
+import { readdir, readFile } from 'fs/promises';
+import { join } from 'path';
 
-import type { TestResult, TestSummary } from "../types";
-import type { Language } from "../utils/language";
+import type { TestResult, TestSummary } from '../types';
+import type { Language } from '../utils/language';
 
-import { compareOutput } from "./diff-checker";
-import { runSolution } from "./runner";
+import { compareOutput } from './diff-checker';
+import { runSolution } from './runner';
 
 export interface RunAllTestsOptions {
   problemDir: string;
@@ -27,8 +27,8 @@ function buildSummary(results: TestResult[]): TestSummary {
   };
 
   for (const r of results) {
-    if (r.status === "pass") summary.passed += 1;
-    else if (r.status === "fail") summary.failed += 1;
+    if (r.status === 'pass') summary.passed += 1;
+    else if (r.status === 'fail') summary.failed += 1;
     else summary.errored += 1;
   }
 
@@ -49,14 +49,14 @@ export async function runAllTests({
   let effectiveTimeout: number | undefined = timeoutMs;
   if (effectiveTimeout == null) {
     try {
-      const metaRaw = await readFile(join(problemDir, "meta.json"), "utf-8");
+      const metaRaw = await readFile(join(problemDir, 'meta.json'), 'utf-8');
       const meta = JSON.parse(metaRaw) as {
         timeLimitMs?: number;
         timeLimit?: string;
       };
-      if (typeof meta.timeLimitMs === "number") {
+      if (typeof meta.timeLimitMs === 'number') {
         effectiveTimeout = meta.timeLimitMs;
-      } else if (typeof meta.timeLimit === "string") {
+      } else if (typeof meta.timeLimit === 'string') {
         const match = meta.timeLimit.match(/([\d.]+)/);
         if (match) {
           const seconds = parseFloat(match[1]);
@@ -83,13 +83,13 @@ export async function runAllTests({
     // 기대 출력 읽기
     let expected: string | undefined;
     try {
-      expected = await readFile(outputPath, "utf-8");
+      expected = await readFile(outputPath, 'utf-8');
     } catch {
       results.push({
         caseId,
         inputPath,
-        status: "error",
-        error: "기대 출력(output*.txt)을 찾을 수 없습니다.",
+        status: 'error',
+        error: '기대 출력(output*.txt)을 찾을 수 없습니다.',
       });
       continue;
     }
@@ -110,20 +110,20 @@ export async function runAllTests({
         actual: runResult.stdout,
         error: runResult.timedOut
           ? `시간 초과 (timeout ${effectiveTimeout}ms)`
-          : runResult.stderr || "실행 에러",
-        status: "error",
+          : runResult.stderr || '실행 에러',
+        status: 'error',
         durationMs: runResult.durationMs,
       });
       continue;
     }
 
-    const diff = compareOutput(expected ?? "", runResult.stdout);
+    const diff = compareOutput(expected ?? '', runResult.stdout);
     results.push({
       caseId,
       inputPath,
       expected: diff.expected,
       actual: diff.actual,
-      status: diff.pass ? "pass" : "fail",
+      status: diff.pass ? 'pass' : 'fail',
       durationMs: runResult.durationMs,
     });
   }
