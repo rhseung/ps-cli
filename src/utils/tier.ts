@@ -1,5 +1,4 @@
-import chalk from 'chalk';
-import gradient, { Gradient } from 'gradient-string';
+import gradient, { type Gradient } from 'gradient-string';
 
 export const TIER_NAMES = [
   undefined,
