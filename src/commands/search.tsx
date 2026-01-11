@@ -346,7 +346,7 @@ function SearchView({ query, onComplete }: SearchViewProps) {
               🔍 검색 결과
             </Text>
           </Box>
-          <Box marginBottom={1}>
+          <Box>
             <Text color="gray">쿼리: {query}</Text>
           </Box>
         </Box>

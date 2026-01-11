@@ -29,6 +29,7 @@ function InitView({ onComplete }: InitViewProps) {
     cancelled,
     setProblemDirValue,
     setSolvingDirValue,
+    setArchiveStrategy,
     setLanguage,
     setEditorValue,
     setAutoOpen,
@@ -113,6 +114,34 @@ function InitView({ onComplete }: InitViewProps) {
               setSolvingDirValue(value);
               const displayValue = value === '.' ? '프로젝트 루트' : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
+            }}
+          />,
+        );
+      }
+
+      case 'archive-strategy': {
+        const options = [
+          { label: '평면 (전부 나열)', value: 'flat' },
+          { label: '1000번대 묶기', value: 'by-range' },
+          { label: '티어별', value: 'by-tier' },
+          { label: '태그별', value: 'by-tag' },
+        ];
+        return renderQuestionCard(
+          getStepLabel(currentStep),
+          <Select
+            options={options}
+            onChange={(value) => {
+              setArchiveStrategy(value);
+              const strategyLabels: Record<string, string> = {
+                flat: '평면 (전부 나열)',
+                'by-range': '1000번대 묶기',
+                'by-tier': '티어별',
+                'by-tag': '태그별',
+              };
+              moveToNextStep(
+                strategyLabels[value] || value,
+                getStepLabel(currentStep),
+              );
             }}
           />,
         );

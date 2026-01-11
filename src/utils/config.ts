@@ -21,6 +21,7 @@ interface ProjectConfig {
   editor?: string;
   autoOpenEditor?: boolean;
   solvedAcHandle?: string;
+  archiveStrategy?: string;
 }
 
 const config = new Conf<ConfigSchema>({
@@ -204,6 +205,18 @@ export function getSolvingDir(): string {
 
 export function setSolvingDir(dir: string): void {
   config.set('solvingDir', dir);
+}
+
+export function getArchiveStrategy(): string {
+  const projectConfig = getProjectConfigSync();
+  if (projectConfig?.archiveStrategy !== undefined) {
+    return projectConfig.archiveStrategy;
+  }
+  return config.get('archiveStrategy') ?? 'flat';
+}
+
+export function setArchiveStrategy(strategy: string): void {
+  config.set('archiveStrategy', strategy);
 }
 
 export function clearConfig(): void {

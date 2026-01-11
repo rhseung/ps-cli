@@ -4,6 +4,7 @@ import { join } from 'path';
 import { execaCommand, execa } from 'execa';
 import { useEffect, useState, useCallback } from 'react';
 
+import type { ProjectConfig } from '../types/index';
 import {
   getProblemDir,
   getSolvingDir,
@@ -11,11 +12,13 @@ import {
   getEditor,
   getAutoOpenEditor,
   getSolvedAcHandle,
+  getArchiveStrategy,
 } from '../utils/config';
 
 export type InitStep =
   | 'problem-dir'
   | 'solving-dir'
+  | 'archive-strategy'
   | 'language'
   | 'editor'
   | 'auto-open'
@@ -40,6 +43,7 @@ export interface UseInitReturn {
   initialized: boolean;
   problemDir: string;
   solvingDir: string;
+  archiveStrategy: string;
   language: string;
   editor: string;
   autoOpen: boolean;
@@ -49,6 +53,7 @@ export interface UseInitReturn {
   cancelled: boolean;
   setProblemDirValue: (value: string) => void;
   setSolvingDirValue: (value: string) => void;
+  setArchiveStrategy: (value: string) => void;
   setLanguage: (value: string) => void;
   setEditorValue: (value: string) => void;
   setAutoOpen: (value: boolean) => void;
@@ -71,6 +76,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   const [initialized, setInitialized] = useState(false);
   const [problemDir, setProblemDirValue] = useState<string>(getProblemDir());
   const [solvingDir, setSolvingDirValue] = useState<string>(getSolvingDir());
+  const [archiveStrategy, setArchiveStrategy] =
+    useState<string>(getArchiveStrategy());
   const [language, setLanguage] = useState<string>(getDefaultLanguage());
   const [editor, setEditorValue] = useState<string>(getEditor());
   const [autoOpen, setAutoOpen] = useState<boolean>(getAutoOpenEditor());
@@ -116,6 +123,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           setProblemDirValue(projectConfig.problemDir);
         if (projectConfig.solvingDir)
           setSolvingDirValue(projectConfig.solvingDir);
+        if (projectConfig.archiveStrategy)
+          setArchiveStrategy(projectConfig.archiveStrategy);
         if (projectConfig.defaultLanguage)
           setLanguage(projectConfig.defaultLanguage);
         if (projectConfig.editor) setEditorValue(projectConfig.editor);
@@ -138,6 +147,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         return '문제 디렉토리 설정 (아카이브된 문제)';
       case 'solving-dir':
         return 'Solving 디렉토리 설정 (푸는 중인 문제)';
+      case 'archive-strategy':
+        return '아카이빙 전략 설정';
       case 'language':
         return '기본 언어 설정';
       case 'editor':
@@ -158,6 +169,15 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           return problemDir === '.' ? '프로젝트 루트' : problemDir;
         case 'solving-dir':
           return solvingDir === '.' ? '프로젝트 루트' : solvingDir;
+        case 'archive-strategy': {
+          const strategyLabels: Record<string, string> = {
+            flat: '평면 (전부 나열)',
+            'by-range': '1000번대 묶기',
+            'by-tier': '티어별',
+            'by-tag': '태그별',
+          };
+          return strategyLabels[archiveStrategy] || archiveStrategy;
+        }
         case 'language':
           return language;
         case 'editor':
@@ -170,7 +190,15 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           return '';
       }
     },
-    [problemDir, solvingDir, language, editor, autoOpen, handle],
+    [
+      problemDir,
+      solvingDir,
+      archiveStrategy,
+      language,
+      editor,
+      autoOpen,
+      handle,
+    ],
   );
 
   const executeInit = useCallback(async () => {
@@ -179,14 +207,18 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
       // 프로젝트별 메타데이터 파일 생성 (.ps-cli.json)
       const projectConfigPath = join(cwd, '.ps-cli.json');
-      const projectConfig = {
+      const projectConfig: ProjectConfig = {
         problemDir,
         solvingDir,
+        archiveStrategy,
         defaultLanguage: language,
         editor,
         autoOpenEditor: autoOpen,
-        solvedAcHandle: handle || undefined,
       };
+      // handle이 빈 문자열이 아닐 때만 추가
+      if (handle && handle.trim() !== '') {
+        projectConfig.solvedAcHandle = handle;
+      }
       await writeFile(
         projectConfigPath,
         JSON.stringify(projectConfig, null, 2),
@@ -222,12 +254,10 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         }
       }
 
-      // .gitignore 업데이트
+      // .gitignore 업데이트 (solving dir만 포함, problem dir은 Git에 커밋)
       const gitignorePath = join(cwd, '.gitignore');
       const gitignorePatterns: string[] = [];
-      if (problemDir !== '.' && problemDir !== '') {
-        gitignorePatterns.push(`${problemDir}/`);
-      }
+      // problemDir은 Git에 커밋하므로 .gitignore에 포함하지 않음
       if (solvingDir !== '.' && solvingDir !== '') {
         gitignorePatterns.push(`${solvingDir}/`);
       }
@@ -325,7 +355,16 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         onComplete();
       }, 2000);
     }
-  }, [problemDir, solvingDir, language, editor, autoOpen, handle, onComplete]);
+  }, [
+    problemDir,
+    solvingDir,
+    archiveStrategy,
+    language,
+    editor,
+    autoOpen,
+    handle,
+    onComplete,
+  ]);
 
   const moveToNextStep = useCallback(
     (selectedValue: string, stepLabel: string) => {
@@ -338,6 +377,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       const stepOrder: InitStep[] = [
         'problem-dir',
         'solving-dir',
+        'archive-strategy',
         'language',
         'editor',
         'auto-open',
@@ -365,6 +405,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     initialized,
     problemDir,
     solvingDir,
+    archiveStrategy,
     language,
     editor,
     autoOpen,
@@ -374,6 +415,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     cancelled,
     setProblemDirValue,
     setSolvingDirValue,
+    setArchiveStrategy,
     setLanguage,
     setEditorValue,
     setAutoOpen,

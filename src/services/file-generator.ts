@@ -34,7 +34,7 @@ export async function generateProblemFiles(
   problem: Problem,
   language: Language = 'python',
 ): Promise<string> {
-  const problemDir = getSolvingDirPath(problem.id);
+  const problemDir = getSolvingDirPath(problem.id, process.cwd(), problem);
   await mkdir(problemDir, { recursive: true });
 
   const langConfig = getLanguageConfig(language);
@@ -154,6 +154,7 @@ ${tags}
     id: problem.id,
     title: problem.title,
     level: problem.level,
+    tags: problem.tags,
     timeLimit: problem.timeLimit,
     timeLimitMs: parseTimeLimitToMs(problem.timeLimit),
     memoryLimit: problem.memoryLimit,

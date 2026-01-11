@@ -12,6 +12,7 @@ import {
   getAutoOpenEditor,
   getSolvedAcHandle,
   getProblemDir,
+  getArchiveStrategy,
 } from '../utils/config';
 import {
   getSupportedLanguages,
@@ -42,6 +43,7 @@ export function getConfigHelp(): string {
     auto-open-editor       fetch 후 자동으로 에디터 열기 (true/false)
     solved-ac-handle       Solved.ac 핸들 (stats 명령어용)
     problem-dir            문제 디렉토리 경로 (기본값: problems, "." 또는 ""는 프로젝트 루트)
+    archive-strategy       아카이빙 전략 (flat, by-range, by-tier, by-tag)
 
   옵션:
     --help, -h             도움말 표시
@@ -65,6 +67,7 @@ const CONFIG_KEYS = [
   { label: 'auto-open-editor', value: 'auto-open-editor' },
   { label: 'solved-ac-handle', value: 'solved-ac-handle' },
   { label: 'problem-dir', value: 'problem-dir' },
+  { label: 'archive-strategy', value: 'archive-strategy' },
 ];
 
 interface ConfigViewProps {
@@ -124,6 +127,7 @@ function ConfigView({
     const autoOpen = config?.autoOpenEditor ?? getAutoOpenEditor();
     const handle = config?.solvedAcHandle ?? getSolvedAcHandle();
     const problemDir = config?.problemDir ?? getProblemDir();
+    const archiveStrategy = config?.archiveStrategy ?? getArchiveStrategy();
 
     return (
       <Box flexDirection="column">
@@ -162,6 +166,11 @@ function ConfigView({
             <Text> </Text>
             <Text bold>{problemDir}</Text>
           </Box>
+          <Box marginBottom={1}>
+            <Text color="gray">archive-strategy:</Text>
+            <Text> </Text>
+            <Text bold>{archiveStrategy}</Text>
+          </Box>
         </Box>
       </Box>
     );
@@ -187,6 +196,9 @@ function ConfigView({
         break;
       case 'problem-dir':
         configValue = config?.problemDir ?? getProblemDir();
+        break;
+      case 'archive-strategy':
+        configValue = config?.archiveStrategy ?? getArchiveStrategy();
         break;
       default:
         console.error(`알 수 없는 설정 키: ${configKey}`);
@@ -412,6 +424,8 @@ export class ConfigCommand extends Command {
           return 'Solved.ac 핸들 입력';
         case 'problem-dir':
           return '문제 디렉토리 경로 입력';
+        case 'archive-strategy':
+          return '아카이빙 전략 입력 (flat, by-range, by-tier, by-tag)';
         default:
           return '값 입력';
       }
@@ -429,6 +443,8 @@ export class ConfigCommand extends Command {
           return 'Solved.ac 사용자 핸들';
         case 'problem-dir':
           return '문제 디렉토리 경로 (기본값: "problems", 프로젝트 루트: ".")';
+        case 'archive-strategy':
+          return '아카이빙 전략: flat (평면), by-range (1000번대 묶기), by-tier (티어별), by-tag (태그별)';
         default:
           return '';
       }
@@ -444,6 +460,8 @@ export class ConfigCommand extends Command {
           return ['true', 'false'];
         case 'problem-dir':
           return ['problems', '.', ''];
+        case 'archive-strategy':
+          return ['flat', 'by-range', 'by-tier', 'by-tag'];
         default:
           return [];
       }

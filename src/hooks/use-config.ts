@@ -4,19 +4,12 @@ import { join } from 'path';
 
 import { useEffect, useState } from 'react';
 
+import type { ProjectConfig } from '../types/index';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
   type Language,
 } from '../utils/language';
-
-export interface ProjectConfig {
-  problemDir?: string;
-  defaultLanguage?: string;
-  editor?: string;
-  autoOpenEditor?: boolean;
-  solvedAcHandle?: string;
-}
 
 function getProjectConfigPath(): string {
   return join(process.cwd(), '.ps-cli.json');
@@ -120,6 +113,17 @@ export function useConfig({
           case 'problem-dir':
             updatedConfig.problemDir = value;
             break;
+          case 'archive-strategy': {
+            const validStrategies = ['flat', 'by-range', 'by-tier', 'by-tag'];
+            if (!validStrategies.includes(value)) {
+              console.error(
+                `지원하지 않는 아카이빙 전략입니다: ${value}\n지원 전략: ${validStrategies.join(', ')}`,
+              );
+              process.exit(1);
+            }
+            updatedConfig.archiveStrategy = value;
+            break;
+          }
           default:
             console.error(`알 수 없는 설정 키: ${configKey}`);
             process.exit(1);

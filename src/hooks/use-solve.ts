@@ -1,10 +1,11 @@
-import { access, readFile, rename } from 'fs/promises';
-import { join } from 'path';
+import { access, readFile, rename, mkdir, readdir, rmdir } from 'fs/promises';
+import { join, dirname } from 'path';
 
 import { execa } from 'execa';
 import { useEffect, useState } from 'react';
 
-import { findProjectRoot } from '../utils/config';
+import type { Problem } from '../types/index';
+import { findProjectRoot, getSolvingDir } from '../utils/config';
 import { getSolvingDirPath, getProblemDirPath } from '../utils/problem-id';
 
 export interface UseSolveParams {
@@ -50,22 +51,39 @@ export function useSolve({
           );
         }
 
-        // meta.json에서 문제 이름 읽기
+        // meta.json에서 문제 정보 읽기
         setMessage('문제 정보를 읽는 중...');
         const metaPath = join(solvingDir, 'meta.json');
         let problemTitle = `문제 ${problemId}`;
+        let problem: Problem | undefined;
         try {
           const metaContent = await readFile(metaPath, 'utf-8');
-          const meta = JSON.parse(metaContent) as { title?: string };
+          const meta = JSON.parse(metaContent) as {
+            id?: number;
+            title?: string;
+            level?: number;
+            tags?: string[];
+          };
           if (meta.title) {
             problemTitle = meta.title;
+          }
+          // 문제 정보 구성 (아카이빙 전략에 필요)
+          if (meta.id && meta.level !== undefined) {
+            problem = {
+              id: meta.id,
+              title: meta.title || `문제 ${meta.id}`,
+              level: meta.level,
+              tier: '', // tier는 level에서 계산되므로 빈 문자열로 충분
+              tags: meta.tags || [],
+              testCases: [],
+            };
           }
         } catch {
           // meta.json이 없거나 읽을 수 없어도 계속 진행
         }
 
-        // problem 디렉토리 경로
-        const problemDir = getProblemDirPath(problemId, projectRoot);
+        // problem 디렉토리 경로 (문제 정보 전달)
+        const problemDir = getProblemDirPath(problemId, projectRoot, problem);
 
         // problem 디렉토리에 이미 같은 문제가 있는지 확인
         try {
@@ -80,9 +98,51 @@ export function useSolve({
           }
         }
 
+        // 타겟 디렉토리의 부모 디렉토리 생성 (아카이빙 전략에 따라 필요)
+        const problemDirParent = dirname(problemDir);
+        setMessage('아카이브 디렉토리를 준비하는 중...');
+        await mkdir(problemDirParent, { recursive: true });
+
         // 디렉토리 이동
         setMessage('문제를 problem 디렉토리로 이동하는 중...');
         await rename(solvingDir, problemDir);
+
+        // solving dir의 빈 부모 디렉토리 삭제
+        setMessage('빈 디렉토리 정리 중...');
+        try {
+          const solvingDirConfig = getSolvingDir();
+          if (
+            solvingDirConfig &&
+            solvingDirConfig !== '.' &&
+            solvingDirConfig !== ''
+          ) {
+            let currentParentDir = dirname(solvingDir);
+            const solvingBaseDir = join(projectRoot, solvingDirConfig);
+
+            // solving dir의 부모 디렉토리들을 재귀적으로 확인하고 삭제
+            while (
+              currentParentDir !== solvingBaseDir &&
+              currentParentDir !== projectRoot
+            ) {
+              try {
+                const entries = await readdir(currentParentDir);
+                // 디렉토리가 비어있으면 삭제
+                if (entries.length === 0) {
+                  await rmdir(currentParentDir);
+                  currentParentDir = dirname(currentParentDir);
+                } else {
+                  // 비어있지 않으면 중단
+                  break;
+                }
+              } catch {
+                // 읽기 실패하면 중단
+                break;
+              }
+            }
+          }
+        } catch {
+          // 빈 디렉토리 삭제 실패해도 계속 진행
+        }
 
         // Git 커밋
         setMessage('Git 커밋을 실행하는 중...');

@@ -145,7 +145,7 @@ export class SubmitCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
     const problemId = getProblemId(args);
 
-    // 문제 컨텍스트 해석
+    // 문제 컨텍스트 해석 (solving dir과 problem dir 둘 다 확인)
     const context = await resolveProblemContext(
       problemId !== null ? [problemId.toString()] : [],
       { requireId: true },

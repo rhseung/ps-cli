@@ -129,4 +129,14 @@ export interface SearchResults {
   totalPages: number;
 }
 
+export interface ProjectConfig {
+  problemDir?: string;
+  solvingDir?: string;
+  archiveStrategy?: string;
+  defaultLanguage?: string;
+  editor?: string;
+  autoOpenEditor?: boolean;
+  solvedAcHandle?: string;
+}
+
 export type { Workbook, WorkbookProblem } from './workbook';
