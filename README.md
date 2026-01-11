@@ -1,64 +1,39 @@
 # ps-cli
 
-백준(BOJ) 문제 해결을 위한 통합 CLI 도구입니다. Ink 기반의 인터랙티브 터미널 UI로 문제 가져오기, 로컬 테스트, 제출까지 지원하는 개발 환경을 제공합니다.
+백준 문제 해결을 위한 CLI 도구입니다.
 
 ## 설치
 
-### npm 사용
-
 ```bash
 npm install -g @rhseung/ps-cli
-```
-
-### bun 사용
-
-```bash
+# 또는
 bun install -g @rhseung/ps-cli
 ```
 
-또는 `bunx`를 사용하여 직접 실행:
+## 빠른 시작
 
 ```bash
-bunx @rhseung/ps-cli fetch 1000
+# 1. 프로젝트 초기화
+ps init
+
+# 2. 문제 가져오기
+ps fetch 1000
+
+# 3. 코드 작성 후 테스트
+ps test
+
+# 4. 제출
+ps submit
 ```
-
-## 요구사항
-
-- Node.js >= 18.0.0
-
-## 주요 기능
-
-- **문제 가져오기**: Solved.ac API와 BOJ 크롤링을 통한 문제 정보 및 예제 데이터 자동 생성
-- **로컬 테스트**: 여러 언어(JS/TS, Python, C++) 지원 및 자동 테스트 실행
-- **제출**: BOJ 자동 제출 및 결과 확인
-- **통계**: Solved.ac API를 활용한 사용자 통계 조회
-- **Watch 모드**: 파일 저장 시 자동 테스트 실행
 
 ## 명령어
 
 ### `init` - 프로젝트 초기화
 
-현재 디렉토리를 ps-cli 프로젝트로 초기화합니다.
+프로젝트를 초기화하고 설정을 구성합니다.
 
 ```bash
 ps init
-```
-
-**기능:**
-
-- `problems/` 디렉토리 생성
-- `.gitignore`에 `problems/` 추가 (이미 있으면 스킵)
-
-**예제:**
-
-```bash
-# 프로젝트 폴더에서 초기화
-mkdir my-algorithm-problems
-cd my-algorithm-problems
-ps init
-
-# 이제 문제를 가져올 수 있습니다
-ps fetch 1000
 ```
 
 ### `fetch` - 문제 가져오기
@@ -66,277 +41,139 @@ ps fetch 1000
 백준 문제를 가져와서 로컬에 파일을 생성합니다.
 
 ```bash
-ps fetch <문제번호> [옵션]
-```
-
-**기능:**
-
-- Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
-- 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
-- 선택한 언어의 솔루션 템플릿 파일 생성
-- README.md에 문제 정보, 통계, 태그 등 포함
-
-**옵션:**
-
-- `--language, -l`: 언어 선택 (python, javascript, typescript, cpp)
-  - 기본값: python
-
-**예제:**
-
-```bash
 ps fetch 1000
 ps fetch 1000 --language python
-ps fetch 1000 -l cpp
 ```
 
-### `test` - 로컬 테스트 실행
+### `test` - 로컬 테스트
 
-예제 입출력 기반으로 로컬 테스트를 실행합니다.
-
-```bash
-ps test [문제번호] [옵션]
-```
-
-**기능:**
-
-- 현재 디렉토리 또는 지정한 문제 번호의 테스트 실행
-- `solution.*` 파일을 자동으로 찾아 언어 감지
-- `input*.txt`와 `output*.txt` 파일을 기반으로 테스트
-- 문제의 시간 제한을 자동으로 적용
-- `--watch` 옵션으로 파일 변경 시 자동 재테스트
-
-**옵션:**
-
-- `--language, -l`: 언어 선택 (지정 시 자동 감지 무시)
-- `--watch, -w`: watch 모드 (파일 변경 시 자동 재테스트)
-
-**예제:**
+예제 입출력으로 테스트를 실행합니다.
 
 ```bash
-ps test                    # 현재 디렉토리에서 테스트
-ps test 1000               # 1000번 문제 테스트
-ps test --watch            # watch 모드로 테스트
-ps test 1000 --watch       # 1000번 문제를 watch 모드로 테스트
+ps test
+ps test 1000
+ps test --watch  # 파일 변경 시 자동 재테스트
 ```
 
 ### `run` - 코드 실행
 
-코드를 실행합니다 (테스트 없이).
+테스트 없이 코드를 실행합니다.
 
 ```bash
-ps run [문제번호] [옵션]
+ps run
+ps run 1000
 ```
 
-**기능:**
+### `submit` - 제출
 
-- 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
-- `solution.*` 파일을 자동으로 찾아 언어 감지
-- `input.txt` 또는 `input1.txt`를 표준 입력으로 사용
-- 테스트 케이스 검증 없이 단순 실행
-
-**옵션:**
-
-- `--language, -l`: 언어 선택 (지정 시 자동 감지 무시)
-- `--input, -i`: 입력 파일 지정 (기본값: input.txt 또는 input1.txt)
-
-**예제:**
+백준 제출 페이지를 열고 소스 코드를 클립보드에 복사합니다.
 
 ```bash
-ps run                    # 현재 디렉토리에서 실행
-ps run 1000               # 1000번 문제 실행
-ps run --language python  # Python으로 실행
-ps run --input input2.txt # 특정 입력 파일 사용
+ps submit
+ps submit 1000
 ```
 
-### `submit` - BOJ 제출
+### `solve` - 아카이빙
 
-현재 문제의 솔루션 파일을 BOJ에 제출합니다.
+solving 디렉토리의 문제를 problem 디렉토리로 이동하고 Git 커밋을 생성합니다.
 
 ```bash
-ps submit [문제번호] [옵션]
+ps solve 1000
 ```
 
-**기능:**
+### `open` - 문제 페이지 열기
 
-- 현재 디렉토리 또는 지정한 문제 번호의 솔루션 파일 제출
-- `solution.*` 파일을 자동으로 찾아 언어 감지
-- 제출 후 채점 결과를 자동으로 확인
-
-**옵션:**
-
-- `--language, -l`: 언어 선택 (지정 시 자동 감지 무시)
-- `--dry-run`: 실제 제출 없이 검증만 수행
-
-**예제:**
+백준 문제 페이지를 브라우저로 엽니다.
 
 ```bash
-ps submit                    # 현재 디렉토리에서 제출
-ps submit 1000               # 1000번 문제 제출
-ps submit --language python  # Python으로 제출
-ps submit --dry-run          # 제출 전 검증만 수행
+ps open 1000
 ```
 
-**참고:** 제출 기능을 사용하려면 먼저 BOJ 세션 쿠키를 설정해야 합니다:
+### `search` - 문제 검색
+
+solved.ac에서 문제를 검색합니다.
 
 ```bash
-ps config boj-session-cookie "boj_session=your_session_cookie"
+ps search "*g1...g5"
+ps search --workbook 12345
 ```
 
-### `stats` - 사용자 통계 조회
+### `stats` - 통계 조회
 
-Solved.ac에서 사용자 통계를 조회합니다.
-
-```bash
-ps stats [핸들] [옵션]
-```
-
-**기능:**
-
-- 티어, 레이팅, 해결한 문제 수 등 표시
-- 그라데이션으로 시각적으로 표시
-
-**옵션:**
-
-- `--handle, -h`: Solved.ac 핸들 (설정에 저장된 값 사용 가능)
-
-**예제:**
+Solved.ac 사용자 통계를 조회합니다.
 
 ```bash
+ps stats
 ps stats myhandle
-ps stats --handle myhandle
-```
-
-**참고:** 핸들을 설정에 저장하면 매번 입력할 필요가 없습니다:
-
-```bash
-ps config solved-ac-handle myhandle
-ps stats  # 설정된 핸들 사용
 ```
 
 ### `config` - 설정 관리
 
-사용자 설정을 관리합니다.
+프로젝트 설정을 관리합니다.
 
 ```bash
-ps config <키> [값]
-ps config <키> --get
-ps config --list
+ps config list
+ps config set default-language python
+ps config get archive-strategy
 ```
 
-**설정 키:**
+## 설정
 
-- `boj-session-cookie`: BOJ 세션 쿠키 (제출 기능용)
+프로젝트 루트의 `.ps-cli.json` 파일에 저장됩니다.
+
+### 주요 설정
+
 - `default-language`: 기본 언어 (python, javascript, typescript, cpp)
-- `code-open`: 코드 공개 여부 (true/false)
-- `editor`: 에디터 명령어 (예: code, vim, nano)
+- `editor`: 에디터 명령어 (code, cursor, vim 등)
 - `auto-open-editor`: fetch 후 자동으로 에디터 열기 (true/false)
-- `solved-ac-handle`: Solved.ac 핸들 (stats 명령어용)
-- `problem-dir`: 문제 디렉토리 경로 (기본값: `problems`, `"."` 또는 `""`는 프로젝트 루트에 직접 저장)
+- `solved-ac-handle`: Solved.ac 핸들
+- `problem-dir`: 아카이브된 문제 디렉토리 (기본값: problems)
+- `solving-dir`: 푸는 중인 문제 디렉토리 (기본값: solving)
+- `archive-strategy`: 아카이빙 전략
 
-**옵션:**
+### 아카이빙 전략
 
-- `--get`: 설정 값 조회
-- `--list`: 모든 설정 조회
-- `--help, -h`: 도움말 표시
+문제가 많아질 때를 대비해 아카이빙 전략을 선택할 수 있습니다:
 
-**예제:**
+- `flat`: 평면적으로 나열 (기본값)
 
-```bash
-ps config boj-session-cookie "boj_session=xxx"
-ps config default-language python
-ps config solved-ac-handle myhandle
-ps config solved-ac-handle --get
-ps config --list
-```
+  ```txt
+  problems/1000/
+  problems/1001/
+  ```
 
-### `help` - 도움말 표시
+- `by-range`: 1000번대별로 묶기
 
-도움말을 표시합니다.
+  ```txt
+  problems/01000/1000/
+  problems/01000/1001/
+  problems/02000/2000/
+  ```
 
-```bash
-ps help
-ps --help
-ps <명령어> --help
-```
+- `by-tier`: 티어별로 묶기
 
-## 기술 스택
+  ```txt
+  problems/bronze-v/1000/
+  problems/silver-i/1001/
+  ```
 
-- **Ink**: React 기반 터미널 UI
-- **TypeScript**: 타입 안전성
-- **Meow**: CLI 인자 파싱
-- **Execa**: 프로세스 실행
-- **Cheerio**: HTML 파싱
-- **tsup**: 빌드 도구
+- `by-tag`: 태그별로 묶기
 
-## 사용 예제
+  ```txt
+  problems/구현/1000/
+  problems/그래프-이론/1001/
+  ```
 
-### 전체 워크플로우
+**참고:** solving 디렉토리는 항상 평면적으로 나열됩니다.
 
-```bash
-# 1. 프로젝트 초기화 (최초 1회)
-ps init
+## 워크플로우
 
-# 2. 문제 가져오기
-ps fetch 1000 --language python
-
-# 3. 문제 디렉토리로 이동
-cd problems/1000
-
-# 4. 코드 작성 (solution.py 편집)
-
-# 5. 로컬 테스트
-ps test
-
-# 6. Watch 모드로 개발 (파일 저장 시 자동 테스트)
-ps test --watch
-
-# 7. 단일 입력으로 실행 테스트
-ps run
-
-# 8. BOJ에 제출
-ps submit
-```
-
-### 설정 예제
-
-```bash
-# BOJ 세션 쿠키 설정 (제출 기능용)
-ps config boj-session-cookie "boj_session=your_cookie_here"
-
-# 기본 언어 설정
-ps config default-language python
-
-# Solved.ac 핸들 설정
-ps config solved-ac-handle myhandle
-
-# fetch 후 자동으로 VS Code 열기
-ps config editor code
-ps config auto-open-editor true
-
-# 문제 디렉토리 설정
-ps config problem-dir "problems"  # problems 디렉토리 사용 (기본값)
-ps config problem-dir "."         # 프로젝트 루트에 직접 저장
-ps config problem-dir "solutions" # solutions 디렉토리 사용
-```
-
-### 문제 디렉토리 설정
-
-`problem-dir` 설정을 통해 문제 파일이 저장되는 위치를 변경할 수 있습니다:
-
-- **기본값 (`problems`)**: `problems/{문제번호}/` 형식으로 저장
-- **프로젝트 루트 (`"."` 또는 `""`)**: 프로젝트 루트에 `{문제번호}/` 형식으로 직접 저장
-
-**예제:**
-
-```bash
-# 프로젝트 루트에 직접 저장하도록 설정
-ps config problem-dir "."
-
-# 문제 가져오기 (프로젝트 루트에 1000/ 디렉토리 생성)
-ps fetch 1000
-
-# 결과: ./1000/solution.py, ./1000/input1.txt 등
-```
+1. **초기화**: `ps init`으로 프로젝트 설정
+2. **가져오기**: `ps fetch 1000`으로 문제 가져오기
+3. **작성**: `solving/1000/`에서 코드 작성
+4. **테스트**: `ps test`로 로컬 테스트
+5. **제출**: `ps submit`으로 제출
+6. **아카이빙**: `ps solve`로 problem 디렉토리로 이동
 
 ## 라이선스
 

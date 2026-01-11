@@ -99,25 +99,21 @@ function generateHelpText(commands: Map<string, CommandDefinition>): string {
 
   명령어:
 ${commandList}
-    help                이 도움말 표시
+    help                도움말 표시
 
-  옵션:
-    --language, -l      언어 선택
-                        지원 언어: ${getSupportedLanguagesString()}
-                        - fetch: 기본값 python
-                        - test: solution.* 파일로 자동 감지 (지정 시 덮어쓰기)
+  주요 옵션:
+    --language, -l      언어 선택 (${getSupportedLanguagesString()})
+    --watch, -w         테스트 watch 모드 (test 전용)
+    --help, -h          명령어별 도움말
 
-    --watch, -w         테스트 watch 모드 (test 명령어 전용)
-                        - solution.*, input*.txt, output*.txt 파일 변경 감지
-                        - 변경 시 자동으로 테스트 재실행
+  빠른 시작:
+    $ ps init           # 프로젝트 초기화
+    $ ps fetch 1000     # 문제 가져오기
+    $ ps test           # 테스트 실행
+    $ ps submit         # 제출
 
-    --help, -h          명령어별 도움말 표시
-
-  예제:
-    $ ps fetch 1000
-    $ ps test 1000 --watch
-    $ ps help
-    $ ps fetch --help
+  자세한 도움말:
+    $ ps <명령어> --help
 `;
 }
 
