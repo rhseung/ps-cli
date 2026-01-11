@@ -8,10 +8,12 @@
   },
   "files": [
     "dist",
-    "templates"
+    "templates",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup && node scripts/add-shebang.js",
+    "prepublishOnly": "npm run build",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
