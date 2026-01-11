@@ -212,9 +212,14 @@ function InitView({ onComplete }: InitViewProps) {
               <TextInput
                 placeholder="핸들 입력"
                 onSubmit={(value) => {
-                  setHandle(value);
+                  const handleValue = value.trim();
+                  setHandle(handleValue);
                   setHandleInputMode(false);
-                  moveToNextStep(value || '(스킵)', getStepLabel(currentStep));
+                  moveToNextStep(
+                    handleValue || '(스킵)',
+                    getStepLabel(currentStep),
+                    handleValue,
+                  );
                 }}
               />
             </Box>,

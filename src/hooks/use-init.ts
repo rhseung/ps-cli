@@ -62,7 +62,11 @@ export interface UseInitReturn {
   setConfirmExit: (value: boolean) => void;
   setCurrentStep: (step: InitStep) => void;
   setCancelled: (value: boolean) => void;
-  moveToNextStep: (selectedValue: string, stepLabel: string) => void;
+  moveToNextStep: (
+    selectedValue: string,
+    stepLabel: string,
+    handleValue?: string,
+  ) => void;
   getStepLabel: (step: InitStep) => string;
   getStepValue: (step: InitStep) => string;
 }
@@ -201,178 +205,192 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     ],
   );
 
-  const executeInit = useCallback(async () => {
-    try {
-      const cwd = process.cwd();
+  const executeInit = useCallback(
+    async (overrideHandle?: string) => {
+      try {
+        const cwd = process.cwd();
 
-      // 프로젝트별 메타데이터 파일 생성 (.ps-cli.json)
-      const projectConfigPath = join(cwd, '.ps-cli.json');
-      const projectConfig: ProjectConfig = {
-        problemDir,
-        solvingDir,
-        archiveStrategy,
-        defaultLanguage: language,
-        editor,
-        autoOpenEditor: autoOpen,
-      };
-      // handle이 빈 문자열이 아닐 때만 추가
-      if (handle && handle.trim() !== '') {
-        projectConfig.solvedAcHandle = handle;
-      }
-      await writeFile(
-        projectConfigPath,
-        JSON.stringify(projectConfig, null, 2),
-        'utf-8',
-      );
-      setCreated((prev) => [...prev, '.ps-cli.json']);
-
-      // problemDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-      if (problemDir !== '.' && problemDir !== '') {
-        const problemDirPath = join(cwd, problemDir);
-        try {
-          await mkdir(problemDirPath, { recursive: true });
-          setCreated((prev) => [...prev, `${problemDir}/`]);
-        } catch (err) {
-          const error = err as NodeJS.ErrnoException;
-          if (error.code !== 'EEXIST') {
-            throw err;
-          }
+        // 프로젝트별 메타데이터 파일 생성 (.ps-cli.json)
+        const projectConfigPath = join(cwd, '.ps-cli.json');
+        const projectConfig: ProjectConfig = {
+          problemDir,
+          solvingDir,
+          archiveStrategy,
+          defaultLanguage: language,
+          editor,
+          autoOpenEditor: autoOpen,
+        };
+        // handle이 존재하고 빈 문자열이 아닐 때만 추가
+        // overrideHandle이 있으면 우선 사용, 없으면 상태의 handle 사용
+        const handleToUse = overrideHandle ?? handle;
+        if (
+          handleToUse &&
+          typeof handleToUse === 'string' &&
+          handleToUse.trim().length > 0
+        ) {
+          projectConfig.solvedAcHandle = handleToUse.trim();
         }
-      }
+        await writeFile(
+          projectConfigPath,
+          JSON.stringify(projectConfig, null, 2),
+          'utf-8',
+        );
+        setCreated((prev) => [...prev, '.ps-cli.json']);
 
-      // solvingDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-      if (solvingDir !== '.' && solvingDir !== '') {
-        const solvingDirPath = join(cwd, solvingDir);
-        try {
-          await mkdir(solvingDirPath, { recursive: true });
-          setCreated((prev) => [...prev, `${solvingDir}/`]);
-        } catch (err) {
-          const error = err as NodeJS.ErrnoException;
-          if (error.code !== 'EEXIST') {
-            throw err;
-          }
-        }
-      }
-
-      // .gitignore 업데이트 (solving dir만 포함, problem dir은 Git에 커밋)
-      const gitignorePath = join(cwd, '.gitignore');
-      const gitignorePatterns: string[] = [];
-      // problemDir은 Git에 커밋하므로 .gitignore에 포함하지 않음
-      if (solvingDir !== '.' && solvingDir !== '') {
-        gitignorePatterns.push(`${solvingDir}/`);
-      }
-
-      if (gitignorePatterns.length > 0) {
-        try {
-          const gitignoreContent = await readFile(gitignorePath, 'utf-8');
-          let updatedContent = gitignoreContent.trim();
-          let hasChanges = false;
-
-          for (const pattern of gitignorePatterns) {
-            if (!gitignoreContent.includes(pattern)) {
-              updatedContent +=
-                (updatedContent ? '\n' : '') +
-                `# ps-cli 문제 디렉토리\n${pattern}`;
-              hasChanges = true;
+        // problemDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
+        if (problemDir !== '.' && problemDir !== '') {
+          const problemDirPath = join(cwd, problemDir);
+          try {
+            await mkdir(problemDirPath, { recursive: true });
+            setCreated((prev) => [...prev, `${problemDir}/`]);
+          } catch (err) {
+            const error = err as NodeJS.ErrnoException;
+            if (error.code !== 'EEXIST') {
+              throw err;
             }
           }
+        }
 
-          if (hasChanges) {
-            await writeFile(gitignorePath, updatedContent + '\n', 'utf-8');
-            setCreated((prev) => [...prev, '.gitignore 업데이트']);
+        // solvingDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
+        if (solvingDir !== '.' && solvingDir !== '') {
+          const solvingDirPath = join(cwd, solvingDir);
+          try {
+            await mkdir(solvingDirPath, { recursive: true });
+            setCreated((prev) => [...prev, `${solvingDir}/`]);
+          } catch (err) {
+            const error = err as NodeJS.ErrnoException;
+            if (error.code !== 'EEXIST') {
+              throw err;
+            }
+          }
+        }
+
+        // .gitignore 업데이트 (solving dir만 포함, problem dir은 Git에 커밋)
+        const gitignorePath = join(cwd, '.gitignore');
+        const gitignorePatterns: string[] = [];
+        // problemDir은 Git에 커밋하므로 .gitignore에 포함하지 않음
+        if (solvingDir !== '.' && solvingDir !== '') {
+          gitignorePatterns.push(`${solvingDir}/`);
+        }
+
+        if (gitignorePatterns.length > 0) {
+          try {
+            const gitignoreContent = await readFile(gitignorePath, 'utf-8');
+            let updatedContent = gitignoreContent.trim();
+            let hasChanges = false;
+
+            for (const pattern of gitignorePatterns) {
+              if (!gitignoreContent.includes(pattern)) {
+                updatedContent +=
+                  (updatedContent ? '\n' : '') +
+                  `# ps-cli 문제 디렉토리\n${pattern}`;
+                hasChanges = true;
+              }
+            }
+
+            if (hasChanges) {
+              await writeFile(gitignorePath, updatedContent + '\n', 'utf-8');
+              setCreated((prev) => [...prev, '.gitignore 업데이트']);
+            }
+          } catch (err) {
+            const error = err as NodeJS.ErrnoException;
+            if (error.code === 'ENOENT') {
+              const content = `# ps-cli 문제 디렉토리\n${gitignorePatterns.join('\n')}\n`;
+              await writeFile(gitignorePath, content, 'utf-8');
+              setCreated((prev) => [...prev, '.gitignore 생성']);
+            } else {
+              console.warn('.gitignore 업데이트 실패:', error.message);
+            }
+          }
+        }
+
+        // Git 저장소 초기화 및 커밋
+        try {
+          const gitDir = join(cwd, '.git');
+          let isGitRepo = false;
+          try {
+            await access(gitDir);
+            isGitRepo = true;
+          } catch {
+            // .git 디렉토리가 없으면 새로 초기화
+          }
+
+          if (!isGitRepo) {
+            // Git 저장소 초기화
+            await execaCommand('git init', { cwd });
+            setCreated((prev) => [...prev, 'Git 저장소 초기화']);
+          }
+
+          // .ps-cli.json과 .gitignore를 스테이징
+          const filesToAdd: string[] = ['.ps-cli.json'];
+          const gitignorePath = join(cwd, '.gitignore');
+          try {
+            await access(gitignorePath);
+            filesToAdd.push('.gitignore');
+          } catch {
+            // .gitignore가 없으면 스킵
+          }
+
+          if (filesToAdd.length > 0) {
+            await execa('git', ['add', ...filesToAdd], { cwd });
+
+            // 초기 커밋 생성 (이미 커밋이 있는지 확인)
+            try {
+              await execa('git', ['rev-parse', '--verify', 'HEAD'], { cwd });
+              // HEAD가 있으면 커밋 스킵 (이미 커밋이 있는 경우)
+            } catch {
+              // HEAD가 없으면 초기 커밋 생성
+              await execa(
+                'git',
+                ['commit', '-m', 'chore: ps-cli 프로젝트 초기화'],
+                { cwd },
+              );
+              setCreated((prev) => [...prev, '초기 커밋 생성']);
+            }
           }
         } catch (err) {
+          // Git 연동 실패해도 계속 진행 (경고만 표시)
           const error = err as NodeJS.ErrnoException;
-          if (error.code === 'ENOENT') {
-            const content = `# ps-cli 문제 디렉토리\n${gitignorePatterns.join('\n')}\n`;
-            await writeFile(gitignorePath, content, 'utf-8');
-            setCreated((prev) => [...prev, '.gitignore 생성']);
-          } else {
-            console.warn('.gitignore 업데이트 실패:', error.message);
-          }
-        }
-      }
-
-      // Git 저장소 초기화 및 커밋
-      try {
-        const gitDir = join(cwd, '.git');
-        let isGitRepo = false;
-        try {
-          await access(gitDir);
-          isGitRepo = true;
-        } catch {
-          // .git 디렉토리가 없으면 새로 초기화
+          console.warn('Git 연동 실패:', error.message);
         }
 
-        if (!isGitRepo) {
-          // Git 저장소 초기화
-          await execaCommand('git init', { cwd });
-          setCreated((prev) => [...prev, 'Git 저장소 초기화']);
-        }
-
-        // .ps-cli.json과 .gitignore를 스테이징
-        const filesToAdd: string[] = ['.ps-cli.json'];
-        const gitignorePath = join(cwd, '.gitignore');
-        try {
-          await access(gitignorePath);
-          filesToAdd.push('.gitignore');
-        } catch {
-          // .gitignore가 없으면 스킵
-        }
-
-        if (filesToAdd.length > 0) {
-          await execa('git', ['add', ...filesToAdd], { cwd });
-
-          // 초기 커밋 생성 (이미 커밋이 있는지 확인)
-          try {
-            await execa('git', ['rev-parse', '--verify', 'HEAD'], { cwd });
-            // HEAD가 있으면 커밋 스킵 (이미 커밋이 있는 경우)
-          } catch {
-            // HEAD가 없으면 초기 커밋 생성
-            await execa(
-              'git',
-              ['commit', '-m', 'chore: ps-cli 프로젝트 초기화'],
-              { cwd },
-            );
-            setCreated((prev) => [...prev, '초기 커밋 생성']);
-          }
-        }
+        setTimeout(() => {
+          onComplete();
+        }, 3000);
       } catch (err) {
-        // Git 연동 실패해도 계속 진행 (경고만 표시)
-        const error = err as NodeJS.ErrnoException;
-        console.warn('Git 연동 실패:', error.message);
+        const error = err as Error;
+        console.error('초기화 중 오류 발생:', error.message);
+        setCancelled(true);
+        setCurrentStep('cancelled');
+        setTimeout(() => {
+          onComplete();
+        }, 2000);
       }
-
-      setTimeout(() => {
-        onComplete();
-      }, 3000);
-    } catch (err) {
-      const error = err as Error;
-      console.error('초기화 중 오류 발생:', error.message);
-      setCancelled(true);
-      setCurrentStep('cancelled');
-      setTimeout(() => {
-        onComplete();
-      }, 2000);
-    }
-  }, [
-    problemDir,
-    solvingDir,
-    archiveStrategy,
-    language,
-    editor,
-    autoOpen,
-    handle,
-    onComplete,
-  ]);
+    },
+    [
+      problemDir,
+      solvingDir,
+      archiveStrategy,
+      language,
+      editor,
+      autoOpen,
+      handle,
+      onComplete,
+    ],
+  );
 
   const moveToNextStep = useCallback(
-    (selectedValue: string, stepLabel: string) => {
+    (selectedValue: string, stepLabel: string, handleValue?: string) => {
       // 현재 단계를 완료 목록에 추가
       setCompletedSteps((prev) => [
         ...prev,
         { label: stepLabel, value: selectedValue },
       ]);
+
+      // handle 단계에서 handleValue가 전달된 경우 즉시 업데이트
+      if (currentStep === 'handle' && handleValue !== undefined) {
+        setHandle(handleValue);
+      }
 
       const stepOrder: InitStep[] = [
         'problem-dir',
@@ -390,12 +408,27 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         setCurrentStep(nextStep);
 
         // 다음 step이 "done"이면 초기화 실행
+        // handle 단계에서 handleValue가 전달된 경우 해당 값을 executeInit에 전달
         if (nextStep === 'done') {
-          void executeInit();
+          if (currentStep === 'handle' && handleValue !== undefined) {
+            void executeInit(handleValue.trim());
+          } else {
+            void executeInit();
+          }
         }
       }
     },
-    [currentStep, executeInit],
+    [
+      currentStep,
+      executeInit,
+      problemDir,
+      solvingDir,
+      archiveStrategy,
+      language,
+      editor,
+      autoOpen,
+      onComplete,
+    ],
   );
 
   return {
