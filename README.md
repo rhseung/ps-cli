@@ -24,6 +24,9 @@ ps test
 
 # 4. 제출
 ps submit
+
+# 5. 커밋 및 아카이빙
+ps solve
 ```
 
 ## 명령어
