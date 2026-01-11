@@ -1,18 +1,17 @@
-import { existsSync } from "fs";
+import { existsSync } from 'fs';
 
-import { Alert, Select, Spinner } from "@inkjs/ui";
-import chalk from "chalk";
-import { Box, Text } from "ink";
-import React, { useEffect, useState } from "react";
+import { Alert, Spinner } from '@inkjs/ui';
+import { Box, Text } from 'ink';
+import React, { useEffect, useState } from 'react';
 
-import { Command } from "../core/base-command";
-import { CommandDef, CommandBuilder } from "../core/command-builder";
-import { useOpenBrowser } from "../hooks/use-open-browser";
-import { searchProblems } from "../services/scraper";
-import type { CommandFlags } from "../types/command";
-import type { SearchResult } from "../types/index";
-import { getProblemDirPath } from "../utils/problem-id";
-import { getTierName, getTierColor } from "../utils/tier";
+import { ProblemSelector } from '../components/problem-selector';
+import { Command } from '../core/base-command';
+import { CommandDef, CommandBuilder } from '../core/command-builder';
+import { useOpenBrowser } from '../hooks/use-open-browser';
+import { searchProblems } from '../services/scraper';
+import type { CommandFlags } from '../types/command';
+import type { SearchResult } from '../types/index';
+import { getProblemDirPath } from '../utils/problem-id';
 
 interface SearchViewProps {
   query: string;
@@ -30,7 +29,7 @@ function OpenBrowserView({ problemId, onComplete }: OpenBrowserViewProps) {
     onComplete,
   });
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
       <Box flexDirection="column">
         <Spinner label="브라우저를 여는 중..." />
@@ -41,7 +40,7 @@ function OpenBrowserView({ problemId, onComplete }: OpenBrowserViewProps) {
     );
   }
 
-  if (status === "error") {
+  if (status === 'error') {
     return (
       <Box flexDirection="column">
         <Alert variant="error">브라우저를 열 수 없습니다: {error}</Alert>
@@ -59,13 +58,13 @@ function OpenBrowserView({ problemId, onComplete }: OpenBrowserViewProps) {
         <Text>
           <Text color="cyan" bold>
             문제 번호:
-          </Text>{" "}
+          </Text>{' '}
           {problemId}
         </Text>
         <Text>
           <Text color="cyan" bold>
             URL:
-          </Text>{" "}
+          </Text>{' '}
           <Text color="blue" underline>
             {url}
           </Text>
@@ -156,99 +155,43 @@ function SearchView({ query, onComplete }: SearchViewProps) {
     );
   }
 
-  // Select 옵션 생성
-  const options: Array<{ label: string; value: string }> = [];
-
-  // 문제 목록 추가
-  results.forEach((problem) => {
-    const solvedText = problem.solvedCount
-      ? ` (${problem.solvedCount.toLocaleString()}명`
-      : "";
-    const triesText = problem.averageTries
-      ? `, 평균 ${problem.averageTries}회`
-      : "";
-    const suffix = solvedText + triesText + (solvedText ? ")" : "");
-
-    // 해결된 문제 표시
-    const solvedMark = problem.isSolved ? " ✓" : "";
-
-    // 티어 표시 (색상 적용)
-    let tierText = "";
-    if (problem.level) {
-      const tierName = getTierName(problem.level);
-      const tierColor = getTierColor(problem.level);
-
-      // 색상 적용
-      if (typeof tierColor === "string") {
-        tierText = ` ${chalk.bold.hex(tierColor)(tierName)}`;
-      } else {
-        tierText = ` ${tierColor(chalk.bold(tierName))}`;
-      }
-    }
-
-    options.push({
-      label: `${tierText} ${problem.problemId} - ${problem.title}${solvedMark}${suffix}`,
-      value: `problem:${problem.problemId}`,
-    });
-  });
-
-  // 페이지네이션 옵션 추가
-  if (currentPage < totalPages) {
-    options.push({
-      label: `→ 다음 페이지 (${currentPage + 1}/${totalPages})`,
-      value: "next-page",
-    });
-  }
-
-  if (currentPage > 1) {
-    options.push({
-      label: `← 이전 페이지 (${currentPage - 1}/${totalPages})`,
-      value: "prev-page",
-    });
-  }
-
-  const handleSelect = (value: string) => {
-    if (value === "next-page") {
-      setCurrentPage(currentPage + 1);
-      return;
-    }
-
-    if (value === "prev-page") {
-      setCurrentPage(currentPage - 1);
-      return;
-    }
-
-    if (value.startsWith("problem:")) {
-      const problemId = parseInt(value.replace("problem:", ""), 10);
-      if (!isNaN(problemId)) {
-        setSelectedProblemId(problemId);
-      }
-    }
-  };
-
   return (
-    <Box flexDirection="column">
-      <Box marginBottom={1}>
-        <Text color="cyan" bold>
-          🔍 검색 결과
-        </Text>
-      </Box>
-      <Box marginBottom={1}>
-        <Text color="gray">쿼리: {query}</Text>
-        <Text color="gray">
-          {" "}
-          (페이지 {currentPage}/{totalPages})
-        </Text>
-      </Box>
-      <Box>
-        <Select options={options} onChange={handleSelect} />
-      </Box>
-    </Box>
+    <ProblemSelector
+      problems={results.map((problem) => ({
+        problemId: problem.problemId,
+        title: problem.title,
+        level: problem.level,
+        solvedCount: problem.solvedCount,
+        averageTries: problem.averageTries,
+        isSolved: problem.isSolved,
+      }))}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      showPagination={true}
+      onSelect={(problemId) => {
+        setSelectedProblemId(problemId);
+      }}
+      onPageChange={(page) => {
+        setCurrentPage(page);
+      }}
+      header={
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="cyan" bold>
+              🔍 검색 결과
+            </Text>
+          </Box>
+          <Box marginBottom={1}>
+            <Text color="gray">쿼리: {query}</Text>
+          </Box>
+        </Box>
+      }
+    />
   );
 }
 
 @CommandDef({
-  name: "search",
+  name: 'search',
   description: `solved.ac에서 문제를 검색하고 선택한 문제를 브라우저로 엽니다.
 - solved.ac 검색어 문법을 지원합니다.
 - 문제 목록에서 선택하면 자동으로 브라우저에서 문제 페이지를 엽니다.
@@ -265,10 +208,10 @@ function SearchView({ query, onComplete }: SearchViewProps) {
 })
 export class SearchCommand extends Command {
   async execute(args: string[], _flags: CommandFlags): Promise<void> {
-    const query = args.join(" ").trim();
+    const query = args.join(' ').trim();
 
     if (!query) {
-      console.error("오류: 검색 쿼리를 입력해주세요.");
+      console.error('오류: 검색 쿼리를 입력해주세요.');
       console.error(`사용법: ps search <쿼리>`);
       console.error(`도움말: ps search --help`);
       console.error(`예제: ps search "*g1...g5"`);

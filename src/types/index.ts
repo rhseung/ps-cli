@@ -128,3 +128,10 @@ export interface SearchResults {
   currentPage: number;
   totalPages: number;
 }
+
+export type {
+  Workbook,
+  WorkbookProblem,
+  WorkbookProgress,
+  ProblemStatus,
+} from './workbook';
