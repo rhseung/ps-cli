@@ -17,6 +17,48 @@ function parseTimeLimitToMs(timeLimit?: string): number | undefined {
   return Math.round(seconds * 1000);
 }
 
+/**
+ * Markdown 텍스트가 리스트, 테이블, 코드 블록 등으로 끝나는지 확인하고
+ * 필요한 경우 적절한 개행을 추가합니다.
+ */
+function ensureTrailingNewline(content: string): string {
+  if (!content || content.trim().length === 0) {
+    return content;
+  }
+
+  // 이미 개행으로 끝나는지 확인
+  const trimmed = content.trimEnd();
+  if (trimmed.length === 0) {
+    return content;
+  }
+
+  // 마지막 줄 확인
+  const lines = trimmed.split('\n');
+  const lastLine = lines[lines.length - 1];
+
+  // 리스트 항목으로 끝나는지 확인 (unordered: - 또는 *, ordered: 숫자. 또는 숫자))
+  const isListItem =
+    /^[\s]*[-*]\s/.test(lastLine) || /^[\s]*\d+[.)]\s/.test(lastLine);
+
+  // 테이블로 끝나는지 확인 (|로 시작하고 끝나는 줄)
+  const isTableRow = /^\s*\|.+\|\s*$/.test(lastLine);
+
+  // 코드 블록으로 끝나는지 확인 (```로 끝나는 경우)
+  const isCodeBlock = trimmed.endsWith('```');
+
+  // 리스트, 테이블, 코드 블록으로 끝나면 추가 개행 필요
+  if (isListItem || isTableRow || isCodeBlock) {
+    return trimmed + '\n';
+  }
+
+  // 이미 개행으로 끝나지 않으면 개행 추가
+  if (!content.endsWith('\n')) {
+    return content + '\n';
+  }
+
+  return content;
+}
+
 // 프로젝트 루트 경로 찾기 (dist 또는 src에서 실행될 수 있음)
 function getProjectRoot(): string {
   const __filename = fileURLToPath(import.meta.url);
@@ -111,18 +153,23 @@ export async function generateProblemFiles(
     infoTable = `\n${headerRow}\n${separatorRow}\n${valueRow}\n`;
   }
 
+  // 각 필드에 적절한 개행 추가
+  const description = ensureTrailingNewline(problem.description || '설명 없음');
+  const inputFormat = ensureTrailingNewline(
+    problem.inputFormat || '입력 형식 없음',
+  );
+  const outputFormat = ensureTrailingNewline(
+    problem.outputFormat || '출력 형식 없음',
+  );
+
   const readmeContent = `# [${problem.id}: ${
     problem.title
   }](https://www.acmicpc.net/problem/${problem.id})
 
 ${infoTable}## 문제 설명
-${problem.description || '설명 없음'}
-
-## 입력
-${problem.inputFormat || '입력 형식 없음'}
-
-## 출력
-${problem.outputFormat || '출력 형식 없음'}
+${description}## 입력
+${inputFormat}## 출력
+${outputFormat}
 
 ## 예제
 ${problem.testCases
