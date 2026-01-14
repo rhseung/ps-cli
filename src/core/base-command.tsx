@@ -6,13 +6,14 @@ import type { CommandFlags } from '../types/command';
 /**
  * 모든 Command 클래스의 베이스 클래스
  * 공통 기능과 패턴을 제공합니다.
+ * @template TFlags - 명령어별 플래그 타입 (기본값: CommandFlags)
  */
-export abstract class Command {
+export abstract class Command<TFlags extends CommandFlags = CommandFlags> {
   /**
    * 명령어 실행 메서드 (추상 메서드)
    * 각 Command 클래스에서 구현해야 합니다.
    */
-  abstract execute(args: string[], flags: CommandFlags): Promise<void> | void;
+  abstract execute(args: string[], flags: TFlags): Promise<void> | void;
 
   /**
    * 뷰 렌더링 헬퍼 메서드

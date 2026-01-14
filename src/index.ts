@@ -152,7 +152,8 @@ async function main() {
     commands = await loadCommands();
   }
 
-  const [command, ...args] = cli.input;
+  const [command, ...initialArgs] = cli.input;
+  let rawArgs = initialArgs;
 
   // help 명령어 처리 또는 명령어 없이 --help 플래그
   if (command === 'help' || (!command && cli.flags.help)) {
@@ -179,6 +180,45 @@ async function main() {
     );
     process.exit(1);
     return;
+  }
+
+  // 명령어별 플래그 파싱
+  let finalFlags = cli.flags;
+  if (commandDef.metadata?.flags) {
+    // 명령어별 플래그 정의를 meow 형식으로 변환
+    const commandFlags: Record<string, unknown> = {};
+    for (const flagDef of commandDef.metadata.flags) {
+      commandFlags[flagDef.name] = {
+        type: flagDef.options?.type || 'string',
+        shortFlag: flagDef.options?.shortFlag,
+        default: flagDef.options?.default,
+      };
+    }
+
+    // 명령어별 meow 인스턴스 생성 (명령어 인자만 파싱)
+    // process.argv에서 명령어를 제외한 인자만 전달
+    const commandIndex = process.argv.findIndex((arg) => arg === command);
+    const commandArgs =
+      commandIndex >= 0
+        ? process.argv.slice(commandIndex + 1)
+        : process.argv.slice(2);
+
+    const commandCli = meow('', {
+      importMeta: import.meta,
+      argv: commandArgs,
+      flags: {
+        help: {
+          type: 'boolean',
+          shortFlag: 'h',
+          default: false,
+        },
+        ...commandFlags,
+      },
+    });
+
+    // meow가 이미 플래그를 제거한 인자를 반환
+    rawArgs = commandCli.input;
+    finalFlags = { ...cli.flags, ...commandCli.flags };
   }
 
   // init 명령어는 예외 (프로젝트 초기화 명령어)
@@ -213,7 +253,7 @@ async function main() {
     }
   }
 
-  await commandDef.execute(args, cli.flags);
+  await commandDef.execute(rawArgs, finalFlags);
 }
 
 main().catch((error) => {

@@ -124,6 +124,7 @@ export class CommandBuilder {
       name: finalMetadata.name,
       help,
       execute: wrappedExecute,
+      metadata: finalMetadata,
     };
   }
 

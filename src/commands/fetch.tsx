@@ -7,13 +7,29 @@ import { ProblemDashboard } from '../components/problem-dashboard';
 import { Command } from '../core/base-command';
 import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useFetchProblem } from '../hooks/use-fetch-problem';
-import type { CommandFlags } from '../types/command';
+import type {
+  InferFlagsFromSchema,
+  FlagDefinitionSchema,
+} from '../types/command';
+import { defineFlags } from '../types/command';
 import { resolveProblemContext } from '../utils/execution-context';
 import type { Language } from '../utils/language';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
 } from '../utils/language';
+
+// 플래그 정의 스키마 (타입 추론용)
+const fetchFlagsSchema = {
+  language: {
+    type: 'string' as const,
+    shortFlag: 'l',
+    description: `언어 선택 (${getSupportedLanguagesString()})
+                        기본값: python`,
+  },
+} as const satisfies FlagDefinitionSchema;
+
+type FetchCommandFlags = InferFlagsFromSchema<typeof fetchFlagsSchema>;
 
 interface FetchViewProps {
   problemId: number;
@@ -68,22 +84,13 @@ function FetchView({
 - 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
 - 선택한 언어의 솔루션 템플릿 파일 생성
 - README.md에 문제 정보, 통계, 태그 등 포함`,
-  flags: [
-    {
-      name: 'language',
-      options: {
-        shortFlag: 'l',
-        description: `언어 선택 (${getSupportedLanguagesString()})
-                        기본값: python`,
-      },
-    },
-  ],
+  flags: defineFlags(fetchFlagsSchema),
   autoDetectProblemId: false,
   requireProblemId: true,
   examples: ['fetch 1000', 'fetch 1000 --language python', 'fetch 1000 -l cpp'],
 })
-export class FetchCommand extends Command {
-  async execute(args: string[], flags: CommandFlags): Promise<void> {
+export class FetchCommand extends Command<FetchCommandFlags> {
+  async execute(args: string[], flags: FetchCommandFlags): Promise<void> {
     // 문제 컨텍스트 해석
     const context = await resolveProblemContext(args, { requireId: true });
 

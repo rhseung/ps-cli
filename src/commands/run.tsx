@@ -7,12 +7,33 @@ import { Box, Text } from 'ink';
 import { Command } from '../core/base-command';
 import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useRunSolution } from '../hooks/use-run-solution';
-import type { CommandFlags } from '../types/command';
+import type {
+  InferFlagsFromSchema,
+  FlagDefinitionSchema,
+} from '../types/command';
+import { defineFlags } from '../types/command';
 import {
   resolveProblemContext,
   resolveLanguage,
 } from '../utils/execution-context';
 import { getSupportedLanguagesString, type Language } from '../utils/language';
+
+// 플래그 정의 스키마 (타입 추론용)
+const runFlagsSchema = {
+  language: {
+    type: 'string' as const,
+    shortFlag: 'l',
+    description: `언어 선택 (지정 시 자동 감지 무시)
+                        지원 언어: ${getSupportedLanguagesString()}`,
+  },
+  input: {
+    type: 'string' as const,
+    shortFlag: 'i',
+    description: '입력 파일 지정 (예: 1 또는 testcases/1/input.txt)',
+  },
+} as const satisfies FlagDefinitionSchema;
+
+type RunCommandFlags = InferFlagsFromSchema<typeof runFlagsSchema>;
 
 interface RunViewProps {
   problemDir: string;
@@ -143,23 +164,7 @@ function RunView({
 - --input 옵션으로 입력 파일 지정 가능 (예: testcases/1/input.txt)
 - 옵션 없이 실행 시 표준 입력으로 입력 받기
 - 테스트 케이스 검증 없이 단순 실행`,
-  flags: [
-    {
-      name: 'language',
-      options: {
-        shortFlag: 'l',
-        description: `언어 선택 (지정 시 자동 감지 무시)
-                        지원 언어: ${getSupportedLanguagesString()}`,
-      },
-    },
-    {
-      name: 'input',
-      options: {
-        shortFlag: 'i',
-        description: '입력 파일 지정 (예: 1 또는 testcases/1/input.txt)',
-      },
-    },
-  ],
+  flags: defineFlags(runFlagsSchema),
   autoDetectProblemId: true,
   autoDetectLanguage: true,
   examples: [
@@ -170,8 +175,8 @@ function RunView({
     'run --input testcases/1/input.txt # 전체 경로로 입력 파일 지정',
   ],
 })
-export class RunCommand extends Command {
-  async execute(args: string[], flags: CommandFlags): Promise<void> {
+export class RunCommand extends Command<RunCommandFlags> {
+  async execute(args: string[], flags: RunCommandFlags): Promise<void> {
     // 문제 컨텍스트 해석
     const context = await resolveProblemContext(args);
 

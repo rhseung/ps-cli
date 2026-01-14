@@ -7,7 +7,11 @@ import React from 'react';
 import { Command } from '../core/base-command';
 import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useUserStats } from '../hooks/use-user-stats';
-import type { CommandFlags } from '../types/command';
+import type {
+  InferFlagsFromSchema,
+  FlagDefinitionSchema,
+} from '../types/command';
+import { defineFlags } from '../types/command';
 import { getSolvedAcHandle } from '../utils/config';
 import {
   calculateTierProgress,
@@ -15,6 +19,17 @@ import {
   getTierColor,
   getTierName,
 } from '../utils/tier';
+
+// 플래그 정의 스키마 (타입 추론용)
+const statsFlagsSchema = {
+  handle: {
+    type: 'string' as const,
+    shortFlag: 'h',
+    description: 'Solved.ac 핸들 (설정에 저장된 값 사용 가능)',
+  },
+} as const satisfies FlagDefinitionSchema;
+
+type StatsCommandFlags = InferFlagsFromSchema<typeof statsFlagsSchema>;
 
 interface StatsViewProps {
   handle: string;
@@ -148,20 +163,12 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
   description: `Solved.ac에서 사용자 통계를 조회합니다.
 - 티어, 레이팅, 해결한 문제 수 등 표시
 - 그라데이션으로 시각적으로 표시`,
-  flags: [
-    {
-      name: 'handle',
-      options: {
-        shortFlag: 'h',
-        description: 'Solved.ac 핸들 (설정에 저장된 값 사용 가능)',
-      },
-    },
-  ],
+  flags: defineFlags(statsFlagsSchema),
   autoDetectProblemId: false,
   examples: ['stats myhandle', 'stats --handle myhandle'],
 })
-export class StatsCommand extends Command {
-  async execute(args: string[], flags: CommandFlags): Promise<void> {
+export class StatsCommand extends Command<StatsCommandFlags> {
+  async execute(args: string[], flags: StatsCommandFlags): Promise<void> {
     // 핸들 결정: 인자 > 플래그 > 설정
     let handle: string | undefined =
       args[0] || (flags.handle as string | undefined);

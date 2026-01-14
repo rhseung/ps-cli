@@ -5,7 +5,8 @@ import { openBrowser } from '../utils/browser';
 const BOJ_BASE_URL = 'https://www.acmicpc.net';
 
 export interface UseOpenBrowserParams {
-  problemId: number;
+  problemId?: number;
+  workbookId?: number;
   onComplete?: () => void;
 }
 
@@ -17,6 +18,7 @@ export interface UseOpenBrowserReturn {
 
 export function useOpenBrowser({
   problemId,
+  workbookId,
   onComplete,
 }: UseOpenBrowserParams): UseOpenBrowserReturn {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -28,11 +30,19 @@ export function useOpenBrowser({
   useEffect(() => {
     async function handleOpenBrowser() {
       try {
-        const problemUrl = `${BOJ_BASE_URL}/problem/${problemId}`;
-        setUrl(problemUrl);
+        let targetUrl: string;
+        if (workbookId !== undefined) {
+          targetUrl = `${BOJ_BASE_URL}/workbook/view/${workbookId}`;
+        } else if (problemId !== undefined) {
+          targetUrl = `${BOJ_BASE_URL}/problem/${problemId}`;
+        } else {
+          throw new Error('문제 번호 또는 문제집 ID가 필요합니다.');
+        }
+
+        setUrl(targetUrl);
 
         // 브라우저 열기
-        await openBrowser(problemUrl);
+        await openBrowser(targetUrl);
 
         setStatus('success');
         setTimeout(() => {
@@ -48,7 +58,7 @@ export function useOpenBrowser({
     }
 
     void handleOpenBrowser();
-  }, [problemId, onComplete]);
+  }, [problemId, workbookId, onComplete]);
 
   return {
     status,

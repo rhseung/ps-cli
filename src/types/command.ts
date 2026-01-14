@@ -1,6 +1,4 @@
 export interface CommandFlags {
-  language?: string;
-  watch?: boolean;
   help?: boolean;
   [key: string]: unknown;
 }
@@ -9,6 +7,7 @@ export interface CommandDefinition {
   name: string;
   help: string;
   execute: (args: string[], flags: CommandFlags) => Promise<void> | void;
+  metadata?: CommandMetadata;
 }
 
 /**
@@ -31,6 +30,44 @@ export interface FlagOptions {
 export interface FlagDefinition {
   name: string;
   options?: FlagOptions;
+}
+
+/**
+ * 플래그 정의 스키마 (타입 추론용)
+ */
+export type FlagDefinitionSchema = {
+  readonly [K in string]: {
+    readonly type?: 'string' | 'boolean' | 'number';
+    readonly shortFlag?: string;
+    readonly default?: string | boolean | number;
+    readonly description?: string;
+  };
+};
+
+/**
+ * 플래그 스키마에서 타입을 추론하는 유틸리티 타입
+ */
+export type InferFlagsFromSchema<T extends FlagDefinitionSchema> = {
+  [K in keyof T]: T[K]['type'] extends 'number'
+    ? number
+    : T[K]['type'] extends 'boolean'
+      ? boolean
+      : string;
+} & CommandFlags;
+
+/**
+ * 플래그 정의 스키마를 FlagDefinition 배열로 변환하는 헬퍼 함수
+ */
+export function defineFlags<T extends FlagDefinitionSchema>(
+  schema: T,
+): Array<{
+  name: string;
+  options?: FlagOptions;
+}> {
+  return Object.entries(schema).map(([name, options]) => ({
+    name,
+    options: options as FlagOptions,
+  }));
 }
 
 /**

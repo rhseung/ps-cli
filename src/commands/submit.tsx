@@ -6,7 +6,11 @@ import React from 'react';
 import { Command } from '../core/base-command';
 import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useSubmit } from '../hooks/use-submit';
-import type { CommandFlags } from '../types/command';
+import type {
+  InferFlagsFromSchema,
+  FlagDefinitionSchema,
+} from '../types/command';
+import { defineFlags } from '../types/command';
 import {
   resolveProblemContext,
   resolveLanguage,
@@ -14,6 +18,18 @@ import {
 } from '../utils/execution-context';
 import { getSupportedLanguagesString, type Language } from '../utils/language';
 import { detectProblemIdFromPath } from '../utils/problem-id';
+
+// 플래그 정의 스키마 (타입 추론용)
+const submitFlagsSchema = {
+  language: {
+    type: 'string' as const,
+    shortFlag: 'l',
+    description: `언어 선택 (지정 시 자동 감지 무시)
+                        지원 언어: ${getSupportedLanguagesString()}`,
+  },
+} as const satisfies FlagDefinitionSchema;
+
+type SubmitCommandFlags = InferFlagsFromSchema<typeof submitFlagsSchema>;
 
 interface SubmitViewProps {
   problemId: number;
@@ -122,16 +138,7 @@ function SubmitView({
 - solution.* 파일을 자동으로 찾아 언어 감지
 - 소스 코드를 클립보드에 자동 복사
 - 제출 페이지를 브라우저로 자동 열기`,
-  flags: [
-    {
-      name: 'language',
-      options: {
-        shortFlag: 'l',
-        description: `언어 선택 (지정 시 자동 감지 무시)
-                        지원 언어: ${getSupportedLanguagesString()}`,
-      },
-    },
-  ],
+  flags: defineFlags(submitFlagsSchema),
   autoDetectProblemId: true,
   autoDetectLanguage: true,
   requireProblemId: true,
@@ -141,8 +148,8 @@ function SubmitView({
     'submit --language python   # Python으로 제출',
   ],
 })
-export class SubmitCommand extends Command {
-  async execute(args: string[], flags: CommandFlags): Promise<void> {
+export class SubmitCommand extends Command<SubmitCommandFlags> {
+  async execute(args: string[], flags: SubmitCommandFlags): Promise<void> {
     // 문제 컨텍스트 해석 (solving dir과 archive dir 둘 다 확인)
     const context = await resolveProblemContext(args, { requireId: true });
 

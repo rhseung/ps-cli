@@ -11,10 +11,25 @@ import { useOpenBrowser } from '../hooks/use-open-browser';
 import { searchProblems } from '../services/scraper';
 import { getProblem } from '../services/solved-api';
 import { scrapeWorkbook } from '../services/workbook-scraper';
-import type { CommandFlags } from '../types/command';
+import type {
+  InferFlagsFromSchema,
+  FlagDefinitionSchema,
+} from '../types/command';
+import { defineFlags } from '../types/command';
 import type { SearchResult } from '../types/index';
 import type { WorkbookProblem } from '../types/workbook';
 import { getArchiveDirPath } from '../utils/problem-id';
+
+// 플래그 정의 스키마 (타입 추론용)
+const searchFlagsSchema = {
+  workbook: {
+    type: 'number' as const,
+    shortFlag: 'w',
+    description: '문제집 ID를 지정하여 해당 문제집의 문제 목록을 표시',
+  },
+} as const satisfies FlagDefinitionSchema;
+
+type SearchCommandFlags = InferFlagsFromSchema<typeof searchFlagsSchema>;
 
 interface SearchViewProps {
   query: string;
@@ -362,14 +377,7 @@ function SearchView({ query, onComplete }: SearchViewProps) {
 - 문제 목록에서 선택하면 자동으로 브라우저에서 문제 페이지를 엽니다.
 - 페이지네이션을 통해 여러 페이지의 결과를 탐색할 수 있습니다.
 - --workbook 옵션으로 백준 문제집의 문제 목록을 볼 수 있습니다.`,
-  flags: [
-    {
-      name: 'workbook',
-      options: {
-        description: '문제집 ID를 지정하여 해당 문제집의 문제 목록을 표시',
-      },
-    },
-  ],
+  flags: defineFlags(searchFlagsSchema),
   autoDetectProblemId: false,
   requireProblemId: false,
   examples: [
@@ -379,10 +387,11 @@ function SearchView({ query, onComplete }: SearchViewProps) {
     'search "tag:dp"              # DP 태그 문제 검색 (tag: 문법)',
     'search "*g1...g5 #dp"        # Gold 1-5 티어의 DP 태그 문제 검색',
     'search --workbook 25052      # 문제집 25052의 문제 목록 표시',
+    'search -w 25052              # 문제집 25052의 문제 목록 표시 (단축 옵션)',
   ],
 })
-export class SearchCommand extends Command {
-  async execute(args: string[], flags: CommandFlags): Promise<void> {
+export class SearchCommand extends Command<SearchCommandFlags> {
+  async execute(args: string[], flags: SearchCommandFlags): Promise<void> {
     const workbookId = flags.workbook
       ? parseInt(String(flags.workbook), 10)
       : null;
