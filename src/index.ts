@@ -184,28 +184,39 @@ async function main() {
 
   // 명령어별 플래그 파싱
   let finalFlags = cli.flags;
+
+  // 명령어 인자에서 플래그 파싱을 위한 준비
+  const commandIndex = process.argv.findIndex((arg) => arg === command);
+  const commandArgs =
+    commandIndex >= 0
+      ? process.argv.slice(commandIndex + 1)
+      : process.argv.slice(2);
+
   if (commandDef.metadata?.flags) {
     // 명령어별 플래그 정의를 meow 형식으로 변환
     const commandFlags: Record<string, unknown> = {};
     for (const flagDef of commandDef.metadata.flags) {
-      commandFlags[flagDef.name] = {
+      const flagConfig: Record<string, unknown> = {
         type: flagDef.options?.type || 'string',
-        shortFlag: flagDef.options?.shortFlag,
-        default: flagDef.options?.default,
       };
+
+      if (flagDef.options?.shortFlag) {
+        flagConfig.shortFlag = flagDef.options.shortFlag;
+      }
+
+      // default가 있을 때만 포함 (undefined를 전달하면 meow가 에러 발생)
+      if (flagDef.options?.default !== undefined) {
+        flagConfig.default = flagDef.options.default;
+      }
+
+      commandFlags[flagDef.name] = flagConfig;
     }
 
     // 명령어별 meow 인스턴스 생성 (명령어 인자만 파싱)
-    // process.argv에서 명령어를 제외한 인자만 전달
-    const commandIndex = process.argv.findIndex((arg) => arg === command);
-    const commandArgs =
-      commandIndex >= 0
-        ? process.argv.slice(commandIndex + 1)
-        : process.argv.slice(2);
-
     const commandCli = meow('', {
       importMeta: import.meta,
       argv: commandArgs,
+      autoHelp: false, // 기본 help 출력 비활성화 (우리가 직접 처리)
       flags: {
         help: {
           type: 'boolean',
@@ -216,7 +227,54 @@ async function main() {
       },
     });
 
+    // help 플래그가 설정되어 있으면 도움말 표시 후 종료
+    if (commandCli.flags.help) {
+      if (commandDef.help && commandDef.help.trim()) {
+        console.log(commandDef.help.trim());
+      } else {
+        // help가 없으면 기본 정보 표시
+        console.log(`명령어: ${commandDef.name}`);
+        if (commandDef.metadata?.description) {
+          console.log(`설명: ${commandDef.metadata.description}`);
+        }
+      }
+      process.exit(0);
+      return;
+    }
+
     // meow가 이미 플래그를 제거한 인자를 반환
+    rawArgs = commandCli.input;
+    finalFlags = { ...cli.flags, ...commandCli.flags };
+  } else {
+    // 플래그가 없는 명령어도 help 플래그 확인
+    const commandCli = meow('', {
+      importMeta: import.meta,
+      argv: commandArgs,
+      autoHelp: false, // 기본 help 출력 비활성화 (우리가 직접 처리)
+      flags: {
+        help: {
+          type: 'boolean',
+          shortFlag: 'h',
+          default: false,
+        },
+      },
+    });
+
+    // help 플래그가 설정되어 있으면 도움말 표시 후 종료
+    if (commandCli.flags.help) {
+      if (commandDef.help && commandDef.help.trim()) {
+        console.log(commandDef.help.trim());
+      } else {
+        // help가 없으면 기본 정보 표시
+        console.log(`명령어: ${commandDef.name}`);
+        if (commandDef.metadata?.description) {
+          console.log(`설명: ${commandDef.metadata.description}`);
+        }
+      }
+      process.exit(0);
+      return;
+    }
+
     rawArgs = commandCli.input;
     finalFlags = { ...cli.flags, ...commandCli.flags };
   }
