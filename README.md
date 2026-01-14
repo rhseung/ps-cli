@@ -436,7 +436,7 @@ cd /path/to/test-project
 ps init  # 로컬 버전이 사용됨
 
 # 테스트 후 링크 해제
-bun unlink -g @rhseung/ps-cli
+npm unlink -g @rhseung/ps-cli
 ```
 
 **주의:** `npm link`를 사용하면 글로벌 설치된 버전이 링크된 버전으로 대체됩니다.
