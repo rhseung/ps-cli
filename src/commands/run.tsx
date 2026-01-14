@@ -1,4 +1,3 @@
-import { readdir } from 'fs/promises';
 import { join } from 'path';
 
 import { StatusMessage, Alert } from '@inkjs/ui';
@@ -18,7 +17,7 @@ import { getSupportedLanguagesString, type Language } from '../utils/language';
 interface RunViewProps {
   problemDir: string;
   language: Language;
-  inputFile: string;
+  inputFile?: string;
   onComplete: () => void;
 }
 
@@ -36,6 +35,32 @@ function RunView({
   });
 
   if (status === 'loading') {
+    // 표준 입력을 받아야 하는 경우 안내 메시지 표시
+    if (!inputFile) {
+      return (
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="cyan" bold>
+              표준 입력 대기 중
+            </Text>
+          </Box>
+          <Box flexDirection="column">
+            <Text color="gray" dimColor>
+              입력을 입력한 후, 마지막 줄에서 Enter를 누르고:
+            </Text>
+            <Text color="gray" dimColor>
+              • macOS/Linux: Ctrl+D
+            </Text>
+            <Text color="gray" dimColor>
+              • Windows: Ctrl+Z (그리고 Enter)
+            </Text>
+            <Text color="gray" dimColor>
+              예: "3 4" 입력 → Enter → Ctrl+D
+            </Text>
+          </Box>
+        </Box>
+      );
+    }
     return (
       <Box flexDirection="column">
         <Spinner label="코드 실행 중..." />
@@ -54,7 +79,7 @@ function RunView({
   if (result) {
     return (
       <Box flexDirection="column">
-        <Box marginBottom={1}>
+        <Box>
           <Text color="cyan" bold>
             실행 결과
           </Text>
@@ -75,12 +100,20 @@ function RunView({
           ) : (
             <StatusMessage variant="success">실행 완료</StatusMessage>
           )}
+          {result.input && (
+            <Box marginTop={1} flexDirection="column">
+              <Text color="gray" dimColor>
+                입력:
+              </Text>
+              <Text>{result.input.trim()}</Text>
+            </Box>
+          )}
           {result.stdout && (
             <Box marginTop={1} flexDirection="column">
               <Text color="gray" dimColor>
                 출력:
               </Text>
-              <Text>{result.stdout}</Text>
+              <Text>{result.stdout.trim()}</Text>
             </Box>
           )}
           {result.stderr && (
@@ -107,7 +140,8 @@ function RunView({
   description: `코드를 실행합니다 (테스트 없이).
 - 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
 - solution.* 파일을 자동으로 찾아 언어 감지
-- input.txt 또는 input1.txt를 표준 입력으로 사용
+- --input 옵션으로 입력 파일 지정 가능 (예: testcases/1/input.txt)
+- 옵션 없이 실행 시 표준 입력으로 입력 받기
 - 테스트 케이스 검증 없이 단순 실행`,
   flags: [
     {
@@ -122,17 +156,18 @@ function RunView({
       name: 'input',
       options: {
         shortFlag: 'i',
-        description: '입력 파일 지정 (기본값: input.txt 또는 input1.txt)',
+        description: '입력 파일 지정 (예: 1 또는 testcases/1/input.txt)',
       },
     },
   ],
   autoDetectProblemId: true,
   autoDetectLanguage: true,
   examples: [
-    'run                    # 현재 디렉토리에서 실행',
-    'run 1000               # 1000번 문제 실행',
-    'run --language python  # Python으로 실행',
-    'run --input input2.txt # 특정 입력 파일 사용',
+    'run                              # 현재 디렉토리에서 표준 입력으로 실행',
+    'run 1000                          # 1000번 문제 표준 입력으로 실행',
+    'run --language python             # Python으로 표준 입력으로 실행',
+    'run --input 1                     # 테스트 케이스 1번 사용',
+    'run --input testcases/1/input.txt # 전체 경로로 입력 파일 지정',
   ],
 })
 export class RunCommand extends Command {
@@ -140,10 +175,23 @@ export class RunCommand extends Command {
     // 문제 컨텍스트 해석
     const context = await resolveProblemContext(args);
 
-    // 입력 파일 찾기
-    const inputPath = flags.input
-      ? join(context.archiveDir, flags.input as string)
-      : await this.findInputFile(context.archiveDir);
+    // 입력 파일 찾기 (옵션이 있을 때만)
+    let inputPath: string | undefined;
+    if (flags.input) {
+      const inputValue = flags.input as string;
+      // 숫자만 입력된 경우 testcases/{숫자}/input.txt로 변환
+      if (/^\d+$/.test(inputValue)) {
+        inputPath = join(
+          context.archiveDir,
+          'testcases',
+          inputValue,
+          'input.txt',
+        );
+      } else {
+        // 전체 경로가 입력된 경우 그대로 사용
+        inputPath = join(context.archiveDir, inputValue);
+      }
+    }
 
     // 언어 감지
     const detectedLanguage = await resolveLanguage(
@@ -156,19 +204,6 @@ export class RunCommand extends Command {
       language: detectedLanguage,
       inputFile: inputPath,
     });
-  }
-
-  // 입력 파일 찾기: private 메서드
-  private async findInputFile(problemDir: string): Promise<string> {
-    const files = await readdir(problemDir);
-    // input1.txt, input.txt 순서로 찾기
-    const inputFile =
-      files.find((f) => f === 'input1.txt') ||
-      files.find((f) => f === 'input.txt');
-    if (!inputFile) {
-      throw new Error('input.txt 또는 input1.txt 파일을 찾을 수 없습니다.');
-    }
-    return join(problemDir, inputFile);
   }
 }
 

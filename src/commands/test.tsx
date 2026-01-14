@@ -77,7 +77,7 @@ function TestView({
   description: `예제 입출력 기반으로 로컬 테스트를 실행합니다.
 - 현재 디렉토리 또는 지정한 문제 번호의 테스트 실행
 - solution.* 파일을 자동으로 찾아 언어 감지
-- input*.txt와 output*.txt 파일을 기반으로 테스트
+- testcases/{번호}/input.txt와 testcases/{번호}/output.txt 파일을 기반으로 테스트
 - 문제의 시간 제한을 자동으로 적용
 - --watch 옵션으로 파일 변경 시 자동 재테스트`,
   flags: [
@@ -94,7 +94,7 @@ function TestView({
       options: {
         shortFlag: 'w',
         description: `watch 모드 (파일 변경 시 자동 재테스트)
-                        solution.*, input*.txt, output*.txt 파일 변경 감지`,
+                        solution.*, testcases/**/*.txt 파일 변경 감지`,
       },
     },
   ],

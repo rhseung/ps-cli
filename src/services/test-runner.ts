@@ -40,8 +40,21 @@ export async function runAllTests({
   language,
   timeoutMs,
 }: RunAllTestsOptions): Promise<RunAllTestsResult> {
-  const entries = await readdir(problemDir);
-  const inputFiles = entries.filter((f) => /^input\d+\.txt$/.test(f));
+  const testcasesDir = join(problemDir, 'testcases');
+  let caseDirs: string[] = [];
+
+  // testcases 디렉토리에서 테스트 케이스 디렉토리 찾기
+  try {
+    const entries = await readdir(testcasesDir);
+    // 숫자 디렉토리만 필터링하고 정렬
+    caseDirs = entries
+      .filter((entry) => /^\d+$/.test(entry))
+      .sort((a, b) => Number(a) - Number(b))
+      .map((entry) => join(testcasesDir, entry));
+  } catch {
+    // testcases 디렉토리가 없으면 빈 배열 반환
+    return { results: [], summary: buildSummary([]) };
+  }
 
   const results: TestResult[] = [];
 
@@ -74,11 +87,10 @@ export async function runAllTests({
     effectiveTimeout = 5000;
   }
 
-  for (const inputFile of inputFiles) {
-    const match = inputFile.match(/input(\d+)\.txt$/);
-    const caseId = match ? Number(match[1]) : results.length + 1;
-    const inputPath = join(problemDir, inputFile);
-    const outputPath = join(problemDir, `output${caseId}.txt`);
+  for (const caseDir of caseDirs) {
+    const caseId = Number(join(caseDir).split('/').pop() || '0');
+    const inputPath = join(caseDir, 'input.txt');
+    const outputPath = join(caseDir, 'output.txt');
 
     // 기대 출력 읽기
     let expected: string | undefined;
@@ -89,7 +101,7 @@ export async function runAllTests({
         caseId,
         inputPath,
         status: 'error',
-        error: '기대 출력(output*.txt)을 찾을 수 없습니다.',
+        error: '기대 출력(output.txt)을 찾을 수 없습니다.',
       });
       continue;
     }

@@ -83,8 +83,7 @@ export function useTestRunner({
     const watcher = chokidar.watch(
       [
         join(problemDir, 'solution.*'),
-        join(problemDir, 'input*.txt'),
-        join(problemDir, 'output*.txt'),
+        join(problemDir, 'testcases', '**', '*.txt'),
       ],
       {
         ignoreInitial: true,

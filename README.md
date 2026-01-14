@@ -95,7 +95,7 @@ ps test [문제번호] [옵션]
 - `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
   - 지원 언어: python, javascript, typescript, cpp
 - `--watch`, `-w`: watch 모드 (파일 변경 시 자동 재테스트)
-  - solution._, input_.txt, output\*.txt 파일 변경 감지
+  - solution._, testcases/\*\*/_.txt 파일 변경 감지
 
 **예제:**
 
@@ -111,7 +111,7 @@ ps test --language python  # Python으로 테스트
 
 - 현재 디렉토리 또는 지정한 문제 번호의 테스트 실행
 - solution.\* 파일을 자동으로 찾아 언어 감지
-- input*.txt와 output*.txt 파일을 기반으로 테스트
+- testcases/{번호}/input.txt와 testcases/{번호}/output.txt 파일을 기반으로 테스트
 - 문제의 시간 제한을 자동으로 적용
 
 ---
@@ -131,22 +131,25 @@ ps run [문제번호] [옵션]
 - `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
   - 지원 언어: python, javascript, typescript, cpp
 - `--input`, `-i`: 입력 파일 지정
-  - 기본값: input.txt 또는 input1.txt
+  - 숫자만 입력 시 testcases/{숫자}/input.txt로 자동 변환 (예: `--input 1`)
+  - 전체 경로도 지원 (예: testcases/1/input.txt)
 
 **예제:**
 
 ```bash
-ps run                    # 현재 디렉토리에서 실행
-ps run 1000               # 1000번 문제 실행
-ps run --language python  # Python으로 실행
-ps run --input input2.txt # 특정 입력 파일 사용
+ps run                  # 현재 디렉토리에서 표준 입력으로 실행
+ps run 1000             # 1000번 문제 표준 입력으로 실행
+ps run --language python # Python으로 표준 입력으로 실행
+ps run --input 1         # 테스트 케이스 1번 사용
+ps run --input testcases/1/input.txt # 전체 경로로 입력 파일 지정
 ```
 
 **설명:**
 
 - 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
 - solution.\* 파일을 자동으로 찾아 언어 감지
-- input.txt 또는 input1.txt를 표준 입력으로 사용
+- --input 옵션으로 입력 파일 지정 가능 (예: `--input 1` 또는 `--input testcases/1/input.txt`)
+- 옵션 없이 실행 시 표준 입력으로 입력 받기
 - 테스트 케이스 검증 없이 단순 실행
 
 ---
@@ -424,17 +427,6 @@ npm unlink -g @rhseung/ps-cli
 ```
 
 **주의:** `npm link`를 사용하면 글로벌 설치된 버전이 링크된 버전으로 대체됩니다.
-
-### 방법 3: 프로젝트 내에서만 테스트
-
-```bash
-# 빌드
-bun run build
-
-# 프로젝트 디렉토리 내에서만
-bun run ps init
-bun run ps fetch 1000
-```
 
 ## 라이선스
 

@@ -6,7 +6,7 @@ import type { Language } from '../utils/language';
 export interface UseRunSolutionParams {
   problemDir: string;
   language: Language;
-  inputFile: string;
+  inputFile?: string;
   onComplete: () => void;
 }
 
@@ -16,6 +16,7 @@ export interface RunResult {
   exitCode: number | null;
   timedOut: boolean;
   durationMs: number;
+  input?: string;
 }
 
 export interface UseRunSolutionReturn {

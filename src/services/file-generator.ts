@@ -98,10 +98,14 @@ export async function generateProblemFiles(
   }
 
   // 예제 파일 생성
+  const testcasesDir = join(problemDir, 'testcases');
   for (let i = 0; i < problem.testCases.length; i++) {
     const testCase = problem.testCases[i];
-    const inputPath = join(problemDir, `input${i + 1}.txt`);
-    const outputPath = join(problemDir, `output${i + 1}.txt`);
+    const caseDir = join(testcasesDir, String(i + 1));
+    await mkdir(caseDir, { recursive: true });
+
+    const inputPath = join(caseDir, 'input.txt');
+    const outputPath = join(caseDir, 'output.txt');
 
     await writeFile(inputPath, testCase.input, 'utf-8');
     await writeFile(outputPath, testCase.output, 'utf-8');
