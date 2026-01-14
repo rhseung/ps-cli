@@ -26,99 +26,310 @@ ps test
 ps submit
 
 # 5. 커밋 및 아카이빙
-ps solve
+ps archive
 ```
 
 ## 명령어
 
 ### `init` - 프로젝트 초기화
 
-프로젝트를 초기화하고 설정을 구성합니다.
+프로젝트를 대화형으로 초기화하고 설정을 구성합니다.
+
+**사용법:**
 
 ```bash
 ps init
 ```
 
+**설명:**
+
+- 단계별로 설정을 물어봅니다
+- 아카이브 디렉토리, solving 디렉토리, 아카이빙 전략, 기본 언어, 에디터 등을 설정할 수 있습니다
+
+---
+
 ### `fetch` - 문제 가져오기
 
 백준 문제를 가져와서 로컬에 파일을 생성합니다.
 
+**사용법:**
+
+```bash
+ps fetch <문제번호> [옵션]
+```
+
+**옵션:**
+
+- `--language`, `-l`: 언어 선택 (python, javascript, typescript, cpp)
+  - 기본값: python 또는 설정 파일의 `default-language`
+
+**예제:**
+
 ```bash
 ps fetch 1000
 ps fetch 1000 --language python
+ps fetch 1000 -l cpp
 ```
+
+**설명:**
+
+- Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
+- 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
+- 선택한 언어의 솔루션 템플릿 파일 생성
+- README.md에 문제 정보, 통계, 태그 등 포함
+
+---
 
 ### `test` - 로컬 테스트
 
 예제 입출력으로 테스트를 실행합니다.
 
+**사용법:**
+
 ```bash
-ps test
-ps test 1000
-ps test --watch  # 파일 변경 시 자동 재테스트
+ps test [문제번호] [옵션]
 ```
+
+**옵션:**
+
+- `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
+  - 지원 언어: python, javascript, typescript, cpp
+- `--watch`, `-w`: watch 모드 (파일 변경 시 자동 재테스트)
+  - solution._, input_.txt, output\*.txt 파일 변경 감지
+
+**예제:**
+
+```bash
+ps test                    # 현재 디렉토리에서 테스트
+ps test 1000               # 1000번 문제 테스트
+ps test --watch            # watch 모드로 테스트
+ps test 1000 --watch       # 1000번 문제를 watch 모드로 테스트
+ps test --language python  # Python으로 테스트
+```
+
+**설명:**
+
+- 현재 디렉토리 또는 지정한 문제 번호의 테스트 실행
+- solution.\* 파일을 자동으로 찾아 언어 감지
+- input*.txt와 output*.txt 파일을 기반으로 테스트
+- 문제의 시간 제한을 자동으로 적용
+
+---
 
 ### `run` - 코드 실행
 
 테스트 없이 코드를 실행합니다.
 
+**사용법:**
+
 ```bash
-ps run
-ps run 1000
+ps run [문제번호] [옵션]
 ```
+
+**옵션:**
+
+- `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
+  - 지원 언어: python, javascript, typescript, cpp
+- `--input`, `-i`: 입력 파일 지정
+  - 기본값: input.txt 또는 input1.txt
+
+**예제:**
+
+```bash
+ps run                    # 현재 디렉토리에서 실행
+ps run 1000               # 1000번 문제 실행
+ps run --language python  # Python으로 실행
+ps run --input input2.txt # 특정 입력 파일 사용
+```
+
+**설명:**
+
+- 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
+- solution.\* 파일을 자동으로 찾아 언어 감지
+- input.txt 또는 input1.txt를 표준 입력으로 사용
+- 테스트 케이스 검증 없이 단순 실행
+
+---
 
 ### `submit` - 제출
 
 백준 제출 페이지를 열고 소스 코드를 클립보드에 복사합니다.
 
-```bash
-ps submit
-ps submit 1000
-```
-
-### `solve` - 아카이빙
-
-solving 디렉토리의 문제를 problem 디렉토리로 이동하고 Git 커밋을 생성합니다.
+**사용법:**
 
 ```bash
-ps solve 1000
+ps submit [문제번호] [옵션]
 ```
+
+**옵션:**
+
+- `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
+  - 지원 언어: python, javascript, typescript, cpp
+
+**예제:**
+
+```bash
+ps submit                    # 현재 디렉토리에서 제출
+ps submit 1000                # 1000번 문제 제출
+ps submit --language python   # Python으로 제출
+```
+
+**설명:**
+
+- 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론
+- solution.\* 파일을 자동으로 찾아 언어 감지
+- 소스 코드를 클립보드에 자동 복사
+- 제출 페이지를 브라우저로 자동 열기
+
+---
+
+### `archive` - 아카이빙
+
+solving 디렉토리의 문제를 archive 디렉토리로 이동하고 Git 커밋을 생성합니다.
+
+**사용법:**
+
+```bash
+ps archive [문제번호]
+```
+
+**예제:**
+
+```bash
+ps archive 1000              # 1000번 문제 아카이빙
+ps archive                   # 현재 디렉토리에서 문제 번호 자동 감지
+```
+
+**설명:**
+
+- solving 디렉토리에서 문제를 찾아 archive 디렉토리로 이동
+- Git add 및 commit 실행
+- 커밋 메시지: "solve: {문제번호} - {문제이름}"
+
+---
 
 ### `open` - 문제 페이지 열기
 
 백준 문제 페이지를 브라우저로 엽니다.
 
+**사용법:**
+
 ```bash
-ps open 1000
+ps open [문제번호]
 ```
+
+**예제:**
+
+```bash
+ps open 1000                 # 1000번 문제 열기
+ps open                      # 문제 디렉토리에서 실행 시 자동 추론
+```
+
+**설명:**
+
+- 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론
+
+---
 
 ### `search` - 문제 검색
 
-solved.ac에서 문제를 검색합니다.
+solved.ac에서 문제를 검색하거나 백준 문제집의 문제 목록을 표시합니다.
+
+**사용법:**
 
 ```bash
-ps search "*g1...g5"
-ps search --workbook 12345
+ps search <쿼리> [옵션]
+ps search --workbook <문제집ID>
 ```
+
+**옵션:**
+
+- `--workbook`: 문제집 ID를 지정하여 해당 문제집의 문제 목록을 표시
+
+**예제:**
+
+```bash
+ps search "*g1...g5"           # Gold 1-5 문제 검색
+ps search "tier:g1...g5"       # Gold 1-5 문제 검색 (tier: 문법)
+ps search "#dp"                 # DP 태그 문제 검색
+ps search "tag:dp"              # DP 태그 문제 검색 (tag: 문법)
+ps search "*g1...g5 #dp"        # Gold 1-5 티어의 DP 태그 문제 검색
+ps search --workbook 25052      # 문제집 25052의 문제 목록 표시
+```
+
+**설명:**
+
+- solved.ac 검색어 문법을 지원합니다
+- 문제 목록에서 선택하면 자동으로 브라우저에서 문제 페이지를 엽니다
+- 페이지네이션을 통해 여러 페이지의 결과를 탐색할 수 있습니다
+- `--workbook` 옵션으로 백준 문제집의 문제 목록을 볼 수 있습니다
+
+---
 
 ### `stats` - 통계 조회
 
-Solved.ac 사용자 통계를 조회합니다.
+Solved.ac에서 사용자 통계를 조회합니다.
+
+**사용법:**
 
 ```bash
-ps stats
-ps stats myhandle
+ps stats [핸들] [옵션]
 ```
+
+**옵션:**
+
+- `--handle`, `-h`: Solved.ac 핸들
+  - 설정에 저장된 값 사용 가능
+  - 인자로 전달하거나 플래그로 지정 가능
+
+**예제:**
+
+```bash
+ps stats myhandle              # myhandle의 통계 조회
+ps stats --handle myhandle     # 플래그로 핸들 지정
+ps stats                       # 설정에 저장된 핸들 사용
+```
+
+**설명:**
+
+- 티어, 레이팅, 해결한 문제 수 등 표시
+- 그라데이션으로 시각적으로 표시
+- 핸들 우선순위: 인자 > 플래그 > 설정 파일
+
+---
 
 ### `config` - 설정 관리
 
-프로젝트 설정을 관리합니다.
+프로젝트 설정 파일(.ps-cli.json)을 관리합니다.
+
+**사용법:**
 
 ```bash
-ps config list
-ps config set default-language python
-ps config get archive-strategy
+ps config <명령어> [키] [값]
 ```
+
+**명령어:**
+
+- `get [키]`: 설정 값 조회 (키 없으면 대화형 선택)
+- `set [키] [값]`: 설정 값 설정 (키/값 없으면 대화형 선택)
+- `list`: 모든 설정 조회
+- `clear`: .ps-cli.json 파일 삭제
+
+**예제:**
+
+```bash
+ps config get                         # 대화형으로 키 선택 후 값 조회
+ps config get default-language         # default-language 값 조회
+ps config set                         # 대화형으로 키 선택 후 값 설정
+ps config set editor cursor            # editor를 cursor로 설정
+ps config list                         # 모든 설정 조회
+ps config clear                        # .ps-cli.json 파일 삭제
+```
+
+**설명:**
+
+- 설정은 현재 프로젝트의 .ps-cli.json 파일에 저장됩니다
+- 대화형 모드로 키와 값을 선택할 수 있습니다
 
 ## 설정
 
@@ -130,7 +341,7 @@ ps config get archive-strategy
 - `editor`: 에디터 명령어 (code, cursor, vim 등)
 - `auto-open-editor`: fetch 후 자동으로 에디터 열기 (true/false)
 - `solved-ac-handle`: Solved.ac 핸들
-- `problem-dir`: 아카이브된 문제 디렉토리 (기본값: problems)
+- `archive-dir`: 아카이브된 문제 디렉토리 (기본값: problems)
 - `solving-dir`: 푸는 중인 문제 디렉토리 (기본값: solving)
 - `archive-strategy`: 아카이빙 전략
 
@@ -176,7 +387,54 @@ ps config get archive-strategy
 3. **작성**: `solving/1000/`에서 코드 작성
 4. **테스트**: `ps test`로 로컬 테스트
 5. **제출**: `ps submit`으로 제출
-6. **아카이빙**: `ps solve`로 problem 디렉토리로 이동
+6. **아카이빙**: `ps archive`로 archive 디렉토리로 이동
+
+## 개발
+
+로컬에서 개발하거나 테스트할 때는 글로벌로 설치된 `ps` 명령어와 충돌을 피하기 위해 다음 방법을 사용할 수 있습니다:
+
+### 방법 1: 절대 경로로 직접 실행 (외부 폴더 테스트 가능)
+
+```bash
+# 빌드
+bun run build
+
+# 프로젝트 디렉토리에서 절대 경로로 실행
+/path/to/ps-cli/dist/index.js init
+/path/to/ps-cli/dist/index.js fetch 1000
+
+# 또는 프로젝트 디렉토리로 이동 후
+cd /path/to/ps-cli
+node dist/index.js init
+```
+
+### 방법 2: npm link 사용 (주의 필요)
+
+```bash
+# 프로젝트 디렉토리에서
+bun run build
+npm link
+
+# 외부 폴더에서 테스트
+cd /path/to/test-project
+ps init  # 로컬 버전이 사용됨
+
+# 테스트 후 링크 해제
+npm unlink -g @rhseung/ps-cli
+```
+
+**주의:** `npm link`를 사용하면 글로벌 설치된 버전이 링크된 버전으로 대체됩니다.
+
+### 방법 3: 프로젝트 내에서만 테스트
+
+```bash
+# 빌드
+bun run build
+
+# 프로젝트 디렉토리 내에서만
+bun run ps init
+bun run ps fetch 1000
+```
 
 ## 라이선스
 

@@ -15,6 +15,7 @@
     "build": "tsup && node scripts/add-shebang.js",
     "prepublishOnly": "npm run build",
     "dev": "tsup --watch",
+    "ps": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "format": "prettier --check .",

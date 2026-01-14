@@ -30,11 +30,7 @@ export { useUserStats } from './use-user-stats';
 export type { UseUserStatsParams, UseUserStatsReturn } from './use-user-stats';
 
 export { useConfig } from './use-config';
-export type {
-  UseConfigParams,
-  UseConfigReturn,
-  ProjectConfig,
-} from './use-config';
+export type { UseConfigParams, UseConfigReturn } from './use-config';
 export {
   readProjectConfig,
   writeProjectConfig,
@@ -49,5 +45,5 @@ export type {
   CompletedStep,
 } from './use-init';
 
-export { useSolve } from './use-solve';
-export type { UseSolveParams, UseSolveReturn } from './use-solve';
+export { useArchive } from './use-archive';
+export type { UseArchiveParams, UseArchiveReturn } from './use-archive';

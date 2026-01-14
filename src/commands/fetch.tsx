@@ -8,12 +8,12 @@ import { Command } from '../core/base-command';
 import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useFetchProblem } from '../hooks/use-fetch-problem';
 import type { CommandFlags } from '../types/command';
+import { resolveProblemContext } from '../utils/execution-context';
 import type { Language } from '../utils/language';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
 } from '../utils/language';
-import { getProblemId } from '../utils/problem-id';
 
 interface FetchViewProps {
   problemId: number;
@@ -84,9 +84,10 @@ function FetchView({
 })
 export class FetchCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
-    const problemId = getProblemId(args);
+    // 문제 컨텍스트 해석
+    const context = await resolveProblemContext(args, { requireId: true });
 
-    if (problemId === null) {
+    if (context.problemId === null) {
       console.error('오류: 문제 번호를 입력해주세요.');
       console.error(`사용법: ps fetch <문제번호> [옵션]`);
       console.error(`도움말: ps fetch --help`);
@@ -108,7 +109,7 @@ export class FetchCommand extends Command {
     }
 
     await this.renderView(FetchView, {
-      problemId,
+      problemId: context.problemId,
       language: language || 'python',
     });
   }

@@ -13,6 +13,7 @@ import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useInit } from '../hooks/use-init';
 import type { CommandFlags } from '../types/command';
 import { getSupportedLanguages } from '../utils/language';
+import { getVersion } from '../utils/version';
 
 interface InitViewProps {
   onComplete: () => void;
@@ -27,7 +28,7 @@ function InitView({ onComplete }: InitViewProps) {
     handleInputMode,
     created,
     cancelled,
-    setProblemDirValue,
+    setArchiveDirValue,
     setSolvingDirValue,
     setArchiveStrategy,
     setLanguage,
@@ -83,7 +84,7 @@ function InitView({ onComplete }: InitViewProps) {
     }
 
     switch (currentStep) {
-      case 'problem-dir': {
+      case 'archive-dir': {
         const options = [
           { label: 'problems', value: 'problems' },
           { label: '. (프로젝트 루트)', value: '.' },
@@ -93,7 +94,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setProblemDirValue(value);
+              setArchiveDirValue(value);
               const displayValue = value === '.' ? '프로젝트 루트' : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
@@ -283,6 +284,8 @@ function InitView({ onComplete }: InitViewProps) {
     );
   }
 
+  const version = getVersion();
+
   return (
     <Box flexDirection="column">
       {/* 헤더 */}
@@ -290,6 +293,12 @@ function InitView({ onComplete }: InitViewProps) {
         <Text color="cyan" bold>
           🚀 ps-cli 프로젝트 초기화
         </Text>
+        {version && (
+          <Text color="gray" dimColor>
+            {' '}
+            v{version}
+          </Text>
+        )}
       </Box>
 
       {/* 완료된 단계 표시 */}

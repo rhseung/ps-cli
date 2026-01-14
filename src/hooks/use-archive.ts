@@ -6,23 +6,23 @@ import { useEffect, useState } from 'react';
 
 import type { Problem } from '../types/index';
 import { findProjectRoot, getSolvingDir } from '../utils/config';
-import { getSolvingDirPath, getProblemDirPath } from '../utils/problem-id';
+import { getSolvingDirPath, getArchiveDirPath } from '../utils/problem-id';
 
-export interface UseSolveParams {
+export interface UseArchiveParams {
   problemId: number;
   onComplete?: () => void;
 }
 
-export interface UseSolveReturn {
+export interface UseArchiveReturn {
   status: 'loading' | 'success' | 'error';
   message: string;
   error: string | null;
 }
 
-export function useSolve({
+export function useArchive({
   problemId,
   onComplete,
-}: UseSolveParams): UseSolveReturn {
+}: UseArchiveParams): UseArchiveReturn {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
     'loading',
   );
@@ -30,7 +30,7 @@ export function useSolve({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function solve() {
+    async function archive() {
       try {
         // 프로젝트 루트 찾기
         const projectRoot = findProjectRoot();
@@ -82,14 +82,14 @@ export function useSolve({
           // meta.json이 없거나 읽을 수 없어도 계속 진행
         }
 
-        // problem 디렉토리 경로 (문제 정보 전달)
-        const problemDir = getProblemDirPath(problemId, projectRoot, problem);
+        // archive 디렉토리 경로 (문제 정보 전달)
+        const archiveDir = getArchiveDirPath(problemId, projectRoot, problem);
 
-        // problem 디렉토리에 이미 같은 문제가 있는지 확인
+        // archive 디렉토리에 이미 같은 문제가 있는지 확인
         try {
-          await access(problemDir);
+          await access(archiveDir);
           throw new Error(
-            `problem 디렉토리에 이미 문제 ${problemId}가 존재합니다.`,
+            `archive 디렉토리에 이미 문제 ${problemId}가 존재합니다.`,
           );
         } catch (err) {
           // access 실패는 정상 (파일이 없음)
@@ -99,13 +99,13 @@ export function useSolve({
         }
 
         // 타겟 디렉토리의 부모 디렉토리 생성 (아카이빙 전략에 따라 필요)
-        const problemDirParent = dirname(problemDir);
+        const archiveDirParent = dirname(archiveDir);
         setMessage('아카이브 디렉토리를 준비하는 중...');
-        await mkdir(problemDirParent, { recursive: true });
+        await mkdir(archiveDirParent, { recursive: true });
 
         // 디렉토리 이동
-        setMessage('문제를 problem 디렉토리로 이동하는 중...');
-        await rename(solvingDir, problemDir);
+        setMessage('문제를 archive 디렉토리로 이동하는 중...');
+        await rename(solvingDir, archiveDir);
 
         // solving dir의 빈 부모 디렉토리 삭제
         setMessage('빈 디렉토리 정리 중...');
@@ -148,7 +148,7 @@ export function useSolve({
         setMessage('Git 커밋을 실행하는 중...');
         try {
           // git add
-          await execa('git', ['add', problemDir], { cwd: projectRoot });
+          await execa('git', ['add', archiveDir], { cwd: projectRoot });
 
           // git commit
           const commitMessage = `solve: ${problemId} - ${problemTitle}`;
@@ -164,7 +164,7 @@ export function useSolve({
         }
 
         setStatus('success');
-        setMessage(`문제 ${problemId}를 아카이브했습니다: ${problemDir}`);
+        setMessage(`문제 ${problemId}를 아카이브했습니다: ${archiveDir}`);
 
         setTimeout(() => {
           onComplete?.();
@@ -178,7 +178,7 @@ export function useSolve({
       }
     }
 
-    void solve();
+    void archive();
   }, [problemId, onComplete]);
 
   return {

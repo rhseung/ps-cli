@@ -3,7 +3,7 @@ import { join } from 'path';
 import type { Problem } from '../types/index';
 
 import {
-  getProblemDir,
+  getArchiveDir,
   getSolvingDir,
   findProjectRoot,
   getArchiveStrategy,
@@ -81,7 +81,7 @@ export function getArchiveSubPath(
 
 /**
  * 현재 작업 디렉토리 경로에서 문제 번호를 추론합니다.
- * config의 problemDir 또는 solvingDir 설정과 archiveStrategy에 따라 경로를 추론합니다.
+ * config의 archiveDir 또는 solvingDir 설정과 archiveStrategy에 따라 경로를 추론합니다.
  * 여러 아카이빙 전략을 시도하여 매칭합니다 (하위 호환성).
  *
  * @param cwd - 확인할 디렉토리 경로 (기본값: process.cwd())
@@ -96,17 +96,17 @@ export function getArchiveSubPath(
 export function detectProblemIdFromPath(
   cwd: string = process.cwd(),
 ): number | null {
-  const problemDir = getProblemDir();
+  const archiveDir = getArchiveDir();
   const solvingDir = getSolvingDir();
   const archiveStrategy = getArchiveStrategy();
   const normalizedPath = cwd.replace(/\\/g, '/');
 
-  // 디렉토리 목록 (problemDir, solvingDir 순서로 확인)
-  const dirsToCheck = [problemDir, solvingDir].filter(
+  // 디렉토리 목록 (archiveDir, solvingDir 순서로 확인)
+  const dirsToCheck = [archiveDir, solvingDir].filter(
     (dir) => dir && dir !== '.' && dir !== '',
   );
 
-  // problemDir나 solvingDir가 "." 또는 ""인 경우 프로젝트 루트에서 직접 추론
+  // archiveDir나 solvingDir가 "." 또는 ""인 경우 프로젝트 루트에서 직접 추론
   if (dirsToCheck.length === 0) {
     // 현재 경로의 마지막 세그먼트가 숫자인지 확인
     const segments = normalizedPath.split('/').filter(Boolean);
@@ -251,26 +251,26 @@ export function getProblemId(
 }
 
 /**
- * 문제 번호에 해당하는 디렉토리 경로를 반환합니다.
- * config의 problemDir 설정과 archiveStrategy에 따라 경로가 결정됩니다.
+ * 문제 번호에 해당하는 아카이브 디렉토리 경로를 반환합니다.
+ * config의 archiveDir 설정과 archiveStrategy에 따라 경로가 결정됩니다.
  * 프로젝트 루트를 기준으로 생성하므로, 문제 디렉토리 안에서 실행해도 올바른 위치에 생성됩니다.
  *
  * @param problemId - 문제 번호
  * @param cwd - 현재 작업 디렉토리 (기본값: process.cwd(), 프로젝트 루트를 찾기 위해 사용)
  * @param problem - 문제 정보 (by-tier, by-tag 전략에 필요, 선택적)
- * @returns 문제 디렉토리 경로
+ * @returns 아카이브 디렉토리 경로
  *
  * @example
- * getProblemDirPath(1000) // "/path/to/problems/1000" (flat 전략, problemDir="problems"인 경우)
- * getProblemDirPath(1000) // "/path/to/problems/01000/1000" (by-range 전략)
- * getProblemDirPath(1000, process.cwd(), problem) // "/path/to/problems/bronze/1000" (by-tier 전략)
+ * getArchiveDirPath(1000) // "/path/to/problems/1000" (flat 전략, archiveDir="problems"인 경우)
+ * getArchiveDirPath(1000) // "/path/to/problems/01000/1000" (by-range 전략)
+ * getArchiveDirPath(1000, process.cwd(), problem) // "/path/to/problems/bronze/1000" (by-tier 전략)
  */
-export function getProblemDirPath(
+export function getArchiveDirPath(
   problemId: number,
   cwd: string = process.cwd(),
   problem?: Problem,
 ): string {
-  const problemDir = getProblemDir();
+  const archiveDir = getArchiveDir();
   const archiveStrategy = getArchiveStrategy();
 
   // 프로젝트 루트 찾기
@@ -280,8 +280,8 @@ export function getProblemDirPath(
   // 아카이빙 전략에 따른 서브 경로
   const subPath = getArchiveSubPath(problemId, archiveStrategy, problem);
 
-  // problemDir가 "." 또는 ""인 경우 프로젝트 루트에 직접 생성
-  if (problemDir === '.' || problemDir === '') {
+  // archiveDir가 "." 또는 ""인 경우 프로젝트 루트에 직접 생성
+  if (archiveDir === '.' || archiveDir === '') {
     if (subPath) {
       return join(baseDir, subPath, problemId.toString());
     }
@@ -290,9 +290,9 @@ export function getProblemDirPath(
 
   // 그 외의 경우 해당 디렉토리 아래에 생성
   if (subPath) {
-    return join(baseDir, problemDir, subPath, problemId.toString());
+    return join(baseDir, archiveDir, subPath, problemId.toString());
   }
-  return join(baseDir, problemDir, problemId.toString());
+  return join(baseDir, archiveDir, problemId.toString());
 }
 
 /**

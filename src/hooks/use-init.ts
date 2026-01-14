@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 import type { ProjectConfig } from '../types/index';
 import {
-  getProblemDir,
+  getArchiveDir,
   getSolvingDir,
   getDefaultLanguage,
   getEditor,
@@ -16,7 +16,7 @@ import {
 } from '../utils/config';
 
 export type InitStep =
-  | 'problem-dir'
+  | 'archive-dir'
   | 'solving-dir'
   | 'archive-strategy'
   | 'language'
@@ -41,7 +41,7 @@ export interface UseInitReturn {
   completedSteps: CompletedStep[];
   confirmExit: boolean;
   initialized: boolean;
-  problemDir: string;
+  archiveDir: string;
   solvingDir: string;
   archiveStrategy: string;
   language: string;
@@ -51,7 +51,7 @@ export interface UseInitReturn {
   handleInputMode: boolean;
   created: string[];
   cancelled: boolean;
-  setProblemDirValue: (value: string) => void;
+  setArchiveDirValue: (value: string) => void;
   setSolvingDirValue: (value: string) => void;
   setArchiveStrategy: (value: string) => void;
   setLanguage: (value: string) => void;
@@ -72,13 +72,13 @@ export interface UseInitReturn {
 }
 
 export function useInit({ onComplete }: UseInitParams): UseInitReturn {
-  const [currentStep, setCurrentStep] = useState<InitStep>('problem-dir');
+  const [currentStep, setCurrentStep] = useState<InitStep>('archive-dir');
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
   const [confirmExit, setConfirmExit] = useState(false);
 
   // 프로젝트별 config 파일에서 초기값 로드
   const [initialized, setInitialized] = useState(false);
-  const [problemDir, setProblemDirValue] = useState<string>(getProblemDir());
+  const [archiveDir, setArchiveDirValue] = useState<string>(getArchiveDir());
   const [solvingDir, setSolvingDirValue] = useState<string>(getSolvingDir());
   const [archiveStrategy, setArchiveStrategy] =
     useState<string>(getArchiveStrategy());
@@ -123,8 +123,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         const configContent = await readFile(projectConfigPath, 'utf-8');
         const projectConfig = JSON.parse(configContent);
 
-        if (projectConfig.problemDir)
-          setProblemDirValue(projectConfig.problemDir);
+        if (projectConfig.archiveDir)
+          setArchiveDirValue(projectConfig.archiveDir);
         if (projectConfig.solvingDir)
           setSolvingDirValue(projectConfig.solvingDir);
         if (projectConfig.archiveStrategy)
@@ -147,8 +147,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
   const getStepLabel = useCallback((step: InitStep): string => {
     switch (step) {
-      case 'problem-dir':
-        return '문제 디렉토리 설정 (아카이브된 문제)';
+      case 'archive-dir':
+        return '아카이브 디렉토리 설정 (아카이브된 문제)';
       case 'solving-dir':
         return 'Solving 디렉토리 설정 (푸는 중인 문제)';
       case 'archive-strategy':
@@ -169,8 +169,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   const getStepValue = useCallback(
     (step: InitStep): string => {
       switch (step) {
-        case 'problem-dir':
-          return problemDir === '.' ? '프로젝트 루트' : problemDir;
+        case 'archive-dir':
+          return archiveDir === '.' ? '프로젝트 루트' : archiveDir;
         case 'solving-dir':
           return solvingDir === '.' ? '프로젝트 루트' : solvingDir;
         case 'archive-strategy': {
@@ -195,13 +195,13 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       }
     },
     [
-      problemDir,
+      archiveDir,
       solvingDir,
-      archiveStrategy,
       language,
       editor,
       autoOpen,
       handle,
+      archiveStrategy,
     ],
   );
 
@@ -213,7 +213,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         // 프로젝트별 메타데이터 파일 생성 (.ps-cli.json)
         const projectConfigPath = join(cwd, '.ps-cli.json');
         const projectConfig: ProjectConfig = {
-          problemDir,
+          archiveDir,
           solvingDir,
           archiveStrategy,
           defaultLanguage: language,
@@ -237,12 +237,12 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         );
         setCreated((prev) => [...prev, '.ps-cli.json']);
 
-        // problemDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-        if (problemDir !== '.' && problemDir !== '') {
-          const problemDirPath = join(cwd, problemDir);
+        // archiveDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
+        if (archiveDir !== '.' && archiveDir !== '') {
+          const archiveDirPath = join(cwd, archiveDir);
           try {
-            await mkdir(problemDirPath, { recursive: true });
-            setCreated((prev) => [...prev, `${problemDir}/`]);
+            await mkdir(archiveDirPath, { recursive: true });
+            setCreated((prev) => [...prev, `${archiveDir}/`]);
           } catch (err) {
             const error = err as NodeJS.ErrnoException;
             if (error.code !== 'EEXIST') {
@@ -265,10 +265,10 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           }
         }
 
-        // .gitignore 업데이트 (solving dir만 포함, problem dir은 Git에 커밋)
+        // .gitignore 업데이트 (solving dir만 포함, archive dir은 Git에 커밋)
         const gitignorePath = join(cwd, '.gitignore');
         const gitignorePatterns: string[] = [];
-        // problemDir은 Git에 커밋하므로 .gitignore에 포함하지 않음
+        // archiveDir은 Git에 커밋하므로 .gitignore에 포함하지 않음
         if (solvingDir !== '.' && solvingDir !== '') {
           gitignorePatterns.push(`${solvingDir}/`);
         }
@@ -368,7 +368,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       }
     },
     [
-      problemDir,
+      archiveDir,
       solvingDir,
       archiveStrategy,
       language,
@@ -393,7 +393,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       }
 
       const stepOrder: InitStep[] = [
-        'problem-dir',
+        'archive-dir',
         'solving-dir',
         'archive-strategy',
         'language',
@@ -418,17 +418,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         }
       }
     },
-    [
-      currentStep,
-      executeInit,
-      problemDir,
-      solvingDir,
-      archiveStrategy,
-      language,
-      editor,
-      autoOpen,
-      onComplete,
-    ],
+    [currentStep, executeInit],
   );
 
   return {
@@ -436,7 +426,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     completedSteps,
     confirmExit,
     initialized,
-    problemDir,
+    archiveDir,
     solvingDir,
     archiveStrategy,
     language,
@@ -446,7 +436,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     handleInputMode,
     created,
     cancelled,
-    setProblemDirValue,
+    setArchiveDirValue,
     setSolvingDirValue,
     setArchiveStrategy,
     setLanguage,

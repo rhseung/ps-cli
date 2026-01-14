@@ -11,7 +11,7 @@ import {
   getEditor,
   getAutoOpenEditor,
   getSolvedAcHandle,
-  getProblemDir,
+  getArchiveDir,
   getArchiveStrategy,
 } from '../utils/config';
 import {
@@ -42,7 +42,7 @@ export function getConfigHelp(): string {
     editor                 에디터 명령어 (예: code, vim, nano)
     auto-open-editor       fetch 후 자동으로 에디터 열기 (true/false)
     solved-ac-handle       Solved.ac 핸들 (stats 명령어용)
-    problem-dir            문제 디렉토리 경로 (기본값: problems, "." 또는 ""는 프로젝트 루트)
+    archive-dir            아카이브 디렉토리 경로 (기본값: problems, "." 또는 ""는 프로젝트 루트)
     archive-strategy       아카이빙 전략 (flat, by-range, by-tier, by-tag)
 
   옵션:
@@ -66,7 +66,7 @@ const CONFIG_KEYS = [
   { label: 'editor', value: 'editor' },
   { label: 'auto-open-editor', value: 'auto-open-editor' },
   { label: 'solved-ac-handle', value: 'solved-ac-handle' },
-  { label: 'problem-dir', value: 'problem-dir' },
+  { label: 'archive-dir', value: 'archive-dir' },
   { label: 'archive-strategy', value: 'archive-strategy' },
 ];
 
@@ -126,7 +126,7 @@ function ConfigView({
     const editor = config?.editor ?? getEditor();
     const autoOpen = config?.autoOpenEditor ?? getAutoOpenEditor();
     const handle = config?.solvedAcHandle ?? getSolvedAcHandle();
-    const problemDir = config?.problemDir ?? getProblemDir();
+    const archiveDir = config?.archiveDir ?? getArchiveDir();
     const archiveStrategy = config?.archiveStrategy ?? getArchiveStrategy();
 
     return (
@@ -162,9 +162,9 @@ function ConfigView({
             </Text>
           </Box>
           <Box marginBottom={1}>
-            <Text color="gray">problem-dir:</Text>
+            <Text color="gray">archive-dir:</Text>
             <Text> </Text>
-            <Text bold>{problemDir}</Text>
+            <Text bold>{archiveDir}</Text>
           </Box>
           <Box marginBottom={1}>
             <Text color="gray">archive-strategy:</Text>
@@ -194,8 +194,8 @@ function ConfigView({
       case 'solved-ac-handle':
         configValue = config?.solvedAcHandle ?? getSolvedAcHandle();
         break;
-      case 'problem-dir':
-        configValue = config?.problemDir ?? getProblemDir();
+      case 'archive-dir':
+        configValue = config?.archiveDir ?? getArchiveDir();
         break;
       case 'archive-strategy':
         configValue = config?.archiveStrategy ?? getArchiveStrategy();
@@ -422,8 +422,8 @@ export class ConfigCommand extends Command {
           return 'true 또는 false 입력';
         case 'solved-ac-handle':
           return 'Solved.ac 핸들 입력';
-        case 'problem-dir':
-          return '문제 디렉토리 경로 입력';
+        case 'archive-dir':
+          return '아카이브 디렉토리 경로 입력';
         case 'archive-strategy':
           return '아카이빙 전략 입력 (flat, by-range, by-tier, by-tag)';
         default:
@@ -441,8 +441,8 @@ export class ConfigCommand extends Command {
           return 'fetch 후 자동으로 에디터를 열지 여부';
         case 'solved-ac-handle':
           return 'Solved.ac 사용자 핸들';
-        case 'problem-dir':
-          return '문제 디렉토리 경로 (기본값: "problems", 프로젝트 루트: ".")';
+        case 'archive-dir':
+          return '아카이브 디렉토리 경로 (기본값: "problems", 프로젝트 루트: ".")';
         case 'archive-strategy':
           return '아카이빙 전략: flat (평면), by-range (1000번대 묶기), by-tier (티어별), by-tag (태그별)';
         default:
@@ -458,7 +458,7 @@ export class ConfigCommand extends Command {
           return ['code', 'cursor', 'vim', 'nano'];
         case 'auto-open-editor':
           return ['true', 'false'];
-        case 'problem-dir':
+        case 'archive-dir':
           return ['problems', '.', ''];
         case 'archive-strategy':
           return ['flat', 'by-range', 'by-tier', 'by-tag'];

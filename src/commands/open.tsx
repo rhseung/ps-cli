@@ -8,7 +8,6 @@ import { CommandDef, CommandBuilder } from '../core/command-builder';
 import { useOpenBrowser } from '../hooks/use-open-browser';
 import type { CommandFlags } from '../types/command';
 import { resolveProblemContext } from '../utils/execution-context';
-import { getProblemId } from '../utils/problem-id';
 
 interface OpenViewProps {
   problemId: number;
@@ -83,13 +82,8 @@ function OpenView({ problemId, onComplete }: OpenViewProps) {
 })
 export class OpenCommand extends Command {
   async execute(args: string[], _flags: CommandFlags): Promise<void> {
-    const problemId = getProblemId(args);
-
     // 문제 컨텍스트 해석
-    const context = await resolveProblemContext(
-      problemId !== null ? [problemId.toString()] : [],
-      { requireId: true },
-    );
+    const context = await resolveProblemContext(args, { requireId: true });
 
     if (context.problemId === null) {
       console.error('오류: 문제 번호를 입력해주세요.');

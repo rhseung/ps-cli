@@ -10,12 +10,12 @@ interface ConfigSchema {
   editor?: string; // 에디터 명령어 (예: "code", "vim", "nano")
   autoOpenEditor?: boolean; // fetch 완료 후 자동으로 에디터 열기
   solvedAcHandle?: string; // Solved.ac 핸들 (stats 명령어용)
-  problemDir?: string; // 문제 디렉토리 경로 (기본값: "problems", "." 또는 ""는 프로젝트 루트)
+  archiveDir?: string; // 아카이브 디렉토리 경로 (기본값: "problems", "." 또는 ""는 프로젝트 루트)
   solvingDir?: string; // 푸는 중인 문제 디렉토리 경로 (기본값: "solving", "." 또는 ""는 프로젝트 루트)
 }
 
 interface ProjectConfig {
-  problemDir?: string;
+  archiveDir?: string;
   solvingDir?: string;
   defaultLanguage?: string;
   editor?: string;
@@ -33,7 +33,7 @@ const config = new Conf<ConfigSchema>({
     editor: 'code', // 기본값: VS Code
     autoOpenEditor: false, // 기본값: 자동 열기 비활성화
     solvedAcHandle: undefined,
-    problemDir: 'problems', // 기본값: problems 디렉토리
+    archiveDir: 'problems', // 기본값: problems 디렉토리
     solvingDir: 'solving', // 기본값: solving 디렉토리
   },
 });
@@ -183,16 +183,16 @@ export function setSolvedAcHandle(handle: string): void {
   config.set('solvedAcHandle', handle);
 }
 
-export function getProblemDir(): string {
+export function getArchiveDir(): string {
   const projectConfig = getProjectConfigSync();
-  if (projectConfig?.problemDir !== undefined) {
-    return projectConfig.problemDir;
+  if (projectConfig?.archiveDir !== undefined) {
+    return projectConfig.archiveDir;
   }
-  return config.get('problemDir') ?? 'problems';
+  return config.get('archiveDir') ?? 'problems';
 }
 
-export function setProblemDir(dir: string): void {
-  config.set('problemDir', dir);
+export function setArchiveDir(dir: string): void {
+  config.set('archiveDir', dir);
 }
 
 export function getSolvingDir(): string {

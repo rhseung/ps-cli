@@ -13,7 +13,6 @@ import {
   resolveLanguage,
 } from '../utils/execution-context';
 import { getSupportedLanguagesString, type Language } from '../utils/language';
-import { getProblemId } from '../utils/problem-id';
 
 interface TestViewProps {
   problemDir: string;
@@ -110,23 +109,17 @@ function TestView({
 })
 export class TestCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
-    const problemId = getProblemId(args);
-
     // 문제 컨텍스트 해석
-    const context = await resolveProblemContext(
-      problemId !== null && problemId !== undefined
-        ? [problemId.toString()]
-        : [],
-    );
+    const context = await resolveProblemContext(args);
 
     // 언어 감지
     const language = await resolveLanguage(
-      context.problemDir,
+      context.archiveDir,
       flags.language as Language | undefined,
     );
 
     await this.renderView(TestView, {
-      problemDir: context.problemDir,
+      problemDir: context.archiveDir,
       language,
       watch: Boolean(flags.watch),
       timeoutMs: flags.timeoutMs as number | undefined,

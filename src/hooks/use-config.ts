@@ -110,8 +110,8 @@ export function useConfig({
           case 'solved-ac-handle':
             updatedConfig.solvedAcHandle = value;
             break;
-          case 'problem-dir':
-            updatedConfig.problemDir = value;
+          case 'archive-dir':
+            updatedConfig.archiveDir = value;
             break;
           case 'archive-strategy': {
             const validStrategies = ['flat', 'by-range', 'by-tier', 'by-tag'];

@@ -13,7 +13,7 @@ import {
   findSolutionFile,
 } from '../utils/execution-context';
 import { getSupportedLanguagesString, type Language } from '../utils/language';
-import { getProblemId, detectProblemIdFromPath } from '../utils/problem-id';
+import { detectProblemIdFromPath } from '../utils/problem-id';
 
 interface SubmitViewProps {
   problemId: number;
@@ -143,20 +143,15 @@ function SubmitView({
 })
 export class SubmitCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
-    const problemId = getProblemId(args);
-
-    // 문제 컨텍스트 해석 (solving dir과 problem dir 둘 다 확인)
-    const context = await resolveProblemContext(
-      problemId !== null ? [problemId.toString()] : [],
-      { requireId: true },
-    );
+    // 문제 컨텍스트 해석 (solving dir과 archive dir 둘 다 확인)
+    const context = await resolveProblemContext(args, { requireId: true });
 
     // 솔루션 파일 찾기
-    const sourcePath = await findSolutionFile(context.problemDir);
+    const sourcePath = await findSolutionFile(context.archiveDir);
 
     // 언어 감지
     const detectedLanguage = await resolveLanguage(
-      context.problemDir,
+      context.archiveDir,
       flags.language as Language | undefined,
     );
 
@@ -164,7 +159,7 @@ export class SubmitCommand extends Command {
     let finalProblemId = context.problemId;
     if (finalProblemId === null) {
       // 경로에서 다시 시도
-      finalProblemId = detectProblemIdFromPath(context.problemDir);
+      finalProblemId = detectProblemIdFromPath(context.archiveDir);
     }
 
     if (finalProblemId === null) {

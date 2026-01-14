@@ -14,7 +14,7 @@ import { scrapeWorkbook } from '../services/workbook-scraper';
 import type { CommandFlags } from '../types/command';
 import type { SearchResult } from '../types/index';
 import type { WorkbookProblem } from '../types/workbook';
-import { getProblemDirPath } from '../utils/problem-id';
+import { getArchiveDirPath } from '../utils/problem-id';
 
 interface SearchViewProps {
   query: string;
@@ -151,7 +151,7 @@ function WorkbookSearchView({
 
   // 각 문제에 대해 problem_dir에 디렉토리가 존재하는지 확인
   const problemsWithSolvedStatus = problems.map((problem) => {
-    const problemDirPath = getProblemDirPath(problem.problemId);
+    const problemDirPath = getArchiveDirPath(problem.problemId);
     const isSolved = existsSync(problemDirPath);
     return {
       problemId: problem.problemId,
@@ -260,7 +260,7 @@ function SearchView({ query, onComplete }: SearchViewProps) {
         // 각 문제에 대해 problem_dir에 디렉토리가 존재하는지 확인
         const resultsWithSolvedStatus = searchResults.problems.map(
           (problem) => {
-            const problemDirPath = getProblemDirPath(problem.problemId);
+            const problemDirPath = getArchiveDirPath(problem.problemId);
             const isSolved = existsSync(problemDirPath);
             return {
               ...problem,

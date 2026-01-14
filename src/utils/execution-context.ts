@@ -12,7 +12,7 @@ import {
 import {
   getProblemId,
   detectProblemIdFromPath,
-  getProblemDirPath,
+  getArchiveDirPath,
   getSolvingDirPath,
 } from './problem-id';
 
@@ -35,14 +35,14 @@ async function directoryExists(dirPath: string): Promise<boolean> {
 
 /**
  * 명령어 인자와 현재 경로에서 문제 컨텍스트를 해석합니다.
- * solving dir과 problem dir 둘 다 확인하여 존재하는 디렉토리를 사용합니다.
- * solving dir을 먼저 확인하고, 없으면 problem dir을 확인합니다.
+ * solving dir과 archive dir 둘 다 확인하여 존재하는 디렉토리를 사용합니다.
+ * solving dir을 먼저 확인하고, 없으면 archive dir을 확인합니다.
  *
  * @param args - 명령어 인자 배열
  * @param options - 옵션
  * @returns 문제 컨텍스트
  * @throws requireId가 true이고 problemId를 찾을 수 없는 경우
- * @throws problemId가 주어졌지만 solving dir과 problem dir 둘 다 존재하지 않는 경우
+ * @throws problemId가 주어졌지만 solving dir과 archive dir 둘 다 존재하지 않는 경우
  */
 export async function resolveProblemContext(
   args: string[],
@@ -68,35 +68,35 @@ export async function resolveProblemContext(
     problemId === null ||
     (problemId !== null && currentPathProblemId === problemId);
 
-  let problemDir: string;
+  let archiveDir: string;
 
   if (problemId && !isCurrentDir) {
-    // solving dir과 problem dir 둘 다 확인
+    // solving dir과 archive dir 둘 다 확인
     const solvingDirPath = getSolvingDirPath(problemId);
-    const problemDirPath = getProblemDirPath(problemId);
+    const archiveDirPath = getArchiveDirPath(problemId);
 
     // 먼저 solving dir 확인
     const solvingDirExists = await directoryExists(solvingDirPath);
     if (solvingDirExists) {
-      problemDir = solvingDirPath;
+      archiveDir = solvingDirPath;
     } else {
-      // solving dir이 없으면 problem dir 확인
-      const problemDirExists = await directoryExists(problemDirPath);
-      if (problemDirExists) {
-        problemDir = problemDirPath;
+      // solving dir이 없으면 archive dir 확인
+      const archiveDirExists = await directoryExists(archiveDirPath);
+      if (archiveDirExists) {
+        archiveDir = archiveDirPath;
       } else {
         // 둘 다 없으면 solving dir을 기본값으로 사용 (새로 생성될 가능성이 높음)
-        problemDir = solvingDirPath;
+        archiveDir = solvingDirPath;
       }
     }
   } else {
     // 현재 디렉토리 사용
-    problemDir = process.cwd();
+    archiveDir = process.cwd();
   }
 
   return {
     problemId,
-    problemDir,
+    archiveDir,
     isCurrentDir,
   };
 }

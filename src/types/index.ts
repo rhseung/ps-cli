@@ -130,7 +130,7 @@ export interface SearchResults {
 }
 
 export interface ProjectConfig {
-  problemDir?: string;
+  archiveDir?: string;
   solvingDir?: string;
   archiveStrategy?: string;
   defaultLanguage?: string;

@@ -14,7 +14,6 @@ import {
   resolveLanguage,
 } from '../utils/execution-context';
 import { getSupportedLanguagesString, type Language } from '../utils/language';
-import { getProblemId } from '../utils/problem-id';
 
 interface RunViewProps {
   problemDir: string;
@@ -138,26 +137,22 @@ function RunView({
 })
 export class RunCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
-    const problemId = getProblemId(args);
-
     // 문제 컨텍스트 해석
-    const context = await resolveProblemContext(
-      problemId !== null ? [problemId.toString()] : [],
-    );
+    const context = await resolveProblemContext(args);
 
     // 입력 파일 찾기
     const inputPath = flags.input
-      ? join(context.problemDir, flags.input as string)
-      : await this.findInputFile(context.problemDir);
+      ? join(context.archiveDir, flags.input as string)
+      : await this.findInputFile(context.archiveDir);
 
     // 언어 감지
     const detectedLanguage = await resolveLanguage(
-      context.problemDir,
+      context.archiveDir,
       flags.language as Language | undefined,
     );
 
     await this.renderView(RunView, {
-      problemDir: context.problemDir,
+      problemDir: context.archiveDir,
       language: detectedLanguage,
       inputFile: inputPath,
     });
