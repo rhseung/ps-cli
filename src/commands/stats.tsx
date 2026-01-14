@@ -97,9 +97,12 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
     return (
       <Box flexDirection="column">
         {/* 헤더 */}
-        <Box marginBottom={1}>
+        <Box marginBottom={1} flexDirection="column">
           <Text color="cyan" bold>
             ✨ {user.handle}
+          </Text>
+          <Text color="blue" underline>
+            https://solved.ac/profile/{user.handle}
           </Text>
         </Box>
 
