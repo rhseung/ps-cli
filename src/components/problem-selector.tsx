@@ -48,7 +48,7 @@ export function ProblemSelector({
     const suffix = solvedText + triesText + (solvedText ? ')' : '');
 
     // 해결된 문제 표시
-    const solvedMark = problem.isSolved ? ' ✓' : '';
+    const solvedMark = problem.isSolved ? ` ${chalk.bold.green('✓')}` : '';
 
     // 티어 표시 (색상 적용)
     let tierText = '';
@@ -58,9 +58,9 @@ export function ProblemSelector({
 
       // 색상 적용
       if (typeof tierColor === 'string') {
-        tierText = ` ${chalk.bold.hex(tierColor)(tierName)}`;
+        tierText = `${chalk.bold.hex(tierColor)(tierName)} `;
       } else {
-        tierText = ` ${tierColor(chalk.bold(tierName))}`;
+        tierText = `${tierColor(chalk.bold(tierName))} `;
       }
     }
 
@@ -68,7 +68,7 @@ export function ProblemSelector({
     const problemText = `${problem.problemId} - ${problem.title}`;
 
     options.push({
-      label: `${tierText} ${problemText}${solvedMark}${suffix}`,
+      label: `${tierText}${problemText}${suffix}${solvedMark}`,
       value: `problem:${problem.problemId}`,
     });
   });

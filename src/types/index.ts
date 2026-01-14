@@ -121,6 +121,7 @@ export interface SearchResult {
   solvedCount?: number;
   averageTries?: number;
   isSolved?: boolean; // 사용자가 해결한 문제인지 여부
+  tags?: string[]; // 문제 태그
 }
 
 export interface SearchResults {

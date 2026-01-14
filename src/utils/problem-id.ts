@@ -45,7 +45,7 @@ function getTierDirName(level: number): string {
 export function getArchiveSubPath(
   problemId: number,
   strategy: string = 'flat',
-  problem?: Problem,
+  problem?: { level?: number; tags?: string[] },
 ): string {
   switch (strategy) {
     case 'flat':
@@ -58,7 +58,7 @@ export function getArchiveSubPath(
     }
 
     case 'by-tier': {
-      if (!problem) {
+      if (!problem || problem.level === undefined) {
         // 문제 정보가 없으면 flat으로 폴백
         return '';
       }
@@ -268,7 +268,7 @@ export function getProblemId(
 export function getArchiveDirPath(
   problemId: number,
   cwd: string = process.cwd(),
-  problem?: Problem,
+  problem?: { level?: number; tags?: string[] },
 ): string {
   const archiveDir = getArchiveDir();
   const archiveStrategy = getArchiveStrategy();

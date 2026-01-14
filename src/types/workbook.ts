@@ -3,6 +3,7 @@ export interface WorkbookProblem {
   title: string;
   level?: number; // 티어 레벨 (solved.ac에서 가져옴)
   order: number; // 문제집 내 순서
+  tags?: string[]; // 문제 태그
 }
 
 export interface Workbook {

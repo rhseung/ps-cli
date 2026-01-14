@@ -47,13 +47,14 @@ interface WorkbookSearchViewProps {
  */
 async function enrichProblemsWithTiers(
   problems: WorkbookProblem[],
-): Promise<Array<WorkbookProblem & { level?: number }>> {
+): Promise<Array<WorkbookProblem & { level?: number; tags?: string[] }>> {
   // Rate limit을 고려하여 배치 처리
   // 한 번에 너무 많은 요청을 보내지 않도록 제한
   const BATCH_SIZE = 10;
   const DELAY_MS = 200; // 각 배치 사이에 200ms 대기
 
-  const enriched: Array<WorkbookProblem & { level?: number }> = [];
+  const enriched: Array<WorkbookProblem & { level?: number; tags?: string[] }> =
+    [];
 
   for (let i = 0; i < problems.length; i += BATCH_SIZE) {
     const batch = problems.slice(i, i + BATCH_SIZE);
@@ -64,6 +65,10 @@ async function enrichProblemsWithTiers(
         return {
           ...problem,
           level: solvedAcData.level,
+          tags: solvedAcData.tags.map(
+            (t) =>
+              t.displayNames.find((n) => n.language === 'ko')?.name || t.key,
+          ),
         };
       } catch (error) {
         // API 호출 실패해도 문제는 포함 (티어 정보만 없음)
@@ -166,7 +171,10 @@ function WorkbookSearchView({
 
   // 각 문제에 대해 problem_dir에 디렉토리가 존재하는지 확인
   const problemsWithSolvedStatus = problems.map((problem) => {
-    const problemDirPath = getArchiveDirPath(problem.problemId);
+    const problemDirPath = getArchiveDirPath(problem.problemId, process.cwd(), {
+      level: problem.level,
+      tags: problem.tags,
+    });
     const isSolved = existsSync(problemDirPath);
     return {
       problemId: problem.problemId,
@@ -272,13 +280,37 @@ function SearchView({ query, onComplete }: SearchViewProps) {
         setError(null);
         const searchResults = await searchProblems(query, currentPage);
 
-        // 각 문제에 대해 problem_dir에 디렉토리가 존재하는지 확인
+        // 각 문제에 대해 상세 정보(티어, 태그 등) 추가로 가져오기 (배치 처리)
+        const enrichedProblems = await enrichProblemsWithTiers(
+          searchResults.problems.map((p) => ({
+            problemId: p.problemId,
+            title: p.title,
+            order: 0, // SearchResult에는 order가 없으므로 0으로 설정
+          })),
+        );
+
+        // 상세 정보와 검색 결과를 병합하고 해결 상태 확인
         const resultsWithSolvedStatus = searchResults.problems.map(
           (problem) => {
-            const problemDirPath = getArchiveDirPath(problem.problemId);
+            const enriched = enrichedProblems.find(
+              (ep) => ep.problemId === problem.problemId,
+            );
+            const level = enriched?.level ?? problem.level;
+            const tags = enriched?.tags ?? problem.tags;
+
+            const problemDirPath = getArchiveDirPath(
+              problem.problemId,
+              process.cwd(),
+              {
+                level,
+                tags,
+              },
+            );
             const isSolved = existsSync(problemDirPath);
             return {
               ...problem,
+              level,
+              tags,
               isSolved,
             };
           },
