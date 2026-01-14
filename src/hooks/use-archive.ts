@@ -5,7 +5,12 @@ import { execa } from 'execa';
 import { useEffect, useState } from 'react';
 
 import type { Problem } from '../types/index';
-import { findProjectRoot, getSolvingDir } from '../utils/config';
+import {
+  findProjectRoot,
+  getSolvingDir,
+  getArchiveAutoCommit,
+  getArchiveCommitMessage,
+} from '../utils/config';
 import { getSolvingDirPath, getArchiveDirPath } from '../utils/problem-id';
 
 export interface UseArchiveParams {
@@ -98,16 +103,45 @@ export function useArchive({
           }
         }
 
+        // 아카이브 시 Git 자동 커밋 여부 및 커밋 메시지 템플릿 결정
+        const autoCommit = getArchiveAutoCommit();
+        const template = getArchiveCommitMessage() ?? 'solve: {id} - {title}';
+        const commitMessage = template
+          .replace('{id}', String(problemId))
+          .replace('{title}', problemTitle);
+
         // 타겟 디렉토리의 부모 디렉토리 생성 (아카이빙 전략에 따라 필요)
         const archiveDirParent = dirname(archiveDir);
         setMessage('아카이브 디렉토리를 준비하는 중...');
         await mkdir(archiveDirParent, { recursive: true });
 
-        // 디렉토리 이동
+        // 1. 먼저 디렉토리 이동 (Git add가 ignore되지 않도록)
         setMessage('문제를 archive 디렉토리로 이동하는 중...');
         await rename(solvingDir, archiveDir);
 
-        // solving dir의 빈 부모 디렉토리 삭제
+        // 2. autoCommit이 true인 경우 Git 커밋 시도
+        if (autoCommit) {
+          try {
+            setMessage('Git 커밋을 실행하는 중...');
+            await execa('git', ['add', archiveDir], { cwd: projectRoot });
+            await execa('git', ['commit', '-m', commitMessage], {
+              cwd: projectRoot,
+            });
+          } catch (gitError) {
+            // 커밋 실패 시 원래 위치로 롤백
+            setMessage('커밋 실패로 인해 롤백하는 중...');
+            try {
+              await rename(archiveDir, solvingDir);
+            } catch (rollbackError) {
+              throw new Error(
+                `Git 커밋 실패 및 롤백 실패: ${gitError instanceof Error ? gitError.message : String(gitError)}. 롤백 에러: ${rollbackError instanceof Error ? rollbackError.message : String(rollbackError)}. 수동으로 파일을 확인해주세요.`,
+              );
+            }
+            throw gitError;
+          }
+        }
+
+        // 3. 모든 작업(커밋 포함)이 성공한 경우에만 빈 부모 디렉토리 삭제
         setMessage('빈 디렉토리 정리 중...');
         try {
           const solvingDirConfig = getSolvingDir();
@@ -142,25 +176,6 @@ export function useArchive({
           }
         } catch {
           // 빈 디렉토리 삭제 실패해도 계속 진행
-        }
-
-        // Git 커밋
-        setMessage('Git 커밋을 실행하는 중...');
-        try {
-          // git add
-          await execa('git', ['add', archiveDir], { cwd: projectRoot });
-
-          // git commit
-          const commitMessage = `solve: ${problemId} - ${problemTitle}`;
-          await execa('git', ['commit', '-m', commitMessage], {
-            cwd: projectRoot,
-          });
-        } catch (gitError) {
-          // Git 연동 실패해도 경고만 표시하고 계속 진행
-          console.warn(
-            'Git 커밋 실패:',
-            gitError instanceof Error ? gitError.message : String(gitError),
-          );
         }
 
         setStatus('success');

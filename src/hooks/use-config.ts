@@ -124,6 +124,19 @@ export function useConfig({
             updatedConfig.archiveStrategy = value;
             break;
           }
+          case 'archive-auto-commit': {
+            if (value !== 'true' && value !== 'false') {
+              console.error(
+                `archive-auto-commit 값은 true 또는 false 여야 합니다: ${value}`,
+              );
+              process.exit(1);
+            }
+            updatedConfig.archiveAutoCommit = value === 'true';
+            break;
+          }
+          case 'archive-commit-message':
+            updatedConfig.archiveCommitMessage = value;
+            break;
           default:
             console.error(`알 수 없는 설정 키: ${configKey}`);
             process.exit(1);

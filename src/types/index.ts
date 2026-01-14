@@ -137,6 +137,8 @@ export interface ProjectConfig {
   editor?: string;
   autoOpenEditor?: boolean;
   solvedAcHandle?: string;
+  archiveAutoCommit?: boolean;
+  archiveCommitMessage?: string;
 }
 
 export type { Workbook, WorkbookProblem } from './workbook';

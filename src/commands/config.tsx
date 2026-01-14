@@ -13,6 +13,8 @@ import {
   getSolvedAcHandle,
   getArchiveDir,
   getArchiveStrategy,
+  getArchiveAutoCommit,
+  getArchiveCommitMessage,
 } from '../utils/config';
 import {
   getSupportedLanguages,
@@ -44,6 +46,8 @@ export function getConfigHelp(): string {
     solved-ac-handle       Solved.ac 핸들 (stats 명령어용)
     archive-dir            아카이브 디렉토리 경로 (기본값: problems, "." 또는 ""는 프로젝트 루트)
     archive-strategy       아카이빙 전략 (flat, by-range, by-tier, by-tag)
+    archive-auto-commit    archive 시 Git 커밋 자동 실행 여부 (true/false)
+    archive-commit-message archive 커밋 메시지 템플릿 ({id}, {title} 사용 가능)
 
   옵션:
     --help, -h             도움말 표시
@@ -68,6 +72,8 @@ const CONFIG_KEYS = [
   { label: 'solved-ac-handle', value: 'solved-ac-handle' },
   { label: 'archive-dir', value: 'archive-dir' },
   { label: 'archive-strategy', value: 'archive-strategy' },
+  { label: 'archive-auto-commit', value: 'archive-auto-commit' },
+  { label: 'archive-commit-message', value: 'archive-commit-message' },
 ];
 
 interface ConfigViewProps {
@@ -128,6 +134,10 @@ function ConfigView({
     const handle = config?.solvedAcHandle ?? getSolvedAcHandle();
     const archiveDir = config?.archiveDir ?? getArchiveDir();
     const archiveStrategy = config?.archiveStrategy ?? getArchiveStrategy();
+    const archiveAutoCommit =
+      config?.archiveAutoCommit ?? getArchiveAutoCommit();
+    const archiveCommitMessage =
+      config?.archiveCommitMessage ?? getArchiveCommitMessage();
 
     return (
       <Box flexDirection="column">
@@ -171,6 +181,27 @@ function ConfigView({
             <Text> </Text>
             <Text bold>{archiveStrategy}</Text>
           </Box>
+          <Box marginBottom={1}>
+            <Text color="gray">archive-auto-commit:</Text>
+            <Text> </Text>
+            <Text bold color={archiveAutoCommit ? 'green' : 'gray'}>
+              {archiveAutoCommit ? 'true' : 'false'}
+            </Text>
+          </Box>
+          <Box marginBottom={1}>
+            <Text color="gray">archive-commit-message:</Text>
+            <Text> </Text>
+            <Text
+              bold
+              color={
+                archiveCommitMessage && archiveCommitMessage.length > 0
+                  ? 'cyan'
+                  : 'gray'
+              }
+            >
+              {archiveCommitMessage || '(설정 안 됨)'}
+            </Text>
+          </Box>
         </Box>
       </Box>
     );
@@ -199,6 +230,15 @@ function ConfigView({
         break;
       case 'archive-strategy':
         configValue = config?.archiveStrategy ?? getArchiveStrategy();
+        break;
+      case 'archive-auto-commit':
+        configValue =
+          config?.archiveAutoCommit !== undefined
+            ? String(config.archiveAutoCommit)
+            : String(getArchiveAutoCommit());
+        break;
+      case 'archive-commit-message':
+        configValue = config?.archiveCommitMessage ?? getArchiveCommitMessage();
         break;
       default:
         console.error(`알 수 없는 설정 키: ${configKey}`);
@@ -426,6 +466,10 @@ export class ConfigCommand extends Command {
           return '아카이브 디렉토리 경로 입력';
         case 'archive-strategy':
           return '아카이빙 전략 입력 (flat, by-range, by-tier, by-tag)';
+        case 'archive-auto-commit':
+          return 'true 또는 false 입력';
+        case 'archive-commit-message':
+          return '커밋 메시지 템플릿 입력 (예: solve: {id} - {title})';
         default:
           return '값 입력';
       }
@@ -445,6 +489,10 @@ export class ConfigCommand extends Command {
           return '아카이브 디렉토리 경로 (기본값: "problems", 프로젝트 루트: ".")';
         case 'archive-strategy':
           return '아카이빙 전략: flat (평면), by-range (1000번대 묶기), by-tier (티어별), by-tag (태그별)';
+        case 'archive-auto-commit':
+          return 'archive 명령 실행 시 Git 커밋을 자동으로 수행할지 여부';
+        case 'archive-commit-message':
+          return 'archive 시 사용할 Git 커밋 메시지 템플릿 ({id}, {title} 사용 가능)';
         default:
           return '';
       }
@@ -462,6 +510,8 @@ export class ConfigCommand extends Command {
           return ['problems', '.', ''];
         case 'archive-strategy':
           return ['flat', 'by-range', 'by-tier', 'by-tag'];
+        case 'archive-auto-commit':
+          return ['true', 'false'];
         default:
           return [];
       }

@@ -188,7 +188,7 @@ ps submit --language python   # Python으로 제출
 
 ### `archive` - 아카이빙
 
-solving 디렉토리의 문제를 archive 디렉토리로 이동하고 Git 커밋을 생성합니다.
+solving 디렉토리의 문제를 archive 디렉토리로 이동하고 (선택적으로) Git 커밋을 생성합니다.
 
 **사용법:**
 
@@ -206,8 +206,10 @@ ps archive                   # 현재 디렉토리에서 문제 번호 자동 �
 **설명:**
 
 - solving 디렉토리에서 문제를 찾아 archive 디렉토리로 이동
-- Git add 및 commit 실행
-- 커밋 메시지: "solve: {문제번호} - {문제이름}"
+- 설정에 따라 Git add 및 commit 실행
+- 기본 커밋 메시지: "solve: {id} - {title}"
+- `archive-auto-commit` 이 `true` 인 경우, **archive 디렉토리로 이동 후** Git 커밋을 시도하며, 커밋 실패 시 다시 원래 위치로 되돌림 (롤백)
+- `archive-auto-commit` 이 `false` 인 경우, Git 커밋 없이 디렉토리만 이동
 
 ---
 
@@ -356,6 +358,8 @@ ps config clear                        # .ps-cli.json 파일 삭제
 - `archive-dir`: 아카이브된 문제 디렉토리 (기본값: problems)
 - `solving-dir`: 푸는 중인 문제 디렉토리 (기본값: solving)
 - `archive-strategy`: 아카이빙 전략
+- `archive-auto-commit`: archive 실행 시 Git 커밋 자동 실행 여부 (true/false, 기본값: true)
+- `archive-commit-message`: archive 시 사용할 Git 커밋 메시지 템플릿 (`{id}`, `{title}` 사용 가능, 기본값: `solve: {id} - {title}`)
 
 ### 아카이빙 전략
 

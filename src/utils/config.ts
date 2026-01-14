@@ -12,6 +12,8 @@ interface ConfigSchema {
   solvedAcHandle?: string; // Solved.ac 핸들 (stats 명령어용)
   archiveDir?: string; // 아카이브 디렉토리 경로 (기본값: "problems", "." 또는 ""는 프로젝트 루트)
   solvingDir?: string; // 푸는 중인 문제 디렉토리 경로 (기본값: "solving", "." 또는 ""는 프로젝트 루트)
+  archiveAutoCommit?: boolean; // 아카이브 시 Git 커밋 자동 실행 여부
+  archiveCommitMessage?: string; // 아카이브 커밋 메시지 템플릿
 }
 
 interface ProjectConfig {
@@ -22,6 +24,8 @@ interface ProjectConfig {
   autoOpenEditor?: boolean;
   solvedAcHandle?: string;
   archiveStrategy?: string;
+  archiveAutoCommit?: boolean;
+  archiveCommitMessage?: string;
 }
 
 const config = new Conf<ConfigSchema>({
@@ -35,6 +39,7 @@ const config = new Conf<ConfigSchema>({
     solvedAcHandle: undefined,
     archiveDir: 'problems', // 기본값: problems 디렉토리
     solvingDir: 'solving', // 기본값: solving 디렉토리
+    archiveAutoCommit: true,
   },
 });
 
@@ -217,6 +222,34 @@ export function getArchiveStrategy(): string {
 
 export function setArchiveStrategy(strategy: string): void {
   config.set('archiveStrategy', strategy);
+}
+
+export function getArchiveAutoCommit(): boolean {
+  const projectConfig = getProjectConfigSync();
+  if (projectConfig?.archiveAutoCommit !== undefined) {
+    return projectConfig.archiveAutoCommit;
+  }
+  const globalValue = config.get('archiveAutoCommit');
+  if (globalValue !== undefined) {
+    return globalValue;
+  }
+  return true;
+}
+
+export function setArchiveAutoCommit(enabled: boolean): void {
+  config.set('archiveAutoCommit', enabled);
+}
+
+export function getArchiveCommitMessage(): string | undefined {
+  const projectConfig = getProjectConfigSync();
+  if (projectConfig?.archiveCommitMessage !== undefined) {
+    return projectConfig.archiveCommitMessage;
+  }
+  return config.get('archiveCommitMessage');
+}
+
+export function setArchiveCommitMessage(message: string): void {
+  config.set('archiveCommitMessage', message);
 }
 
 export function clearConfig(): void {
