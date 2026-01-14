@@ -18,6 +18,7 @@ import {
   getNextTierMinRating,
   getTierColor,
   getTierName,
+  getTierShortName,
 } from '../utils/tier';
 
 // 플래그 정의 스키마 (타입 추론용)
@@ -34,6 +35,7 @@ type StatsCommandFlags = InferFlagsFromSchema<typeof statsFlagsSchema>;
 interface StatsViewProps {
   handle: string;
   onComplete: () => void;
+  showLocalStats: boolean;
 }
 
 interface ProgressBarWithColorProps {
@@ -59,10 +61,11 @@ function ProgressBarWithColor({ value, colorFn }: ProgressBarWithColorProps) {
   );
 }
 
-function StatsView({ handle, onComplete }: StatsViewProps) {
-  const { status, user, error } = useUserStats({
+function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
+  const { status, user, top100, localSolvedCount, error } = useUserStats({
     handle,
     onComplete,
+    fetchLocalCount: showLocalStats,
   });
 
   if (status === 'loading') {
@@ -136,6 +139,9 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
                 {user.solvedCount.toLocaleString()}
               </Text>
               개
+              {localSolvedCount !== null && (
+                <Text color="gray"> (로컬: {localSolvedCount}개)</Text>
+              )}
             </Text>
             <Text>
               클래스: <Text bold>{user.class}</Text>
@@ -154,6 +160,41 @@ function StatsView({ handle, onComplete }: StatsViewProps) {
             </Text>
           </Box>
         </Box>
+
+        {/* 상위 100문제 티어 분포 */}
+        {top100 && top100.length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            <Box marginBottom={1}>
+              <Text bold color="yellow">
+                🏆 상위 100문제 티어 분포
+              </Text>
+            </Box>
+            <Box flexDirection="column">
+              {Array.from({ length: Math.ceil(top100.length / 10) }).map(
+                (_, rowIndex) => (
+                  <Box key={rowIndex} flexDirection="row">
+                    {top100
+                      .slice(rowIndex * 10, (rowIndex + 1) * 10)
+                      .map((p, colIndex) => {
+                        const tierColor = getTierColor(p.level);
+                        const tierColorFn =
+                          typeof tierColor === 'string'
+                            ? chalk.hex(tierColor)
+                            : tierColor.multiline;
+                        return (
+                          <Box key={colIndex} width={4}>
+                            <Text>
+                              {tierColorFn(getTierShortName(p.level))}
+                            </Text>
+                          </Box>
+                        );
+                      })}
+                  </Box>
+                ),
+              )}
+            </Box>
+          </Box>
+        )}
       </Box>
     );
   }
@@ -191,8 +232,12 @@ export class StatsCommand extends Command<StatsCommandFlags> {
       return;
     }
 
+    // 핸들을 생략한 경우(자신의 통계를 보는 경우)에만 로컬 통계 표시
+    const showLocalStats = !args[0] && !flags.handle;
+
     await this.renderView(StatsView, {
       handle,
+      showLocalStats,
     });
   }
 }

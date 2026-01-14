@@ -35,6 +35,41 @@ export const TIER_NAMES = [
   'Master',
 ] as const;
 
+export const TIER_SHORT_NAMES = [
+  undefined,
+  'B5',
+  'B4',
+  'B3',
+  'B2',
+  'B1',
+  'S5',
+  'S4',
+  'S3',
+  'S2',
+  'S1',
+  'G5',
+  'G4',
+  'G3',
+  'G2',
+  'G1',
+  'P5',
+  'P4',
+  'P3',
+  'P2',
+  'P1',
+  'D5',
+  'D4',
+  'D3',
+  'D2',
+  'D1',
+  'R5',
+  'R4',
+  'R3',
+  'R2',
+  'R1',
+  'M',
+] as const;
+
 export const TIER_COLORS = [
   undefined,
   '#9d4900',
@@ -184,6 +219,14 @@ export function getTierName(level: number): string {
     return TIER_NAMES[level] || 'Unrated';
   }
   return 'Unrated';
+}
+
+export function getTierShortName(level: number): string {
+  if (level === 0) return 'UR';
+  if (level >= 1 && level < TIER_SHORT_NAMES.length) {
+    return TIER_SHORT_NAMES[level] || 'UR';
+  }
+  return 'UR';
 }
 
 export function getTierColor(level: number): string | Gradient {

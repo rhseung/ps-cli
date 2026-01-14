@@ -61,3 +61,12 @@ export async function getUserStats(handle: string): Promise<SolvedAcUser> {
   const data = await response.json();
   return data as SolvedAcUser;
 }
+
+export async function getUserTop100(
+  handle: string,
+): Promise<SolvedAcProblem[]> {
+  const url = `${BASE_URL}/user/top_100?handle=${handle}`;
+  const response = await fetchWithRetry(url);
+  const data = (await response.json()) as { items: SolvedAcProblem[] };
+  return (data.items || []) as SolvedAcProblem[];
+}
