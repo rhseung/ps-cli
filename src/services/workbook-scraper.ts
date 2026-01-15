@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 
 import type { Workbook, WorkbookProblem } from '../types/workbook';
+import { fetchWithRetry } from '../utils/http';
 
 const BOJ_BASE_URL = 'https://www.acmicpc.net';
 
@@ -11,21 +12,8 @@ const BOJ_BASE_URL = 'https://www.acmicpc.net';
  */
 export async function scrapeWorkbook(workbookId: number): Promise<Workbook> {
   const url = `${BOJ_BASE_URL}/workbook/view/${workbookId}`;
+  const html = await fetchWithRetry(url, `문제집 ${workbookId}`);
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch workbook page: HTTP ${response.status}. 문제집이 존재하지 않거나 접근할 수 없습니다.`,
-    );
-  }
-
-  const html = await response.text();
   const $ = cheerio.load(html);
 
   // 문제집 제목 추출

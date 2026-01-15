@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 
-import type { Language } from '../core';
+import { getProblemTimeLimitMs, type Language } from '../core';
 import type { TestResult, TestSummary } from '../types';
 
 import { compareOutput } from './diff-checker';
@@ -61,26 +61,7 @@ export async function runAllTests({
   // 문제 메타데이터에서 시간 제한(ms)을 우선적으로 사용
   let effectiveTimeout: number | undefined = timeoutMs;
   if (effectiveTimeout == null) {
-    try {
-      const metaRaw = await readFile(join(problemDir, 'meta.json'), 'utf-8');
-      const meta = JSON.parse(metaRaw) as {
-        timeLimitMs?: number;
-        timeLimit?: string;
-      };
-      if (typeof meta.timeLimitMs === 'number') {
-        effectiveTimeout = meta.timeLimitMs;
-      } else if (typeof meta.timeLimit === 'string') {
-        const match = meta.timeLimit.match(/([\d.]+)/);
-        if (match) {
-          const seconds = parseFloat(match[1]);
-          if (!Number.isNaN(seconds)) {
-            effectiveTimeout = Math.round(seconds * 1000);
-          }
-        }
-      }
-    } catch {
-      // meta.json 이 없거나 파싱 실패 시 이후 기본값 사용
-    }
+    effectiveTimeout = await getProblemTimeLimitMs(problemDir);
   }
 
   if (effectiveTimeout == null) {

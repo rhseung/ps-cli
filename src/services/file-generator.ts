@@ -8,18 +8,10 @@ import {
   getSolvingDirPath,
   getTierName,
   getTierImageUrl,
+  parseTimeLimitToMs,
   type Language,
 } from '../core';
 import type { Problem } from '../types/index';
-
-function parseTimeLimitToMs(timeLimit?: string): number | undefined {
-  if (!timeLimit) return undefined;
-  const match = timeLimit.match(/([\d.]+)/);
-  if (!match) return undefined;
-  const seconds = parseFloat(match[1]);
-  if (Number.isNaN(seconds)) return undefined;
-  return Math.round(seconds * 1000);
-}
 
 /**
  * Markdown 텍스트가 리스트, 테이블, 코드 블록 등으로 끝나는지 확인하고

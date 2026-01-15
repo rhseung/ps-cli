@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import type { Language } from '../core';
+import { getProblemTimeLimitMs, type Language } from '../core';
 import { runSolution } from '../services/runner';
 
 export interface UseRunSolutionParams {
@@ -38,26 +38,33 @@ export function useRunSolution({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void runSolution({
-      problemDir,
-      language,
-      inputPath: inputFile,
-      timeoutMs: 10000, // 10초 타임아웃
-    })
-      .then((runResult) => {
+    async function run() {
+      // 문제의 시간 제한을 가져와서 5배 적용 (기본값 2초 * 5 = 10초)
+      const timeLimitMs = await getProblemTimeLimitMs(problemDir);
+      const effectiveTimeout = timeLimitMs ? timeLimitMs * 5 : 10000;
+
+      try {
+        const runResult = await runSolution({
+          problemDir,
+          language,
+          inputPath: inputFile,
+          timeoutMs: effectiveTimeout,
+        });
         setResult(runResult);
         setStatus('ready');
         setTimeout(() => {
           onComplete();
         }, 100);
-      })
-      .catch((err) => {
+      } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
         setStatus('error');
         setTimeout(() => {
           onComplete();
         }, 2000);
-      });
+      }
+    }
+
+    void run();
   }, [problemDir, language, inputFile, onComplete]);
 
   return {

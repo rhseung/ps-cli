@@ -1,3 +1,4 @@
+import { readFile } from 'fs/promises';
 import { join } from 'path';
 
 import type { Problem } from '../types/index';
@@ -9,6 +10,48 @@ import {
   getArchiveStrategy,
 } from './config';
 import { getTierName } from './tier';
+
+/**
+ * 시간 제한 문자열(예: "1 초", "2.5s")을 밀리초로 변환합니다.
+ */
+export function parseTimeLimitToMs(timeLimit?: string): number | undefined {
+  if (!timeLimit) return undefined;
+  const match = timeLimit.match(/([\d.]+)/);
+  if (!match) return undefined;
+  const seconds = parseFloat(match[1]);
+  if (Number.isNaN(seconds)) return undefined;
+  return Math.round(seconds * 1000);
+}
+
+/**
+ * 문제 디렉토리의 meta.json에서 시간 제한을 읽어옵니다.
+ * @param problemDir 문제 디렉토리 경로
+ * @returns 시간 제한 (ms) 또는 undefined
+ */
+export async function getProblemTimeLimitMs(
+  problemDir: string,
+): Promise<number | undefined> {
+  try {
+    const metaPath = join(problemDir, 'meta.json');
+    const metaRaw = await readFile(metaPath, 'utf-8');
+    const meta = JSON.parse(metaRaw) as {
+      timeLimitMs?: number;
+      timeLimit?: string;
+    };
+
+    if (typeof meta.timeLimitMs === 'number') {
+      return meta.timeLimitMs;
+    }
+
+    if (typeof meta.timeLimit === 'string') {
+      return parseTimeLimitToMs(meta.timeLimit);
+    }
+  } catch {
+    // meta.json 이 없거나 읽기 실패
+  }
+
+  return undefined;
+}
 
 /**
  * 파일 시스템 안전한 이름으로 변환합니다.

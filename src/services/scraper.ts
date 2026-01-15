@@ -7,6 +7,7 @@ import type {
   SearchResult,
   SearchResults,
 } from '../types/index';
+import { fetchWithRetry } from '../utils/http';
 
 const BOJ_BASE_URL = 'https://www.acmicpc.net';
 const SOLVED_AC_BASE_URL = 'https://solved.ac';
@@ -129,19 +130,8 @@ export async function scrapeProblem(
   problemId: number,
 ): Promise<ScrapedProblem> {
   const url = `${BOJ_BASE_URL}/problem/${problemId}`;
+  const html = await fetchWithRetry(url, `문제 ${problemId}`);
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch problem page: HTTP ${response.status}`);
-  }
-
-  const html = await response.text();
   const $ = cheerio.load(html);
 
   // 제목 추출
@@ -301,13 +291,13 @@ export async function scrapeProblem(
   // 필수 데이터 검증
   if (!title) {
     throw new Error(
-      `문제 ${problemId}의 제목을 찾을 수 없습니다. BOJ 페이지 구조가 변경되었거나 문제가 존재하지 않을 수 있습니다.`,
+      `문제 ${problemId}의 제목을 찾을 수 없습니다. BOJ 페이지 구조가 변경되었거나, 로그인이 필요한 문제이거나, 존재하지 않는 문제일 수 있습니다.`,
     );
   }
 
   if (!description && !inputFormat && !outputFormat) {
     throw new Error(
-      `문제 ${problemId}의 내용을 가져올 수 없습니다. BOJ 페이지 구조가 변경되었거나 API 제한에 걸렸을 수 있습니다. 잠시 후 다시 시도해주세요.`,
+      `문제 ${problemId}의 내용을 가져올 수 없습니다. 백준의 봇 방지 시스템에 의해 차단되었거나, 페이지 구조가 변경되었을 수 있습니다.`,
     );
   }
 
