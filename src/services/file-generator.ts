@@ -49,13 +49,18 @@ function ensureTrailingNewline(content: string): string {
   // 코드 블록으로 끝나는지 확인 (```로 끝나는 경우)
   const isCodeBlock = trimmed.endsWith('```');
 
-  // 리스트, 테이블, 코드 블록으로 끝나면 추가 개행 필요
+  // 리스트, 테이블, 코드 블록으로 끝나면 추가 개행 필요 (Markdown에서는 빈 줄이 있어야 함)
   if (isListItem || isTableRow || isCodeBlock) {
-    return trimmed + '\n';
+    return trimmed + '\n\n';
   }
 
   // 이미 개행으로 끝나지 않으면 개행 추가
   if (!content.endsWith('\n')) {
+    return content + '\n\n';
+  }
+
+  // 개행이 하나만 있으면 하나 더 추가해서 빈 줄 만들기
+  if (!content.endsWith('\n\n')) {
     return content + '\n';
   }
 

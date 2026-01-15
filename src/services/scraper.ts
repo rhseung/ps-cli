@@ -67,7 +67,7 @@ function htmlToMarkdown(
         case 'div': {
           const divContent = htmlToMarkdown($, $node);
           if (divContent) {
-            result += divContent + '\n';
+            result += divContent + '\n\n';
           }
           break;
         }
@@ -80,7 +80,7 @@ function htmlToMarkdown(
         case 'pre': {
           const preContent = htmlToMarkdown($, $node);
           if (preContent) {
-            result += `\n\`\`\`\n${preContent}\n\`\`\`\n`;
+            result += `\n\`\`\`\n${preContent}\n\`\`\`\n\n`;
           }
           break;
         }
@@ -92,6 +92,7 @@ function htmlToMarkdown(
               result += `- ${liContent}\n`;
             }
           });
+          result += '\n';
           break;
         case 'li':
           result += htmlToMarkdown($, $node);
