@@ -1,13 +1,16 @@
 import { execaCommand } from 'execa';
 import { useEffect, useState } from 'react';
 
+import {
+  getAutoOpenEditor,
+  getEditor,
+  getTierName,
+  type Language,
+} from '../core';
 import { generateProblemFiles } from '../services/file-generator';
 import { scrapeProblem } from '../services/scraper';
 import { getProblem } from '../services/solved-api';
 import type { Problem } from '../types/index';
-import { getAutoOpenEditor, getEditor } from '../utils/config';
-import type { Language } from '../utils/language';
-import { getTierName } from '../utils/tier';
 
 export interface UseFetchProblemParams {
   problemId: number;

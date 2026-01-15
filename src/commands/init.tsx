@@ -8,11 +8,15 @@ import {
 import { Text, Box } from 'ink';
 import React from 'react';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  getSupportedLanguages,
+  icons,
+} from '../core';
 import { useInit } from '../hooks/use-init';
 import type { CommandFlags } from '../types/command';
-import { getSupportedLanguages } from '../utils/language';
 import { getVersion } from '../utils/version';
 
 interface InitViewProps {
@@ -249,7 +253,7 @@ function InitView({ onComplete }: InitViewProps) {
       case 'done': {
         const createdItemsText =
           created.length > 0
-            ? `\n생성된 항목:\n${created.map((item) => `• ${item}`).join('\n')}`
+            ? `\n생성된 항목:\n${created.map((item) => `${icons.solving} ${item}`).join('\n')}`
             : '';
         return (
           <Box flexDirection="column">
@@ -291,7 +295,7 @@ function InitView({ onComplete }: InitViewProps) {
       {/* 헤더 */}
       <Box marginBottom={completedSteps.length > 0 ? 1 : 0}>
         <Text color="cyan" bold>
-          🚀 ps-cli 프로젝트 초기화
+          {icons.init} ps-cli 프로젝트 초기화
         </Text>
         {version && (
           <Text color="gray" dimColor>
@@ -323,6 +327,7 @@ function InitView({ onComplete }: InitViewProps) {
   description: `현재 디렉토리를 ps-cli 프로젝트로 대화형으로 초기화합니다.
 - 단계별로 설정을 물어봅니다
 - 문제 디렉토리, 기본 언어, 에디터 등을 설정할 수 있습니다`,
+  flags: [],
   autoDetectProblemId: false,
   examples: ['init'],
 })

@@ -1,13 +1,21 @@
 import { existsSync } from 'fs';
 
-import { Alert, Spinner } from '@inkjs/ui';
+import { Select, Alert, Spinner } from '@inkjs/ui';
 import { Box, Text } from 'ink';
 import React, { useEffect, useState } from 'react';
 
 import { ProblemSelector } from '../components/problem-selector';
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
-import { useOpenBrowser } from '../hooks/use-open-browser';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveLanguage,
+  findSolutionFile,
+  getArchiveDirPath,
+  getSolvingDirPath,
+  icons,
+  type Language,
+} from '../core';
 import { searchProblems } from '../services/scraper';
 import { getProblem } from '../services/solved-api';
 import { scrapeWorkbook } from '../services/workbook-scraper';
@@ -18,7 +26,12 @@ import type {
 import { defineFlags } from '../types/command';
 import type { SearchResult } from '../types/index';
 import type { WorkbookProblem } from '../types/workbook';
-import { getArchiveDirPath } from '../utils/problem-id';
+
+import { ArchiveView } from './archive';
+import { FetchView } from './fetch';
+import { OpenView } from './open';
+import { SubmitView } from './submit';
+import { TestView } from './test';
 
 // 플래그 정의 스키마 (타입 추론용)
 const searchFlagsSchema = {
@@ -93,19 +106,167 @@ async function enrichProblemsWithTiers(
   return enriched;
 }
 
+interface ProblemActionViewProps {
+  problemId: number;
+  isSolved: boolean;
+  isSolving: boolean;
+  onBack: () => void;
+  onComplete?: () => void;
+}
+
+type Action = 'open' | 'fetch' | 'test' | 'submit' | 'archive' | 'back';
+
+function ProblemActionView({
+  problemId,
+  isSolved,
+  isSolving,
+  onBack,
+  onComplete,
+}: ProblemActionViewProps) {
+  const [selectedAction, setSelectedAction] = useState<Action | null>(null);
+  const [problemDir, setProblemDir] = useState<string | null>(null);
+  const [language, setLanguage] = useState<Language | null>(null);
+  const [sourcePath, setSourcePath] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // 필요한 정보 미리 로드 (test, submit 등을 위해)
+  useEffect(() => {
+    async function loadInfo() {
+      if (isSolving || isSolved) {
+        try {
+          setLoading(true);
+          const solvingPath = getSolvingDirPath(problemId);
+          const archivePath = getArchiveDirPath(problemId);
+
+          let dir = '';
+          if (existsSync(solvingPath)) {
+            dir = solvingPath;
+          } else if (existsSync(archivePath)) {
+            dir = archivePath;
+          }
+
+          if (dir) {
+            setProblemDir(dir);
+            try {
+              const lang = await resolveLanguage(dir);
+              setLanguage(lang);
+              const src = await findSolutionFile(dir);
+              setSourcePath(src);
+            } catch {
+              // language나 source file을 못 찾을 수도 있음 (fetch만 된 상태 등)
+            }
+          }
+        } catch {
+          // 정보 로드 실패해도 메뉴는 보여줌
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+    void loadInfo();
+  }, [problemId, isSolving, isSolved]);
+
+  if (selectedAction === 'open') {
+    return <OpenView problemId={problemId} onComplete={onComplete} />;
+  }
+
+  if (selectedAction === 'fetch') {
+    return <FetchView problemId={problemId} onComplete={onComplete} />;
+  }
+
+  if (selectedAction === 'test' && problemDir && language) {
+    return (
+      <TestView
+        problemDir={problemDir}
+        language={language}
+        watch={false}
+        onComplete={() => onComplete?.()}
+      />
+    );
+  }
+
+  if (selectedAction === 'submit' && language && sourcePath) {
+    return (
+      <SubmitView
+        problemId={problemId}
+        language={language}
+        sourcePath={sourcePath}
+        onComplete={() => onComplete?.()}
+      />
+    );
+  }
+
+  if (selectedAction === 'archive') {
+    return <ArchiveView problemId={problemId} onComplete={onComplete} />;
+  }
+
+  const options = [
+    { label: `${icons.open} 브라우저에서 열기 (open)`, value: 'open' },
+    { label: `${icons.fetch} 문제 가져오기 (fetch)`, value: 'fetch' },
+  ];
+
+  if (isSolving || isSolved) {
+    if (problemDir && language) {
+      options.push({
+        label: `${icons.test} 로컬 테스트 실행 (test)`,
+        value: 'test',
+      });
+      if (sourcePath) {
+        options.push({
+          label: `${icons.submit} 코드 제출하기 (submit)`,
+          value: 'submit',
+        });
+      }
+    }
+    if (isSolving) {
+      options.push({
+        label: `${icons.archive} 문제 아카이브 (archive)`,
+        value: 'archive',
+      });
+    }
+  }
+
+  options.push({ label: `${icons.back} 뒤로 가기`, value: 'back' });
+
+  return (
+    <Box flexDirection="column">
+      <Box marginBottom={1}>
+        <Text color="cyan" bold>
+          문제 #{problemId} 선택됨. 어떤 작업을 하시겠습니까?
+        </Text>
+      </Box>
+      {loading && <Spinner label="문제 정보를 확인하는 중..." />}
+      {!loading && (
+        <Select
+          options={options}
+          onChange={(value) => {
+            if (value === 'back') {
+              onBack();
+            } else {
+              setSelectedAction(value as Action);
+            }
+          }}
+        />
+      )}
+    </Box>
+  );
+}
+
 function WorkbookSearchView({
   workbookId,
   onComplete,
 }: WorkbookSearchViewProps) {
   const [problems, setProblems] = useState<
-    Array<WorkbookProblem & { level?: number }>
+    Array<WorkbookProblem & { level?: number; tags?: string[] }>
   >([]);
   const [workbookTitle, setWorkbookTitle] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProblemId, setSelectedProblemId] = useState<number | null>(
-    null,
-  );
+  const [selectedProblem, setSelectedProblem] = useState<{
+    problemId: number;
+    isSolved: boolean;
+    isSolving: boolean;
+  } | null>(null);
 
   useEffect(() => {
     async function loadWorkbook() {
@@ -130,9 +291,15 @@ function WorkbookSearchView({
     void loadWorkbook();
   }, [workbookId]);
 
-  if (selectedProblemId) {
+  if (selectedProblem) {
     return (
-      <OpenBrowserView problemId={selectedProblemId} onComplete={onComplete} />
+      <ProblemActionView
+        problemId={selectedProblem.problemId}
+        isSolved={selectedProblem.isSolved}
+        isSolving={selectedProblem.isSolving}
+        onBack={() => setSelectedProblem(null)}
+        onComplete={onComplete}
+      />
     );
   }
 
@@ -169,32 +336,46 @@ function WorkbookSearchView({
     );
   }
 
-  // 각 문제에 대해 problem_dir에 디렉토리가 존재하는지 확인
-  const problemsWithSolvedStatus = problems.map((problem) => {
-    const problemDirPath = getArchiveDirPath(problem.problemId, process.cwd(), {
+  // 각 문제에 대해 solving 및 archive 디렉토리가 존재하는지 확인
+  const problemsWithStatus = problems.map((problem) => {
+    const archiveDirPath = getArchiveDirPath(problem.problemId, process.cwd(), {
       level: problem.level,
       tags: problem.tags,
     });
-    const isSolved = existsSync(problemDirPath);
+    const solvingDirPath = getSolvingDirPath(problem.problemId);
+
+    const isSolved = existsSync(archiveDirPath);
+    const isSolving = existsSync(solvingDirPath);
+
     return {
       problemId: problem.problemId,
       title: problem.title,
       level: problem.level,
       isSolved,
+      isSolving,
     };
   });
 
   return (
     <ProblemSelector
-      problems={problemsWithSolvedStatus}
+      problems={problemsWithStatus}
       onSelect={(problemId) => {
-        setSelectedProblemId(problemId);
+        const problem = problemsWithStatus.find(
+          (p) => p.problemId === problemId,
+        );
+        if (problem) {
+          setSelectedProblem({
+            problemId,
+            isSolved: problem.isSolved,
+            isSolving: problem.isSolving,
+          });
+        }
       }}
       header={
         <Box flexDirection="column">
           <Box marginBottom={1}>
             <Text color="cyan" bold>
-              📚 문제집: {workbookTitle} (ID: {workbookId})
+              {icons.workbook} 문제집: {workbookTitle} (ID: {workbookId})
             </Text>
           </Box>
           <Box>
@@ -206,71 +387,17 @@ function WorkbookSearchView({
   );
 }
 
-interface OpenBrowserViewProps {
-  problemId: number;
-  onComplete?: () => void;
-}
-
-function OpenBrowserView({ problemId, onComplete }: OpenBrowserViewProps) {
-  const { status, error, url } = useOpenBrowser({
-    problemId,
-    onComplete,
-  });
-
-  if (status === 'loading') {
-    return (
-      <Box flexDirection="column">
-        <Spinner label="브라우저를 여는 중..." />
-        <Box marginTop={1}>
-          <Text color="gray">문제 #{problemId}</Text>
-        </Box>
-      </Box>
-    );
-  }
-
-  if (status === 'error') {
-    return (
-      <Box flexDirection="column">
-        <Alert variant="error">브라우저를 열 수 없습니다: {error}</Alert>
-        <Box marginTop={1}>
-          <Text color="gray">URL: {url}</Text>
-        </Box>
-      </Box>
-    );
-  }
-
-  return (
-    <Box flexDirection="column">
-      <Alert variant="success">브라우저에서 문제 페이지를 열었습니다!</Alert>
-      <Box marginTop={1} flexDirection="column">
-        <Text>
-          <Text color="cyan" bold>
-            문제 번호:
-          </Text>{' '}
-          {problemId}
-        </Text>
-        <Text>
-          <Text color="cyan" bold>
-            URL:
-          </Text>{' '}
-          <Text color="blue" underline>
-            {url}
-          </Text>
-        </Text>
-      </Box>
-    </Box>
-  );
-}
-
 function SearchView({ query, onComplete }: SearchViewProps) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProblemId, setSelectedProblemId] = useState<number | null>(
-    null,
-  );
+  const [selectedProblem, setSelectedProblem] = useState<{
+    problemId: number;
+    isSolved: boolean;
+    isSolving: boolean;
+  } | null>(null);
 
   // 검색 실행
   useEffect(() => {
@@ -290,33 +417,36 @@ function SearchView({ query, onComplete }: SearchViewProps) {
         );
 
         // 상세 정보와 검색 결과를 병합하고 해결 상태 확인
-        const resultsWithSolvedStatus = searchResults.problems.map(
-          (problem) => {
-            const enriched = enrichedProblems.find(
-              (ep) => ep.problemId === problem.problemId,
-            );
-            const level = enriched?.level ?? problem.level;
-            const tags = enriched?.tags ?? problem.tags;
+        const resultsWithStatus = searchResults.problems.map((problem) => {
+          const enriched = enrichedProblems.find(
+            (ep) => ep.problemId === problem.problemId,
+          );
+          const level = enriched?.level ?? problem.level;
+          const tags = enriched?.tags ?? problem.tags;
 
-            const problemDirPath = getArchiveDirPath(
-              problem.problemId,
-              process.cwd(),
-              {
-                level,
-                tags,
-              },
-            );
-            const isSolved = existsSync(problemDirPath);
-            return {
-              ...problem,
+          const archiveDirPath = getArchiveDirPath(
+            problem.problemId,
+            process.cwd(),
+            {
               level,
               tags,
-              isSolved,
-            };
-          },
-        );
+            },
+          );
+          const solvingDirPath = getSolvingDirPath(problem.problemId);
 
-        setResults(resultsWithSolvedStatus);
+          const isSolved = existsSync(archiveDirPath);
+          const isSolving = existsSync(solvingDirPath);
+
+          return {
+            ...problem,
+            level,
+            tags,
+            isSolved,
+            isSolving,
+          };
+        });
+
+        setResults(resultsWithStatus);
         setTotalPages(searchResults.totalPages);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
@@ -328,7 +458,7 @@ function SearchView({ query, onComplete }: SearchViewProps) {
     void performSearch();
   }, [query, currentPage]);
 
-  if (loading && !selectedProblemId) {
+  if (loading && !selectedProblem) {
     return (
       <Box flexDirection="column">
         <Spinner label="검색 중..." />
@@ -339,7 +469,7 @@ function SearchView({ query, onComplete }: SearchViewProps) {
     );
   }
 
-  if (error && !selectedProblemId) {
+  if (error && !selectedProblem) {
     return (
       <Box flexDirection="column">
         <Alert variant="error">검색 실패: {error}</Alert>
@@ -350,9 +480,15 @@ function SearchView({ query, onComplete }: SearchViewProps) {
     );
   }
 
-  if (selectedProblemId) {
+  if (selectedProblem) {
     return (
-      <OpenBrowserView problemId={selectedProblemId} onComplete={onComplete} />
+      <ProblemActionView
+        problemId={selectedProblem.problemId}
+        isSolved={selectedProblem.isSolved}
+        isSolving={selectedProblem.isSolving}
+        onBack={() => setSelectedProblem(null)}
+        onComplete={onComplete}
+      />
     );
   }
 
@@ -376,12 +512,20 @@ function SearchView({ query, onComplete }: SearchViewProps) {
         solvedCount: problem.solvedCount,
         averageTries: problem.averageTries,
         isSolved: problem.isSolved,
+        isSolving: problem.isSolving,
       }))}
       currentPage={currentPage}
       totalPages={totalPages}
       showPagination={true}
       onSelect={(problemId) => {
-        setSelectedProblemId(problemId);
+        const problem = results.find((p) => p.problemId === problemId);
+        if (problem) {
+          setSelectedProblem({
+            problemId,
+            isSolved: problem.isSolved || false,
+            isSolving: problem.isSolving || false,
+          });
+        }
       }}
       onPageChange={(page) => {
         setCurrentPage(page);
@@ -390,7 +534,7 @@ function SearchView({ query, onComplete }: SearchViewProps) {
         <Box flexDirection="column">
           <Box marginBottom={1}>
             <Text color="cyan" bold>
-              🔍 검색 결과
+              {icons.search} 검색 결과
             </Text>
           </Box>
           <Box>
@@ -406,7 +550,8 @@ function SearchView({ query, onComplete }: SearchViewProps) {
   name: 'search',
   description: `solved.ac에서 문제를 검색하거나 백준 문제집의 문제 목록을 표시합니다.
 - solved.ac 검색어 문법을 지원합니다.
-- 문제 목록에서 선택하면 자동으로 브라우저에서 문제 페이지를 엽니다.
+- 문제 목록에서 해결 상태를 아이콘으로 확인할 수 있습니다.
+- 문제 선택 시 인터랙티브 메뉴를 통해 열기, 가져오기, 테스트, 제출 등을 수행할 수 있습니다.
 - 페이지네이션을 통해 여러 페이지의 결과를 탐색할 수 있습니다.
 - --workbook 옵션으로 백준 문제집의 문제 목록을 볼 수 있습니다.`,
   flags: defineFlags(searchFlagsSchema),

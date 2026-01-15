@@ -2,6 +2,7 @@ import { Badge, StatusMessage } from '@inkjs/ui';
 import { Box, Text } from 'ink';
 import React from 'react';
 
+import { icons } from '../core';
 import type { TestResult, TestSummary } from '../types';
 
 interface TestResultProps {
@@ -32,10 +33,19 @@ function ResultRow({ result }: { result: TestResult }) {
         ? 'FAIL'
         : 'ERROR';
 
+  const statusIcon =
+    result.status === 'pass'
+      ? icons.success
+      : result.status === 'fail'
+        ? icons.error
+        : icons.warning;
+
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box>
-        <Badge color={badgeColor}>{statusText}</Badge>
+        <Badge color={badgeColor}>
+          {statusIcon} {statusText}
+        </Badge>
         <Text> </Text>
         <Text>케이스 {result.caseId}</Text>
         {result.durationMs !== undefined && (

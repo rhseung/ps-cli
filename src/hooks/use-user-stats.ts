@@ -4,9 +4,9 @@ import { join } from 'path';
 
 import { useEffect, useState } from 'react';
 
+import { findProjectRoot, getArchiveDir, getSolvingDir } from '../core';
 import { getUserStats, getUserTop100 } from '../services/solved-api';
 import type { SolvedAcUser, SolvedAcProblem } from '../types';
-import { findProjectRoot, getArchiveDir, getSolvingDir } from '../utils/config';
 
 export interface UseUserStatsParams {
   handle: string;
@@ -102,7 +102,7 @@ export function useUserStats({
     }
 
     void fetchData();
-  }, [handle, onComplete]);
+  }, [fetchLocalCount, handle, onComplete]);
 
   return {
     status,

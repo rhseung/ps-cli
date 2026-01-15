@@ -1,8 +1,8 @@
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 
+import type { Language } from '../core';
 import type { TestResult, TestSummary } from '../types';
-import type { Language } from '../utils/language';
 
 import { compareOutput } from './diff-checker';
 import { runSolution } from './runner';

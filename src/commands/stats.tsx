@@ -4,22 +4,24 @@ import chalk from 'chalk';
 import { Box, Text, Transform } from 'ink';
 import React from 'react';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  getSolvedAcHandle,
+  calculateTierProgress,
+  getNextTierMinRating,
+  getTierColor,
+  getTierName,
+  getTierShortName,
+  icons,
+} from '../core';
 import { useUserStats } from '../hooks/use-user-stats';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
 } from '../types/command';
 import { defineFlags } from '../types/command';
-import { getSolvedAcHandle } from '../utils/config';
-import {
-  calculateTierProgress,
-  getNextTierMinRating,
-  getTierColor,
-  getTierName,
-  getTierShortName,
-} from '../utils/tier';
 
 // 플래그 정의 스키마 (타입 추론용)
 const statsFlagsSchema = {
@@ -102,7 +104,7 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
         {/* 헤더 */}
         <Box marginBottom={1} flexDirection="column">
           <Text color="cyan" bold>
-            ✨ {user.handle}
+            {icons.user} {user.handle}
           </Text>
           <Text color="blue" underline>
             https://solved.ac/profile/{user.handle}
@@ -140,7 +142,10 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
               </Text>
               개
               {localSolvedCount !== null && (
-                <Text color="gray"> (로컬: {localSolvedCount}개)</Text>
+                <Text color="gray">
+                  {' '}
+                  ({icons.solved} 로컬: {localSolvedCount}개)
+                </Text>
               )}
             </Text>
             <Text>
@@ -166,7 +171,7 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
           <Box flexDirection="column" marginTop={1}>
             <Box marginBottom={1}>
               <Text bold color="yellow">
-                🏆 상위 100문제 티어 분포
+                {icons.trophy} 상위 100문제 티어 분포
               </Text>
             </Box>
             <Box flexDirection="column">

@@ -4,12 +4,12 @@ import { join } from 'path';
 
 import { useEffect, useState } from 'react';
 
-import type { ProjectConfig } from '../types/index';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
   type Language,
-} from '../utils/language';
+} from '../core';
+import type { ProjectConfig } from '../types/index';
 
 function getProjectConfigPath(): string {
   return join(process.cwd(), '.ps-cli.json');

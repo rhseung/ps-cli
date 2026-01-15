@@ -4,8 +4,8 @@ import { createInterface } from 'readline';
 
 import { execa, execaCommand } from 'execa';
 
-import type { Language } from '../utils/language';
-import { getLanguageConfig } from '../utils/language';
+import type { Language } from '../core';
+import { getLanguageConfig } from '../core';
 
 export interface RunSolutionParams {
   problemDir: string;

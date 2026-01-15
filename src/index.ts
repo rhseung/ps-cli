@@ -5,8 +5,8 @@ import { fileURLToPath } from 'url';
 
 import meow from 'meow';
 
+import { getSupportedLanguagesString, icons } from './core';
 import type { CommandDefinition } from './types/command';
-import { getSupportedLanguagesString } from './utils/language';
 
 // commands 디렉토리 경로 찾기 (개발/빌드 환경 모두 지원)
 function getCommandsDir(): string {
@@ -107,10 +107,10 @@ ${commandList}
     --help, -h          명령어별 도움말
 
   빠른 시작:
-    $ ps init           # 프로젝트 초기화
-    $ ps fetch 1000     # 문제 가져오기
-    $ ps test           # 테스트 실행
-    $ ps submit         # 제출
+    $ ps init           ${icons.init} 프로젝트 초기화
+    $ ps fetch 1000     ${icons.fetch} 문제 가져오기
+    $ ps test           ${icons.test} 테스트 실행
+    $ ps submit         ${icons.submit} 제출
 
   자세한 도움말:
     $ ps <명령어> --help

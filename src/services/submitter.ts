@@ -1,8 +1,13 @@
 import * as cheerio from 'cheerio';
 
+import {
+  getBojSessionCookie,
+  getCodeOpen,
+  getLanguageConfig,
+  icons,
+  type Language,
+} from '../core';
 import type { SubmitResult, SubmitStatus } from '../types';
-import { getBojSessionCookie, getCodeOpen } from '../utils/config';
-import { getLanguageConfig, type Language } from '../utils/language';
 
 const BOJ_BASE_URL = 'https://www.acmicpc.net';
 
@@ -283,7 +288,7 @@ export async function submitSolution({
   if (!sessionCookie) {
     throw new Error(
       'BOJ 세션 쿠키가 설정되지 않았습니다.\n\n' +
-        '📋 쿠키 복사 방법:\n' +
+        `${icons.clipboard} 쿠키 복사 방법:\n` +
         '1. 브라우저에서 https://www.acmicpc.net 에 로그인\n' +
         '2. 개발자 도구(F12) 열기\n' +
         '3. 방법 A - Network 탭 사용 (추천):\n' +
@@ -295,8 +300,8 @@ export async function submitSolution({
         '   - Application/저장소 탭 → Cookies → https://www.acmicpc.net\n' +
         "   - 'OnlineJudge' 쿠키의 Name과 Value를 복사\n" +
         "   - 형식: 'OnlineJudge=값'\n\n" +
-        '💡 팁: Network 탭에서 복사하는 것이 가장 정확합니다!\n\n' +
-        '⚙️ 설정 방법:\n' +
+        `${icons.tip} 팁: Network 탭에서 복사하는 것이 가장 정확합니다!\n\n` +
+        `${icons.config} 설정 방법:\n` +
         "  export PS_CLI_BOJ_COOKIE='복사한_쿠키_값'\n\n" +
         '예시:\n' +
         "  export PS_CLI_BOJ_COOKIE='OnlineJudge=abc123; __ga=xyz789; ...'",

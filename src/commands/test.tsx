@@ -1,22 +1,24 @@
-import { Alert } from '@inkjs/ui';
-import { Spinner } from '@inkjs/ui';
+import { Alert, Spinner } from '@inkjs/ui';
 import { Box, Text } from 'ink';
 import React from 'react';
 
 import { TestResultView } from '../components/test-result';
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveProblemContext,
+  resolveLanguage,
+  getSupportedLanguagesString,
+  icons,
+  type Language,
+} from '../core';
 import { useTestRunner } from '../hooks/use-test-runner';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
 } from '../types/command';
 import { defineFlags } from '../types/command';
-import {
-  resolveProblemContext,
-  resolveLanguage,
-} from '../utils/execution-context';
-import { getSupportedLanguagesString, type Language } from '../utils/language';
 
 // 플래그 정의 스키마 (타입 추론용)
 const testFlagsSchema = {
@@ -36,7 +38,7 @@ const testFlagsSchema = {
 
 type TestCommandFlags = InferFlagsFromSchema<typeof testFlagsSchema>;
 
-interface TestViewProps {
+export interface TestViewProps {
   problemDir: string;
   language: Language;
   watch: boolean;
@@ -44,7 +46,7 @@ interface TestViewProps {
   onComplete: () => void;
 }
 
-function TestView({
+export function TestView({
   problemDir,
   language,
   watch,
@@ -85,8 +87,8 @@ function TestView({
         </Text>
         <Text> </Text>
         <Text color="gray">
-          {problemDir} • {language}
-          {watch && ' • watch'}
+          {problemDir} {icons.solving} {language}
+          {watch && ` ${icons.solving} watch`}
         </Text>
       </Box>
       <TestResultView results={results} summary={summary} />
@@ -110,6 +112,7 @@ function TestView({
     'test 1000               # 1000번 문제 테스트',
     'test --watch            # watch 모드로 테스트',
     'test 1000 --watch       # 1000번 문제를 watch 모드로 테스트',
+    'test --language python  # Python으로 테스트',
   ],
 })
 export class TestCommand extends Command<TestCommandFlags> {

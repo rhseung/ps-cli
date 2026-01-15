@@ -1,23 +1,22 @@
-import { StatusMessage, Alert } from '@inkjs/ui';
-import { Spinner } from '@inkjs/ui';
+import { StatusMessage, Alert, Spinner } from '@inkjs/ui';
 import { Box } from 'ink';
-import React from 'react';
 
 import { ProblemDashboard } from '../components/problem-dashboard';
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveProblemContext,
+  getSupportedLanguages,
+  getSupportedLanguagesString,
+  type Language,
+} from '../core';
 import { useFetchProblem } from '../hooks/use-fetch-problem';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
 } from '../types/command';
 import { defineFlags } from '../types/command';
-import { resolveProblemContext } from '../utils/execution-context';
-import type { Language } from '../utils/language';
-import {
-  getSupportedLanguages,
-  getSupportedLanguagesString,
-} from '../utils/language';
 
 // 플래그 정의 스키마 (타입 추론용)
 const fetchFlagsSchema = {
@@ -31,13 +30,13 @@ const fetchFlagsSchema = {
 
 type FetchCommandFlags = InferFlagsFromSchema<typeof fetchFlagsSchema>;
 
-interface FetchViewProps {
+export interface FetchViewProps {
   problemId: number;
   language?: Language;
   onComplete?: () => void;
 }
 
-function FetchView({
+export function FetchView({
   problemId,
   language = 'python',
   onComplete,

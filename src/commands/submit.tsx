@@ -1,23 +1,24 @@
-import { Badge, StatusMessage, Alert } from '@inkjs/ui';
-import { Spinner } from '@inkjs/ui';
+import { Badge, StatusMessage, Alert, Spinner } from '@inkjs/ui';
 import { Text, Box } from 'ink';
 import React from 'react';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveProblemContext,
+  resolveLanguage,
+  findSolutionFile,
+  getSupportedLanguagesString,
+  detectProblemIdFromPath,
+  type Language,
+} from '../core';
 import { useSubmit } from '../hooks/use-submit';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
 } from '../types/command';
 import { defineFlags } from '../types/command';
-import {
-  resolveProblemContext,
-  resolveLanguage,
-  findSolutionFile,
-} from '../utils/execution-context';
-import { getSupportedLanguagesString, type Language } from '../utils/language';
-import { detectProblemIdFromPath } from '../utils/problem-id';
 
 // 플래그 정의 스키마 (타입 추론용)
 const submitFlagsSchema = {
@@ -31,14 +32,14 @@ const submitFlagsSchema = {
 
 type SubmitCommandFlags = InferFlagsFromSchema<typeof submitFlagsSchema>;
 
-interface SubmitViewProps {
+export interface SubmitViewProps {
   problemId: number;
   language: Language;
   sourcePath: string;
   onComplete: () => void;
 }
 
-function SubmitView({
+export function SubmitView({
   problemId,
   language,
   sourcePath,

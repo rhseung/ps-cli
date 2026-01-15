@@ -1,20 +1,22 @@
-import { StatusMessage, Alert } from '@inkjs/ui';
-import { Spinner } from '@inkjs/ui';
+import { StatusMessage, Alert, Spinner } from '@inkjs/ui';
 import { Box } from 'ink';
 import React from 'react';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveProblemContext,
+  type CommandFlags,
+} from '../core';
 import { useArchive } from '../hooks/use-archive';
-import type { CommandFlags } from '../types/command';
-import { resolveProblemContext } from '../utils/execution-context';
 
-interface ArchiveViewProps {
+export interface ArchiveViewProps {
   problemId: number;
   onComplete?: () => void;
 }
 
-function ArchiveView({ problemId, onComplete }: ArchiveViewProps) {
+export function ArchiveView({ problemId, onComplete }: ArchiveViewProps) {
   const { status, message, error } = useArchive({
     problemId,
     onComplete,
@@ -48,6 +50,7 @@ function ArchiveView({ problemId, onComplete }: ArchiveViewProps) {
   description: `문제를 아카이브하고 Git 커밋을 생성합니다.
 - solving 디렉토리에서 문제를 찾아 archive 디렉토리로 이동
 - Git add 및 commit 실행 (커밋 메시지: "solve: {문제번호} - {문제이름}")`,
+  flags: [],
   autoDetectProblemId: true,
   requireProblemId: false,
   examples: [

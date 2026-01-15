@@ -1,8 +1,8 @@
 import { Box, Text } from 'ink';
 import React from 'react';
 
+import { getTierName, getTierColor } from '../core';
 import type { Problem } from '../types/index';
-import { getTierName, getTierColor } from '../utils/tier';
 
 interface ProblemDashboardProps {
   problem: Problem;

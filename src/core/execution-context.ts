@@ -14,7 +14,7 @@ import {
   detectProblemIdFromPath,
   getArchiveDirPath,
   getSolvingDirPath,
-} from './problem-id';
+} from './problem';
 
 export interface ResolveProblemContextOptions {
   /** Problem ID가 필수인지 여부 */

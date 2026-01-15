@@ -1,17 +1,18 @@
-import { StatusMessage, Alert } from '@inkjs/ui';
-import { Spinner } from '@inkjs/ui';
+import { StatusMessage, Alert, Spinner } from '@inkjs/ui';
 import { Text, Box } from 'ink';
-import React from 'react';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveProblemContext,
+} from '../core';
 import { useOpenBrowser } from '../hooks/use-open-browser';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
 } from '../types/command';
 import { defineFlags } from '../types/command';
-import { resolveProblemContext } from '../utils/execution-context';
 
 // 플래그 정의 스키마 (타입 추론용)
 const openFlagsSchema = {
@@ -24,13 +25,13 @@ const openFlagsSchema = {
 
 type OpenCommandFlags = InferFlagsFromSchema<typeof openFlagsSchema>;
 
-interface OpenViewProps {
+export interface OpenViewProps {
   problemId?: number;
   workbookId?: number;
   onComplete?: () => void;
 }
 
-function OpenView({ problemId, workbookId, onComplete }: OpenViewProps) {
+export function OpenView({ problemId, workbookId, onComplete }: OpenViewProps) {
   const { status, error, url } = useOpenBrowser({
     problemId,
     workbookId,

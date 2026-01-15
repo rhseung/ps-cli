@@ -2,9 +2,9 @@ import { readFile } from 'fs/promises';
 
 import { useEffect, useState } from 'react';
 
+import type { Language } from '../core';
 import { openBrowser } from '../utils/browser';
 import { copyToClipboard } from '../utils/clipboard';
-import type { Language } from '../utils/language';
 
 const BOJ_BASE_URL = 'https://www.acmicpc.net';
 

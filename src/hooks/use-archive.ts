@@ -4,14 +4,14 @@ import { join, dirname } from 'path';
 import { execa } from 'execa';
 import { useEffect, useState } from 'react';
 
-import type { Problem } from '../types/index';
 import {
   findProjectRoot,
   getSolvingDir,
   getArchiveAutoCommit,
   getArchiveCommitMessage,
-} from '../utils/config';
-import { getSolvingDirPath, getArchiveDirPath } from '../utils/problem-id';
+} from '../core/config';
+import { getSolvingDirPath, getArchiveDirPath } from '../core/problem';
+import type { Problem } from '../types/index';
 
 export interface UseArchiveParams {
   problemId: number;

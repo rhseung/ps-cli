@@ -4,7 +4,6 @@ import { join } from 'path';
 import { execaCommand, execa } from 'execa';
 import { useEffect, useState, useCallback } from 'react';
 
-import type { ProjectConfig } from '../types/index';
 import {
   getArchiveDir,
   getSolvingDir,
@@ -13,7 +12,8 @@ import {
   getAutoOpenEditor,
   getSolvedAcHandle,
   getArchiveStrategy,
-} from '../utils/config';
+} from '../core/config';
+import type { ProjectConfig } from '../types/index';
 
 export type InitStep =
   | 'archive-dir'

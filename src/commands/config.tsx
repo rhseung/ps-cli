@@ -1,12 +1,10 @@
 import { StatusMessage, Select, TextInput, Alert } from '@inkjs/ui';
 import { render, Text, Box } from 'ink';
-import React from 'react';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
-import { useConfig } from '../hooks/use-config';
-import type { CommandFlags } from '../types/command';
 import {
+  Command,
+  CommandDef,
+  CommandBuilder,
   getDefaultLanguage,
   getEditor,
   getAutoOpenEditor,
@@ -15,11 +13,12 @@ import {
   getArchiveStrategy,
   getArchiveAutoCommit,
   getArchiveCommitMessage,
-} from '../utils/config';
-import {
   getSupportedLanguages,
   getSupportedLanguagesString,
-} from '../utils/language';
+  icons,
+  type CommandFlags,
+} from '../core';
+import { useConfig } from '../hooks/use-config';
 
 export function getConfigHelp(): string {
   return `
@@ -143,7 +142,7 @@ function ConfigView({
       <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text color="cyan" bold>
-            ⚙️ 현재 설정 (.ps-cli.json)
+            {icons.config} 현재 설정 (.ps-cli.json)
           </Text>
         </Box>
         <Box flexDirection="column" marginTop={1}>
@@ -428,7 +427,7 @@ export class ConfigCommand extends Command {
       <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text color="cyan" bold>
-            ⚙️ 설정 관리
+            {icons.config} 설정 관리
           </Text>
         </Box>
         <Alert variant="info">설정 키를 선택하세요</Alert>

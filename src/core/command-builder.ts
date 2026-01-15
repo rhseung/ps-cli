@@ -4,17 +4,14 @@ import type {
   CommandFlags,
   FlagDefinition,
 } from '../types/command';
-import {
-  resolveProblemContext,
-  resolveLanguage,
-} from '../utils/execution-context';
+
+import { type Command } from './base-command';
+import { resolveProblemContext, resolveLanguage } from './execution-context';
 import {
   getSupportedLanguages,
   getSupportedLanguagesString,
   type Language,
-} from '../utils/language';
-
-import { type Command } from './base-command';
+} from './language';
 
 /**
  * Command 메타데이터를 저장하는 맵

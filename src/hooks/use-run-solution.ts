@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import type { Language } from '../core';
 import { runSolution } from '../services/runner';
-import type { Language } from '../utils/language';
 
 export interface UseRunSolutionParams {
   problemDir: string;

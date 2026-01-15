@@ -3,9 +3,9 @@ import { join } from 'path';
 import chokidar from 'chokidar';
 import { useEffect, useState, useCallback } from 'react';
 
+import type { Language } from '../core';
 import { runAllTests } from '../services/test-runner';
 import type { TestResult, TestSummary } from '../types';
-import type { Language } from '../utils/language';
 
 type Status = 'loading' | 'ready' | 'error';
 

@@ -2,11 +2,14 @@ import { mkdir, writeFile, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
+import {
+  getLanguageConfig,
+  getSolvingDirPath,
+  getTierName,
+  getTierImageUrl,
+  type Language,
+} from '../core';
 import type { Problem } from '../types/index';
-import type { Language } from '../utils/language';
-import { getLanguageConfig } from '../utils/language';
-import { getSolvingDirPath } from '../utils/problem-id';
-import { getTierName, getTierImageUrl } from '../utils/tier';
 
 function parseTimeLimitToMs(timeLimit?: string): number | undefined {
   if (!timeLimit) return undefined;

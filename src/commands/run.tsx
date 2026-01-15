@@ -4,19 +4,22 @@ import { StatusMessage, Alert } from '@inkjs/ui';
 import { Spinner } from '@inkjs/ui';
 import { Box, Text } from 'ink';
 
-import { Command } from '../core/base-command';
-import { CommandDef, CommandBuilder } from '../core/command-builder';
+import {
+  Command,
+  CommandDef,
+  CommandBuilder,
+  resolveProblemContext,
+  resolveLanguage,
+  getSupportedLanguagesString,
+  icons,
+  type Language,
+} from '../core';
 import { useRunSolution } from '../hooks/use-run-solution';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
 } from '../types/command';
 import { defineFlags } from '../types/command';
-import {
-  resolveProblemContext,
-  resolveLanguage,
-} from '../utils/execution-context';
-import { getSupportedLanguagesString, type Language } from '../utils/language';
 
 // 플래그 정의 스키마 (타입 추론용)
 const runFlagsSchema = {
@@ -70,10 +73,10 @@ function RunView({
               입력을 입력한 후, 마지막 줄에서 Enter를 누르고:
             </Text>
             <Text color="gray" dimColor>
-              • macOS/Linux: Ctrl+D
+              {icons.solving} macOS/Linux: Ctrl+D
             </Text>
             <Text color="gray" dimColor>
-              • Windows: Ctrl+Z (그리고 Enter)
+              {icons.solving} Windows: Ctrl+Z (그리고 Enter)
             </Text>
             <Text color="gray" dimColor>
               예: "3 4" 입력 → Enter → Ctrl+D
@@ -105,8 +108,8 @@ function RunView({
             실행 결과
           </Text>
           <Text color="gray">
-            {problemDir} • {language}
-            {result.timedOut && ' • 타임아웃'}
+            {problemDir} {icons.solving} {language}
+            {result.timedOut && ` ${icons.solving} 타임아웃`}
           </Text>
         </Box>
         <Box flexDirection="column" marginTop={1}>

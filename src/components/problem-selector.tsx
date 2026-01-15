@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { Box, Text } from 'ink';
 import React from 'react';
 
-import { getTierName, getTierColor } from '../utils/tier';
+import { getTierName, getTierColor, icons } from '../core';
 
 export interface ProblemSelectorProblem {
   problemId: number;
@@ -12,6 +12,7 @@ export interface ProblemSelectorProblem {
   solvedCount?: number;
   averageTries?: number;
   isSolved?: boolean; // 로컬에 파일이 있는지
+  isSolving?: boolean; // 현재 해결 중인 문제인지 (solving 디렉토리에 있는지)
   order?: number; // 문제집 내 순서 (workbook용)
 }
 
@@ -47,8 +48,13 @@ export function ProblemSelector({
       : '';
     const suffix = solvedText + triesText + (solvedText ? ')' : '');
 
-    // 해결된 문제 표시
-    const solvedMark = problem.isSolved ? ` ${chalk.bold.green('✓')}` : '';
+    // 해결된 문제 및 해결 중인 문제 표시
+    const solvedMark = problem.isSolved
+      ? ` ${chalk.bold.green(icons.solved)}`
+      : '';
+    const solvingMark = problem.isSolving
+      ? ` ${chalk.bold.blue(icons.solving)}`
+      : '';
 
     // 티어 표시 (색상 적용)
     let tierText = '';
@@ -68,7 +74,7 @@ export function ProblemSelector({
     const problemText = `${problem.problemId} - ${problem.title}`;
 
     options.push({
-      label: `${tierText}${problemText}${suffix}${solvedMark}`,
+      label: `${tierText}${problemText}${suffix}${solvedMark}${solvingMark}`,
       value: `problem:${problem.problemId}`,
     });
   });
@@ -77,14 +83,14 @@ export function ProblemSelector({
   if (showPagination && currentPage !== undefined && totalPages !== undefined) {
     if (currentPage < totalPages) {
       options.push({
-        label: `→ 다음 페이지 (${currentPage + 1}/${totalPages})`,
+        label: `${icons.next} 다음 페이지 (${currentPage + 1}/${totalPages})`,
         value: 'next-page',
       });
     }
 
     if (currentPage > 1) {
       options.push({
-        label: `← 이전 페이지 (${currentPage - 1}/${totalPages})`,
+        label: `${icons.back} 이전 페이지 (${currentPage - 1}/${totalPages})`,
         value: 'prev-page',
       });
     }
