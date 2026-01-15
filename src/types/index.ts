@@ -57,6 +57,40 @@ export interface SolvedAcUser {
   rank: number;
 }
 
+export interface SolvedAcProblemStat {
+  level: number;
+  solved: number;
+  tried: number;
+  partial: number;
+  total: number;
+}
+
+export interface SolvedAcTagRating {
+  tag: {
+    key: string;
+    displayNames: Array<{
+      language: string;
+      name: string;
+      short: string;
+    }>;
+  };
+  rating: number;
+  ratingByProblemsSum: number;
+  ratingByClass: number;
+  ratingBySolvedCount: number;
+  ratingByVoteCount: number;
+}
+
+export interface UserBojStats {
+  submissions: number;
+  accepted: number;
+  wrong: number;
+  timeout: number;
+  memory: number;
+  runtimeError: number;
+  compileError: number;
+}
+
 export interface ScrapedProblem {
   title: string;
   description: string;

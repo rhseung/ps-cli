@@ -1,8 +1,7 @@
-import { Alert } from '@inkjs/ui';
-import { Spinner } from '@inkjs/ui';
+import { Alert, Spinner } from '@inkjs/ui';
+import { BarChart, StackedBarChart } from '@pppp606/ink-chart';
 import chalk from 'chalk';
-import { Box, Text, Transform } from 'ink';
-import React from 'react';
+import { Box, Text } from 'ink';
 
 import {
   Command,
@@ -16,6 +15,7 @@ import {
   getTierShortName,
   icons,
   logger,
+  TIER_COLORS,
 } from '../core';
 import { useUserStats } from '../hooks/use-user-stats';
 import type {
@@ -41,31 +41,17 @@ interface StatsViewProps {
   showLocalStats: boolean;
 }
 
-interface ProgressBarWithColorProps {
-  value: number;
-  colorFn: (text: string) => string;
-}
-
-function ProgressBarWithColor({ value, colorFn }: ProgressBarWithColorProps) {
-  const width = process.stdout.columns || 40;
-  const barWidth = Math.max(10, Math.min(30, width - 20)); // 최소 10칸, 최대 30칸
-
-  const filled = Math.round((value / 100) * barWidth);
-  const empty = barWidth - filled;
-
-  const filledBar = '█'.repeat(filled);
-  const emptyBar = '░'.repeat(empty);
-  const barText = filledBar + emptyBar;
-
-  return (
-    <Transform transform={(output) => colorFn(output)}>
-      <Text>{barText}</Text>
-    </Transform>
-  );
-}
-
 function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
-  const { status, user, top100, localSolvedCount, error } = useUserStats({
+  const {
+    status,
+    user,
+    top100,
+    problemStats,
+    tagRatings,
+    bojStats,
+    localSolvedCount,
+    error,
+  } = useUserStats({
     handle,
     onComplete,
     fetchLocalCount: showLocalStats,
@@ -73,7 +59,7 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
 
   if (status === 'loading') {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" paddingY={1}>
         <Spinner label="통계를 불러오는 중..." />
       </Box>
     );
@@ -81,7 +67,7 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
 
   if (status === 'error') {
     return (
-      <Box flexDirection="column">
+      <Box flexDirection="column" paddingY={1}>
         <Alert variant="error">통계를 불러올 수 없습니다: {error}</Alert>
       </Box>
     );
@@ -100,87 +86,253 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
     const progress =
       user.tier === 31 ? 100 : calculateTierProgress(user.rating, user.tier);
 
+    // 티어별 분포 데이터 가공
+    const tierDistData = problemStats
+      ? [
+          {
+            label: 'Bronze',
+            value: problemStats
+              .filter((s) => s.level >= 1 && s.level <= 5)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[3]!, // Bronze III
+          },
+          {
+            label: 'Silver',
+            value: problemStats
+              .filter((s) => s.level >= 6 && s.level <= 10)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[8]!, // Silver III
+          },
+          {
+            label: 'Gold',
+            value: problemStats
+              .filter((s) => s.level >= 11 && s.level <= 15)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[13]!, // Gold III
+          },
+          {
+            label: 'Platinum',
+            value: problemStats
+              .filter((s) => s.level >= 16 && s.level <= 20)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[18]!, // Platinum III
+          },
+          {
+            label: 'Diamond',
+            value: problemStats
+              .filter((s) => s.level >= 21 && s.level <= 25)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[23]!, // Diamond III
+          },
+          {
+            label: 'Ruby',
+            value: problemStats
+              .filter((s) => s.level >= 26 && s.level <= 30)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[28]!, // Ruby III
+          },
+          {
+            label: 'Master',
+            value: problemStats
+              .filter((s) => s.level === 31)
+              .reduce((a, b) => a + b.solved, 0),
+            color: TIER_COLORS[31]!, // Master
+          },
+        ].filter((d) => d.value > 0)
+      : [];
+
+    // 태그 레이팅 데이터 가공 (상위 8개)
+    const tagChartData = tagRatings
+      ? tagRatings
+          .sort((a, b) => b.rating - a.rating)
+          .slice(0, 8)
+          .map((tr) => ({
+            label:
+              tr.tag.displayNames.find((dn) => dn.language === 'ko')?.name ||
+              tr.tag.key,
+            value: tr.rating,
+          }))
+      : [];
+
+    // 백준 제출 통계
+    const bojSummaryData = bojStats
+      ? [
+          { label: '정답', value: bojStats.accepted, color: 'green' },
+          { label: '오답', value: bojStats.wrong, color: 'red' },
+          {
+            label: 'TLE/MLE',
+            value: bojStats.timeout + bojStats.memory,
+            color: 'yellow',
+          },
+          {
+            label: '기타',
+            value: bojStats.runtimeError + bojStats.compileError,
+            color: 'gray',
+          },
+        ].filter((d) => d.value > 0)
+      : [];
+
     return (
-      <Box flexDirection="column">
-        {/* 헤더 */}
-        <Box marginBottom={1} flexDirection="column">
-          <Text color="cyan" bold>
-            {icons.user} {user.handle}
-          </Text>
-          <Text color="blue" underline>
-            https://solved.ac/profile/{user.handle}
-          </Text>
+      <Box flexDirection="column" gap={1}>
+        {/* 헤더 섹션 */}
+        <Box
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="flex-end"
+        >
+          <Box flexDirection="column">
+            <Text bold>
+              {icons.user} {chalk.cyan(user.handle)}
+            </Text>
+            <Text color="gray">https://solved.ac/profile/{user.handle}</Text>
+          </Box>
         </Box>
 
-        {/* 티어 정보 (박스 밖) */}
-        <Box marginBottom={1} flexDirection="row" gap={1}>
-          <Text>
-            {tierColorFn(tierName)}{' '}
-            <Text bold>{tierColorFn(user.rating.toLocaleString())}</Text>
-            {nextTierMin !== null && (
-              <Text bold>{' / ' + nextTierMin.toLocaleString()}</Text>
-            )}
-          </Text>
-        </Box>
-
-        {/* 프로그레스 바 */}
-        <Box flexDirection="column" marginBottom={1}>
-          <ProgressBarWithColor value={progress} colorFn={tierColorFn} />
-        </Box>
-
-        {/* 통계 정보 */}
+        {/* 티어 정보 및 프로그레스 */}
         <Box
           flexDirection="column"
           borderStyle="round"
           borderColor="gray"
-          alignSelf="flex-start"
+          paddingX={1}
         >
-          <Box paddingX={1} paddingY={0} flexDirection="column">
-            <Text>
-              해결한 문제:{' '}
-              <Text bold color="green">
-                {user.solvedCount.toLocaleString()}
+          <Box justifyContent="space-between" marginBottom={1}>
+            <Box gap={1}>
+              <Text bold>{tierColorFn(tierName)}</Text>
+              <Text bold>{tierColorFn(user.rating.toLocaleString())}</Text>
+              {nextTierMin !== null && (
+                <Text dimColor> / {nextTierMin.toLocaleString()}</Text>
+              )}
+            </Box>
+            <Text color="yellow">
+              {icons.trophy} Rank #{user.rank.toLocaleString()}
+            </Text>
+          </Box>
+          <StackedBarChart
+            data={[
+              {
+                label: 'Progress',
+                value: progress,
+                color: typeof tierColor === 'string' ? tierColor : '#ff7ca8',
+              },
+              ...(progress < 100
+                ? [{ label: 'Remaining', value: 100 - progress, color: '#333' }]
+                : []),
+            ]}
+            showLabels={false}
+            showValues={false}
+            width="full"
+          />
+        </Box>
+
+        <Box flexDirection="row" gap={2}>
+          {/* 상세 수치 통계 */}
+          <Box flexDirection="column" flexGrow={1}>
+            <Box marginBottom={1}>
+              <Text bold color="cyan">
+                [ 상세 통계 ]
               </Text>
-              개
+            </Box>
+            <Box flexDirection="column" gap={0}>
+              <Text>
+                해결한 문제:{' '}
+                <Text bold color="green">
+                  {user.solvedCount.toLocaleString()}
+                </Text>{' '}
+                개
+              </Text>
               {localSolvedCount !== null && (
                 <Text color="gray">
                   {' '}
-                  ({icons.solved} 로컬: {localSolvedCount}개)
+                  └ 로컬 관리: <Text bold>{localSolvedCount}</Text> 개
                 </Text>
               )}
-            </Text>
-            <Text>
-              클래스: <Text bold>{user.class}</Text>
-            </Text>
-            {user.maxStreak > 0 && (
               <Text>
-                최대 연속 해결:{' '}
-                <Text bold color="cyan">
-                  {user.maxStreak}
+                클래스:{' '}
+                <Text bold color="magenta">
+                  {user.class}
+                  {user.classDecoration === 'gold'
+                    ? '++'
+                    : user.classDecoration === 'silver'
+                      ? '+'
+                      : ''}
                 </Text>
+              </Text>
+              <Text>
+                최대 스트릭:{' '}
+                <Text bold color="orange">
+                  {user.maxStreak}
+                </Text>{' '}
                 일
               </Text>
+              <Text>
+                기여 횟수:{' '}
+                <Text bold color="blue">
+                  {user.voteCount}
+                </Text>{' '}
+                회
+              </Text>
+            </Box>
+
+            {bojSummaryData.length > 0 && (
+              <Box flexDirection="column" marginTop={1}>
+                <Box marginBottom={1}>
+                  <Text bold color="cyan">
+                    [ 백준 제출 요약 ]
+                  </Text>
+                </Box>
+                <StackedBarChart
+                  data={bojSummaryData}
+                  mode="absolute"
+                  width={30}
+                />
+              </Box>
             )}
-            <Text>
-              순위: <Text bold>{user.rank.toLocaleString()}</Text>위
-            </Text>
           </Box>
+
+          {/* 알고리즘 강점 */}
+          {tagChartData.length > 0 && (
+            <Box flexDirection="column" width={40}>
+              <Box marginBottom={1}>
+                <Text bold color="cyan">
+                  [ 알고리즘 강점 (Tag Rating) ]
+                </Text>
+              </Box>
+              <BarChart
+                data={tagChartData}
+                showValue="right"
+                barChar="█"
+                color="cyan"
+              />
+            </Box>
+          )}
         </Box>
 
-        {/* 상위 100문제 티어 분포 */}
-        {top100 && top100.length > 0 && (
-          <Box flexDirection="column" marginTop={1}>
+        {/* 티어별 해결 분포 */}
+        {tierDistData.length > 0 && (
+          <Box flexDirection="column">
             <Box marginBottom={1}>
-              <Text bold color="yellow">
-                {icons.trophy} 상위 100문제 티어 분포
+              <Text bold color="cyan">
+                [ 티어별 해결 문제 분포 ]
+              </Text>
+            </Box>
+            <StackedBarChart data={tierDistData} width="full" />
+          </Box>
+        )}
+
+        {/* 상위 100문제 그리드 */}
+        {top100 && top100.length > 0 && (
+          <Box flexDirection="column">
+            <Box marginBottom={1}>
+              <Text bold color="cyan">
+                [ 상위 100문제 분포 ]
               </Text>
             </Box>
             <Box flexDirection="column">
-              {Array.from({ length: Math.ceil(top100.length / 10) }).map(
+              {Array.from({ length: Math.ceil(top100.length / 20) }).map(
                 (_, rowIndex) => (
                   <Box key={rowIndex} flexDirection="row">
                     {top100
-                      .slice(rowIndex * 10, (rowIndex + 1) * 10)
+                      .slice(rowIndex * 20, (rowIndex + 1) * 20)
                       .map((p, colIndex) => {
                         const tierColor = getTierColor(p.level);
                         const tierColorFn =
@@ -188,7 +340,7 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
                             ? chalk.hex(tierColor)
                             : tierColor.multiline;
                         return (
-                          <Box key={colIndex} width={4}>
+                          <Box key={colIndex} width={3}>
                             <Text>
                               {tierColorFn(getTierShortName(p.level))}
                             </Text>

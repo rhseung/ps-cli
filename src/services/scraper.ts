@@ -6,6 +6,7 @@ import type {
   TestCase,
   SearchResult,
   SearchResults,
+  UserBojStats,
 } from '../types/index';
 import { fetchWithRetry } from '../utils/http';
 
@@ -518,4 +519,42 @@ export async function searchProblems(
     currentPage: page,
     totalPages,
   };
+}
+
+/**
+ * 백준 사용자 통계를 스크래핑합니다.
+ */
+export async function scrapeUserStats(handle: string): Promise<UserBojStats> {
+  const url = `${BOJ_BASE_URL}/user/${encodeURIComponent(handle)}`;
+  const html = await fetchWithRetry(url, `사용자 ${handle}`);
+  const $ = cheerio.load(html);
+
+  const stats: UserBojStats = {
+    submissions: 0,
+    accepted: 0,
+    wrong: 0,
+    timeout: 0,
+    memory: 0,
+    runtimeError: 0,
+    compileError: 0,
+  };
+
+  const statTable = $('#stat-table');
+  if (statTable.length > 0) {
+    statTable.find('tr').each((_, row) => {
+      const th = $(row).find('th').text().trim();
+      const td = $(row).find('td').text().trim();
+      const value = parseInt(td.replace(/,/g, ''), 10) || 0;
+
+      if (th.includes('제출')) stats.submissions = value;
+      else if (th.includes('정답')) stats.accepted = value;
+      else if (th.includes('틀린 결과')) stats.wrong = value;
+      else if (th.includes('시간 초과')) stats.timeout = value;
+      else if (th.includes('메모리 초과')) stats.memory = value;
+      else if (th.includes('런타임 에러')) stats.runtimeError = value;
+      else if (th.includes('컴파일 에러')) stats.compileError = value;
+    });
+  }
+
+  return stats;
 }
