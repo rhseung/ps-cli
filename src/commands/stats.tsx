@@ -15,6 +15,7 @@ import {
   getTierName,
   getTierShortName,
   icons,
+  logger,
 } from '../core';
 import { useUserStats } from '../hooks/use-user-stats';
 import type {
@@ -211,7 +212,7 @@ function StatsView({ handle, onComplete, showLocalStats }: StatsViewProps) {
   name: 'stats',
   description: `Solved.ac에서 사용자 통계를 조회합니다.
 - 티어, 레이팅, 해결한 문제 수 등 표시
-- 그라데이션으로 시각적으로 표시`,
+- 기본 Solved.ac 핸들은 ps config에서 설정 가능합니다.`,
   flags: defineFlags(statsFlagsSchema),
   autoDetectProblemId: false,
   examples: ['stats myhandle', 'stats --handle myhandle'],
@@ -227,12 +228,8 @@ export class StatsCommand extends Command<StatsCommandFlags> {
     }
 
     if (!handle) {
-      console.error('오류: Solved.ac 핸들을 입력해주세요.');
-      console.error(`사용법: ps stats <핸들>`);
-      console.error(`도움말: ps stats --help`);
-      console.error(
-        `힌트: 설정에 핸들을 저장하면 매번 입력할 필요가 없습니다.`,
-      );
+      logger.error('Solved.ac 핸들을 입력해주세요.');
+      console.log(`도움말: ps stats --help`);
       process.exit(1);
       return;
     }

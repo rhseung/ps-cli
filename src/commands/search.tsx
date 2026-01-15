@@ -14,6 +14,7 @@ import {
   getArchiveDirPath,
   getSolvingDirPath,
   icons,
+  logger,
   type Language,
 } from '../core';
 import { searchProblems } from '../services/scraper';
@@ -575,9 +576,9 @@ export class SearchCommand extends Command<SearchCommandFlags> {
 
     if (workbookId) {
       if (isNaN(workbookId) || workbookId <= 0) {
-        console.error('오류: 유효한 문제집 ID를 입력해주세요.');
-        console.error(`사용법: ps search --workbook <문제집ID>`);
-        console.error(`도움말: ps search --help`);
+        logger.error('유효한 문제집 ID를 입력해주세요.');
+        console.log(`사용법: ps search --workbook <문제집ID>`);
+        console.log(`도움말: ps search --help`);
         process.exit(1);
         return;
       }
@@ -592,12 +593,8 @@ export class SearchCommand extends Command<SearchCommandFlags> {
     const query = args.join(' ').trim();
 
     if (!query) {
-      console.error('오류: 검색 쿼리 또는 --workbook 옵션을 입력해주세요.');
-      console.error(`사용법: ps search <쿼리>`);
-      console.error(`      ps search --workbook <문제집ID>`);
-      console.error(`도움말: ps search --help`);
-      console.error(`예제: ps search "*g1...g5"`);
-      console.error(`      ps search --workbook 25052`);
+      logger.error('검색 쿼리 또는 --workbook 옵션을 입력해주세요.');
+      console.log(`도움말: ps search --help`);
       process.exit(1);
       return;
     }

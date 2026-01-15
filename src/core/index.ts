@@ -7,3 +7,5 @@ export * from './base-command';
 export * from './command-builder';
 export * from '../types/command';
 export * from '../utils/icons';
+export * from '../utils/logger';
+export * from '../utils/help';

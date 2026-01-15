@@ -7,6 +7,7 @@ import {
   CommandDef,
   CommandBuilder,
   resolveProblemContext,
+  logger,
   type CommandFlags,
 } from '../core';
 import { useArchive } from '../hooks/use-archive';
@@ -49,7 +50,8 @@ export function ArchiveView({ problemId, onComplete }: ArchiveViewProps) {
   name: 'archive',
   description: `문제를 아카이브하고 Git 커밋을 생성합니다.
 - solving 디렉토리에서 문제를 찾아 archive 디렉토리로 이동
-- Git add 및 commit 실행 (커밋 메시지: "solve: {문제번호} - {문제이름}")`,
+- Git add 및 commit 실행 (커밋 메시지: "solve: {문제번호} - {문제이름}")
+- 아카이브 경로, 전략, 자동 커밋 여부 등은 ps config에서 설정 가능합니다.`,
   flags: [],
   autoDetectProblemId: true,
   requireProblemId: false,
@@ -63,12 +65,8 @@ export class ArchiveCommand extends Command {
     const context = await resolveProblemContext(args, { requireId: false });
 
     if (context.problemId === null) {
-      console.error('오류: 문제 번호를 입력해주세요.');
-      console.error(`사용법: ps archive <문제번호>`);
-      console.error(`도움말: ps archive --help`);
-      console.error(
-        `힌트: solving/{문제번호} 디렉토리에서 실행하면 자동으로 문제 번호를 추론합니다.`,
-      );
+      logger.error('문제 번호를 입력해주세요.');
+      console.log(`도움말: ps archive --help`);
       process.exit(1);
       return;
     }

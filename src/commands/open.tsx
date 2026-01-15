@@ -6,6 +6,7 @@ import {
   CommandDef,
   CommandBuilder,
   resolveProblemContext,
+  logger,
 } from '../core';
 import { useOpenBrowser } from '../hooks/use-open-browser';
 import type {
@@ -116,9 +117,9 @@ export class OpenCommand extends Command<OpenCommandFlags> {
     // 문제집 모드
     if (workbookId !== null) {
       if (isNaN(workbookId) || workbookId <= 0) {
-        console.error('오류: 유효한 문제집 ID를 입력해주세요.');
-        console.error(`사용법: ps open --workbook <문제집ID>`);
-        console.error(`도움말: ps open --help`);
+        logger.error('유효한 문제집 ID를 입력해주세요.');
+        console.log(`사용법: ps open --workbook <문제집ID>`);
+        console.log(`도움말: ps open --help`);
         process.exit(1);
         return;
       }
@@ -133,13 +134,8 @@ export class OpenCommand extends Command<OpenCommandFlags> {
     const context = await resolveProblemContext(args, { requireId: true });
 
     if (context.problemId === null) {
-      console.error('오류: 문제 번호를 입력해주세요.');
-      console.error(`사용법: ps open <문제번호>`);
-      console.error(`      ps open --workbook <문제집ID>`);
-      console.error(`도움말: ps open --help`);
-      console.error(
-        `힌트: problems/{문제번호} 디렉토리에서 실행하면 자동으로 문제 번호를 추론합니다.`,
-      );
+      logger.error('문제 번호를 입력해주세요.');
+      console.log(`도움말: ps open --help`);
       process.exit(1);
       return;
     }

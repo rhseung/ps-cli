@@ -13,6 +13,7 @@ export const icons = {
   test: '', // f499
   submit: '󰭹', // f0b79
   archive: '', // f187
+  run: '󰐊', // f040a
 
   // Views / Navigation
   workbook: '', // f02d

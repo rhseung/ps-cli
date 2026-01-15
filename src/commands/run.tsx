@@ -166,7 +166,8 @@ function RunView({
 - solution.* 파일을 자동으로 찾아 언어 감지
 - --input 옵션으로 입력 파일 지정 가능 (예: testcases/1/input.txt)
 - 옵션 없이 실행 시 표준 입력으로 입력 받기
-- 테스트 케이스 검증 없이 단순 실행`,
+- 테스트 케이스 검증 없이 단순 실행
+- 기본 언어 등은 ps config에서 설정 가능합니다.`,
   flags: defineFlags(runFlagsSchema),
   autoDetectProblemId: true,
   autoDetectLanguage: true,

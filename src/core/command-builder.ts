@@ -4,6 +4,8 @@ import type {
   CommandFlags,
   FlagDefinition,
 } from '../types/command';
+import { generateCommandHelp } from '../utils/help';
+import { logger } from '../utils/logger';
 
 import { type Command } from './base-command';
 import { resolveProblemContext, resolveLanguage } from './execution-context';
@@ -80,7 +82,7 @@ export class CommandBuilder {
     }
 
     // Help 문자열 생성
-    const help = this.generateHelp(finalMetadata);
+    const help = generateCommandHelp(finalMetadata);
 
     // execute 함수 래핑 (자동 Problem ID 감지 및 Language 검증)
     const wrappedExecute = async (
@@ -94,19 +96,13 @@ export class CommandBuilder {
         return;
       }
 
-      // 자동 Problem ID 감지가 활성화된 경우
-      if (finalMetadata.autoDetectProblemId !== false) {
-        // args에서 problemId 추출 (이미 getProblemId가 처리)
-        // 실제 사용은 executeFn 내부에서 resolveProblemContext 사용 권장
-      }
-
       // Language 검증 (autoDetectLanguage가 true인 경우)
       if (finalMetadata.autoDetectLanguage && flags.language) {
         const validLanguages = getSupportedLanguages();
         const language = flags.language as Language;
         if (!validLanguages.includes(language)) {
-          console.error(
-            `오류: 지원하지 않는 언어입니다. (${getSupportedLanguagesString()})`,
+          logger.error(
+            `지원하지 않는 언어입니다. (${getSupportedLanguagesString()})`,
           );
           process.exit(1);
           return;
@@ -123,57 +119,6 @@ export class CommandBuilder {
       execute: wrappedExecute,
       metadata: finalMetadata,
     };
-  }
-
-  /**
-   * Help 문자열 생성
-   */
-  private static generateHelp(metadata: CommandMetadata): string {
-    const lines: string[] = [];
-
-    // 사용법
-    lines.push(`  사용법:`);
-    lines.push(
-      `    $ ps ${metadata.name}${
-        metadata.requireProblemId ? ' <문제번호>' : ' [문제번호]'
-      } [옵션]`,
-    );
-    lines.push('');
-
-    // 설명
-    lines.push(`  설명:`);
-    const descriptionLines = metadata.description.split('\n');
-    for (const line of descriptionLines) {
-      lines.push(`    ${line}`);
-    }
-    lines.push('');
-
-    // 옵션
-    if (metadata.flags && metadata.flags.length > 0) {
-      lines.push(`  옵션:`);
-      for (const flag of metadata.flags) {
-        const flagLine: string[] = [];
-        flagLine.push(`    --${flag.name}`);
-        if (flag.options?.shortFlag) {
-          flagLine.push(`, -${flag.options.shortFlag}`);
-        }
-        if (flag.options?.description) {
-          flagLine.push(`      ${flag.options.description}`);
-        }
-        lines.push(flagLine.join(''));
-      }
-      lines.push('');
-    }
-
-    // 예제
-    if (metadata.examples && metadata.examples.length > 0) {
-      lines.push(`  예제:`);
-      for (const example of metadata.examples) {
-        lines.push(`    $ ps ${example}`);
-      }
-    }
-
-    return lines.join('\n');
   }
 
   /**

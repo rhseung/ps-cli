@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 import meow from 'meow';
 
-import { getSupportedLanguagesString, icons } from './core';
+import { generateGlobalHelp, logger } from './core';
 import type { CommandDefinition } from './types/command';
 
 // commands 디렉토리 경로 찾기 (개발/빌드 환경 모두 지원)
@@ -87,56 +87,15 @@ async function loadCommands(): Promise<Map<string, CommandDefinition>> {
 // 명령어 맵 (비동기 로드)
 let commands: Map<string, CommandDefinition> | null = null;
 
-// 전체 help 텍스트 생성
-function generateHelpText(commands: Map<string, CommandDefinition>): string {
-  const commandList = Array.from(commands.values())
-    .map((cmd) => `    ${cmd.name}`)
-    .join('\n');
-
-  return `
-  사용법:
-    $ ps <명령어> [인자] [옵션]
-
-  명령어:
-${commandList}
-    help                도움말 표시
-
-  주요 옵션:
-    --language, -l      언어 선택 (${getSupportedLanguagesString()})
-    --watch, -w         테스트 watch 모드 (test 전용)
-    --help, -h          명령어별 도움말
-
-  빠른 시작:
-    $ ps init           ${icons.init} 프로젝트 초기화
-    $ ps fetch 1000     ${icons.fetch} 문제 가져오기
-    $ ps test           ${icons.test} 테스트 실행
-    $ ps submit         ${icons.submit} 제출
-
-  자세한 도움말:
-    $ ps <명령어> --help
-`;
-}
-
 const cli = meow(
   `
   사용법:
     $ ps <명령어> [인자] [옵션]
-
-  명령어를 로드하는 중...
 `,
   {
     importMeta: import.meta,
+    autoHelp: false,
     flags: {
-      language: {
-        type: 'string',
-        shortFlag: 'l',
-        default: 'python',
-      },
-      watch: {
-        type: 'boolean',
-        shortFlag: 'w',
-        default: false,
-      },
       help: {
         type: 'boolean',
         shortFlag: 'h',
@@ -157,16 +116,14 @@ async function main() {
 
   // help 명령어 처리 또는 명령어 없이 --help 플래그
   if (command === 'help' || (!command && cli.flags.help)) {
-    const helpText = generateHelpText(commands);
-    console.log(helpText.trim());
+    console.log(generateGlobalHelp(commands));
     process.exit(0);
     return;
   }
 
   // 명령어가 없으면 전체 help 표시
   if (!command) {
-    const helpText = generateHelpText(commands);
-    console.log(helpText.trim());
+    console.log(generateGlobalHelp(commands));
     process.exit(0);
     return;
   }
@@ -174,9 +131,9 @@ async function main() {
   // 명령어 실행
   const commandDef = commands.get(command);
   if (!commandDef) {
-    console.error(`오류: 알 수 없는 명령어: ${command}`);
-    console.error(
-      `사용 가능한 명령어: ${Array.from(commands.keys()).join(', ')}, help`,
+    logger.error(`알 수 없는 명령어: ${command}`);
+    console.log(
+      `사용 가능한 명령어: ${Array.from(commands.keys()).join(', ')}`,
     );
     process.exit(1);
     return;
@@ -303,9 +260,9 @@ async function main() {
     }
 
     if (!found) {
-      console.error('오류: 현재 디렉토리가 ps-cli 프로젝트가 아닙니다.');
-      console.error('프로젝트를 초기화하려면 다음 명령어를 실행하세요:');
-      console.error('  $ ps init');
+      logger.error('현재 디렉토리가 ps-cli 프로젝트가 아닙니다.');
+      logger.tip('프로젝트를 초기화하려면 다음 명령어를 실행하세요:');
+      console.log('  $ ps init');
       process.exit(1);
       return;
     }
@@ -315,6 +272,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('오류:', error.message);
+  logger.error(error.message);
   process.exit(1);
 });

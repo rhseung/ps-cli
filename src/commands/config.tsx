@@ -15,6 +15,7 @@ import {
   getArchiveCommitMessage,
   getSupportedLanguages,
   getSupportedLanguagesString,
+  logger,
   icons,
   type CommandFlags,
 } from '../core';
@@ -240,7 +241,7 @@ function ConfigView({
         configValue = config?.archiveCommitMessage ?? getArchiveCommitMessage();
         break;
       default:
-        console.error(`알 수 없는 설정 키: ${configKey}`);
+        logger.error(`알 수 없는 설정 키: ${configKey}`);
         process.exit(1);
     }
 
@@ -374,17 +375,14 @@ export class ConfigCommand extends Command {
 
     // 명령어가 없거나 알 수 없는 명령어
     if (!command) {
-      console.error('오류: 명령어를 입력해주세요.');
-      console.error('사용법: ps config <명령어>');
-      console.error('명령어: get, set, list, clear');
-      console.error('도움말: ps config --help');
+      logger.error('명령어를 입력해주세요.');
+      console.log('도움말: ps config --help');
       process.exit(1);
       return;
     }
 
-    console.error(`오류: 알 수 없는 명령어: ${command}`);
-    console.error('사용 가능한 명령어: get, set, list, clear');
-    console.error('도움말: ps config --help');
+    logger.error(`알 수 없는 명령어: ${command}`);
+    console.log('도움말: ps config --help');
     process.exit(1);
   }
 

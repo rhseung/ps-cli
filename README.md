@@ -3,6 +3,8 @@
 **대화형** 인터페이스와 **사용자 친화적인 디자인**을 갖춘 백준 문제 해결 CLI 도구입니다.
 검색부터 제출까지, 모든 과정을 직관적이고 아름다운 터미널 환경에서 해결하세요.
 
+Nerd Font 사용을 권장합니다.
+
 ## 설치
 
 ```bash
@@ -14,6 +16,9 @@ bun install -g @rhseung/ps-cli
 ## 빠른 시작
 
 ```bash
+# 0. 도움말 보기
+ps --help
+
 # 1. 프로젝트 초기화
 ps init
 
@@ -61,6 +66,7 @@ ps fetch <문제번호> [옵션]
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--language`, `-l`: 언어 선택 (python, javascript, typescript, cpp)
   - 기본값: python 또는 설정 파일의 `default-language`
 
@@ -93,6 +99,7 @@ ps test [문제번호] [옵션]
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
   - 지원 언어: python, javascript, typescript, cpp
 - `--watch`, `-w`: watch 모드 (파일 변경 시 자동 재테스트)
@@ -129,6 +136,7 @@ ps run [문제번호] [옵션]
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
   - 지원 언어: python, javascript, typescript, cpp
 - `--input`, `-i`: 입력 파일 지정
@@ -167,6 +175,7 @@ ps submit [문제번호] [옵션]
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
   - 지원 언어: python, javascript, typescript, cpp
 
@@ -221,13 +230,14 @@ ps archive                   # 현재 디렉토리에서 문제 번호 자동 �
 **사용법:**
 
 ```bash
-ps open [문제번호]
+ps open [문제번호] [옵션]
 ps open --workbook <문제집ID>
 ps open -w <문제집ID>
 ```
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--workbook`, `-w`: 문제집 ID를 지정하여 해당 문제집 페이지를 엽니다
 
 **예제:**
@@ -259,6 +269,7 @@ ps search --workbook <문제집ID>
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--workbook`: 문제집 ID를 지정하여 해당 문제집의 문제 목록을 표시
 
 **예제:**
@@ -301,6 +312,7 @@ ps stats [핸들] [옵션]
 
 **옵션:**
 
+- `--help`, `-h`: 도움말 표시
 - `--handle`, `-h`: Solved.ac 핸들
   - 설정에 저장된 값 사용 가능
   - 인자로 전달하거나 플래그로 지정 가능
@@ -328,7 +340,7 @@ ps stats                       # 설정에 저장된 핸들 사용
 **사용법:**
 
 ```bash
-ps config <명령어> [키] [값]
+ps config <명령어> [키] [값] [옵션]
 ```
 
 **명령어:**
@@ -337,6 +349,10 @@ ps config <명령어> [키] [값]
 - `set [키] [값]`: 설정 값 설정 (키/값 없으면 대화형 선택)
 - `list`: 모든 설정 조회
 - `clear`: .ps-cli.json 파일 삭제
+
+**옵션:**
+
+- `--help`, `-h`: 도움말 표시
 
 **예제:**
 

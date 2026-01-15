@@ -9,6 +9,7 @@ import {
   resolveProblemContext,
   getSupportedLanguages,
   getSupportedLanguagesString,
+  logger,
   type Language,
 } from '../core';
 import { useFetchProblem } from '../hooks/use-fetch-problem';
@@ -82,7 +83,8 @@ export function FetchView({
 - Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
 - 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
 - 선택한 언어의 솔루션 템플릿 파일 생성
-- README.md에 문제 정보, 통계, 태그 등 포함`,
+- README.md에 문제 정보, 통계, 태그 등 포함
+- 기본 언어, 에디터 설정 등은 ps config에서 설정 가능합니다.`,
   flags: defineFlags(fetchFlagsSchema),
   autoDetectProblemId: false,
   requireProblemId: true,
@@ -94,12 +96,8 @@ export class FetchCommand extends Command<FetchCommandFlags> {
     const context = await resolveProblemContext(args, { requireId: true });
 
     if (context.problemId === null) {
-      console.error('오류: 문제 번호를 입력해주세요.');
-      console.error(`사용법: ps fetch <문제번호> [옵션]`);
-      console.error(`도움말: ps fetch --help`);
-      console.error(
-        `힌트: problems/{문제번호} 디렉토리에서 실행하면 자동으로 문제 번호를 추론합니다.`,
-      );
+      logger.error('문제 번호를 입력해주세요.');
+      console.log(`도움말: ps fetch --help`);
       process.exit(1);
       return;
     }

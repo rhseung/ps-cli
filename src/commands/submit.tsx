@@ -138,7 +138,8 @@ export function SubmitView({
 - 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론
 - solution.* 파일을 자동으로 찾아 언어 감지
 - 소스 코드를 클립보드에 자동 복사
-- 제출 페이지를 브라우저로 자동 열기`,
+- 제출 페이지를 브라우저로 자동 열기
+- 기본 언어 등은 ps config에서 설정 가능합니다.`,
   flags: defineFlags(submitFlagsSchema),
   autoDetectProblemId: true,
   autoDetectLanguage: true,
