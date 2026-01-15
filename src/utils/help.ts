@@ -13,6 +13,7 @@ export function generateGlobalHelp(
   commands: Map<string, CommandDefinition>,
 ): string {
   const title = psGradient.multiline(`
+
   ██████╗ ███████╗     ██████╗██╗     ██╗
   ██╔══██╗██╔════╝    ██╔════╝██║     ██║
   ██████╔╝███████╗    ██║     ██║     ██║
