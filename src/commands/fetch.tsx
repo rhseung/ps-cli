@@ -83,7 +83,7 @@ export function FetchView({
 - Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
 - 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
 - 선택한 언어의 솔루션 템플릿 파일 생성
-- README.md에 문제 정보, 통계, 태그 등 포함
+- README.md에 문제 정보, 통계, 태그(설정 시) 등 포함
 - 기본 언어, 에디터 설정 등은 ps config에서 설정 가능합니다.`,
   flags: defineFlags(fetchFlagsSchema),
   autoDetectProblemId: false,

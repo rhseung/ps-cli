@@ -3,6 +3,8 @@ import { join, dirname } from 'path';
 
 import Conf from 'conf';
 
+import { type ProjectConfig } from '../types/index';
+
 interface ConfigSchema {
   bojSessionCookie?: string;
   defaultLanguage?: string;
@@ -14,19 +16,121 @@ interface ConfigSchema {
   solvingDir?: string; // 푸는 중인 문제 디렉토리 경로 (기본값: "solving", "." 또는 ""는 프로젝트 루트)
   archiveAutoCommit?: boolean; // 아카이브 시 Git 커밋 자동 실행 여부
   archiveCommitMessage?: string; // 아카이브 커밋 메시지 템플릿
+  includeTag?: boolean; // README에 알고리즘 분류 포함 여부
 }
 
-interface ProjectConfig {
-  archiveDir?: string;
-  solvingDir?: string;
-  defaultLanguage?: string;
-  editor?: string;
-  autoOpenEditor?: boolean;
-  solvedAcHandle?: string;
-  archiveStrategy?: string;
-  archiveAutoCommit?: boolean;
-  archiveCommitMessage?: string;
+export type ConfigKey =
+  | 'default-language'
+  | 'editor'
+  | 'auto-open-editor'
+  | 'solved-ac-handle'
+  | 'archive-dir'
+  | 'solving-dir'
+  | 'archive-strategy'
+  | 'archive-auto-commit'
+  | 'archive-commit-message'
+  | 'include-tag';
+
+export interface ConfigMetadata {
+  key: ConfigKey;
+  property: keyof ProjectConfig;
+  label: string;
+  description: string;
+  placeholder: string;
+  type: 'string' | 'boolean' | 'select';
+  suggestions?: string[];
 }
+
+export const getConfigMetadata = (): ConfigMetadata[] => [
+  {
+    key: 'default-language',
+    property: 'defaultLanguage',
+    label: '기본 언어',
+    description: `기본으로 사용할 프로그래밍 언어입니다.`,
+    placeholder: '언어 입력 (python, javascript, typescript, cpp)',
+    type: 'select',
+    suggestions: ['python', 'javascript', 'typescript', 'cpp'],
+  },
+  {
+    key: 'editor',
+    property: 'editor',
+    label: '에디터',
+    description: '문제를 가져온 후 자동으로 열 에디터 명령어입니다.',
+    placeholder: '에디터 명령어 입력 (예: code, cursor, vim, nano)',
+    type: 'string',
+    suggestions: ['code', 'cursor', 'vim', 'nano'],
+  },
+  {
+    key: 'auto-open-editor',
+    property: 'autoOpenEditor',
+    label: '자동 에디터 열기',
+    description: 'fetch 명령 실행 후 자동으로 에디터를 열지 여부입니다.',
+    placeholder: 'true 또는 false 입력',
+    type: 'boolean',
+    suggestions: ['true', 'false'],
+  },
+  {
+    key: 'solved-ac-handle',
+    property: 'solvedAcHandle',
+    label: 'Solved.ac 핸들',
+    description: '사용자의 Solved.ac 핸들입니다 (통계 조회용).',
+    placeholder: '핸들 입력',
+    type: 'string',
+  },
+  {
+    key: 'archive-dir',
+    property: 'archiveDir',
+    label: '아카이브 디렉토리',
+    description: '해결한 문제를 보관할 디렉토리 경로입니다.',
+    placeholder: '디렉토리 경로 입력 (기본값: problems)',
+    type: 'string',
+    suggestions: ['problems', '.', ''],
+  },
+  {
+    key: 'solving-dir',
+    property: 'solvingDir',
+    label: 'Solving 디렉토리',
+    description: '현재 풀고 있는 문제를 담을 디렉토리 경로입니다.',
+    placeholder: '디렉토리 경로 입력 (기본값: solving)',
+    type: 'string',
+    suggestions: ['solving', '.', ''],
+  },
+  {
+    key: 'archive-strategy',
+    property: 'archiveStrategy',
+    label: '아카이빙 전략',
+    description: '문제를 아카이브할 때의 디렉토리 구조 전략입니다.',
+    placeholder: '전략 입력 (flat, by-range, by-tier, by-tag)',
+    type: 'select',
+    suggestions: ['flat', 'by-range', 'by-tier', 'by-tag'],
+  },
+  {
+    key: 'archive-auto-commit',
+    property: 'archiveAutoCommit',
+    label: '자동 Git 커밋',
+    description: '아카이브 시 자동으로 Git 커밋을 수행할지 여부입니다.',
+    placeholder: 'true 또는 false 입력',
+    type: 'boolean',
+    suggestions: ['true', 'false'],
+  },
+  {
+    key: 'archive-commit-message',
+    property: 'archiveCommitMessage',
+    label: '커밋 메시지 템플릿',
+    description: '아카이브 시 사용할 Git 커밋 메시지 템플릿입니다.',
+    placeholder: '메시지 템플릿 입력 ({id}, {title} 사용 가능)',
+    type: 'string',
+  },
+  {
+    key: 'include-tag',
+    property: 'includeTag',
+    label: '태그 포함 여부',
+    description: 'README 생성 시 알고리즘 분류(태그)를 포함할지 여부입니다.',
+    placeholder: 'true 또는 false 입력',
+    type: 'boolean',
+    suggestions: ['true', 'false'],
+  },
+];
 
 const config = new Conf<ConfigSchema>({
   projectName: 'ps-cli',
@@ -40,6 +144,7 @@ const config = new Conf<ConfigSchema>({
     archiveDir: 'problems', // 기본값: problems 디렉토리
     solvingDir: 'solving', // 기본값: solving 디렉토리
     archiveAutoCommit: true,
+    includeTag: true,
   },
 });
 
@@ -250,6 +355,18 @@ export function getArchiveCommitMessage(): string | undefined {
 
 export function setArchiveCommitMessage(message: string): void {
   config.set('archiveCommitMessage', message);
+}
+
+export function getIncludeTag(): boolean {
+  const projectConfig = getProjectConfigSync();
+  if (projectConfig?.includeTag !== undefined) {
+    return projectConfig.includeTag;
+  }
+  return config.get('includeTag') ?? true;
+}
+
+export function setIncludeTag(enabled: boolean): void {
+  config.set('includeTag', enabled);
 }
 
 export function clearConfig(): void {

@@ -38,6 +38,7 @@ function InitView({ onComplete }: InitViewProps) {
     setLanguage,
     setEditorValue,
     setAutoOpen,
+    setIncludeTag,
     setHandle,
     setHandleInputMode,
     setConfirmExit,
@@ -209,6 +210,26 @@ function InitView({ onComplete }: InitViewProps) {
         );
       }
 
+      case 'include-tag': {
+        const options = [
+          { label: '예', value: 'true' },
+          { label: '아니오', value: 'false' },
+        ];
+        return renderQuestionCard(
+          getStepLabel(currentStep),
+          <Select
+            options={options}
+            onChange={(value) => {
+              setIncludeTag(value === 'true');
+              moveToNextStep(
+                value === 'true' ? '예' : '아니오',
+                getStepLabel(currentStep),
+              );
+            }}
+          />,
+        );
+      }
+
       case 'handle': {
         if (handleInputMode) {
           return renderQuestionCard(
@@ -326,7 +347,7 @@ function InitView({ onComplete }: InitViewProps) {
   name: 'init',
   description: `현재 디렉토리를 ps-cli 프로젝트로 대화형으로 초기화합니다.
 - 단계별로 설정을 물어봅니다
-- 문제 디렉토리, 기본 언어, 에디터 등을 설정할 수 있습니다`,
+- 문제 디렉토리, 기본 언어, 에디터, 태그 포함 여부 등을 설정할 수 있습니다`,
   flags: [],
   autoDetectProblemId: false,
   examples: ['init'],

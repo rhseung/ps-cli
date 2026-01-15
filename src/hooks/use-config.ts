@@ -4,11 +4,7 @@ import { join } from 'path';
 
 import { useEffect, useState } from 'react';
 
-import {
-  getSupportedLanguages,
-  getSupportedLanguagesString,
-  type Language,
-} from '../core';
+import { getConfigMetadata, type ConfigKey } from '../core';
 import type { ProjectConfig } from '../types/index';
 
 function getProjectConfigPath(): string {
@@ -34,7 +30,7 @@ async function writeProjectConfig(config: ProjectConfig): Promise<void> {
 }
 
 export interface UseConfigParams {
-  configKey?: string;
+  configKey?: ConfigKey;
   value?: string;
   get?: boolean;
   list?: boolean;
@@ -89,57 +85,34 @@ export function useConfig({
         const currentConfig = (await readProjectConfig()) ?? {};
         const updatedConfig: ProjectConfig = { ...currentConfig };
 
-        switch (configKey) {
-          case 'default-language': {
-            const supportedLanguages = getSupportedLanguages();
-            if (!supportedLanguages.includes(value as Language)) {
-              console.error(
-                `지원하지 않는 언어입니다: ${value}\n지원 언어: ${getSupportedLanguagesString()}`,
-              );
-              process.exit(1);
-            }
-            updatedConfig.defaultLanguage = value;
-            break;
-          }
-          case 'editor':
-            updatedConfig.editor = value;
-            break;
-          case 'auto-open-editor':
-            updatedConfig.autoOpenEditor = value === 'true';
-            break;
-          case 'solved-ac-handle':
-            updatedConfig.solvedAcHandle = value;
-            break;
-          case 'archive-dir':
-            updatedConfig.archiveDir = value;
-            break;
-          case 'archive-strategy': {
-            const validStrategies = ['flat', 'by-range', 'by-tier', 'by-tag'];
-            if (!validStrategies.includes(value)) {
-              console.error(
-                `지원하지 않는 아카이빙 전략입니다: ${value}\n지원 전략: ${validStrategies.join(', ')}`,
-              );
-              process.exit(1);
-            }
-            updatedConfig.archiveStrategy = value;
-            break;
-          }
-          case 'archive-auto-commit': {
-            if (value !== 'true' && value !== 'false') {
-              console.error(
-                `archive-auto-commit 값은 true 또는 false 여야 합니다: ${value}`,
-              );
-              process.exit(1);
-            }
-            updatedConfig.archiveAutoCommit = value === 'true';
-            break;
-          }
-          case 'archive-commit-message':
-            updatedConfig.archiveCommitMessage = value;
-            break;
-          default:
-            console.error(`알 수 없는 설정 키: ${configKey}`);
+        const metadata = getConfigMetadata();
+        const item = metadata.find((m) => m.key === configKey);
+
+        if (!item) {
+          console.error(`알 수 없는 설정 키: ${configKey}`);
+          process.exit(1);
+        }
+
+        const property = item.property;
+
+        if (item.type === 'boolean') {
+          if (value !== 'true' && value !== 'false') {
+            console.error(
+              `${configKey} 값은 true 또는 false 여야 합니다: ${value}`,
+            );
             process.exit(1);
+          }
+          Object.assign(updatedConfig, { [property]: value === 'true' });
+        } else if (item.type === 'select' && item.suggestions) {
+          if (!item.suggestions.includes(value)) {
+            console.error(
+              `지원하지 않는 값입니다: ${value}\n지원되는 값: ${item.suggestions.join(', ')}`,
+            );
+            process.exit(1);
+          }
+          Object.assign(updatedConfig, { [property]: value });
+        } else {
+          Object.assign(updatedConfig, { [property]: value });
         }
 
         await writeProjectConfig(updatedConfig);

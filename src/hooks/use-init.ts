@@ -12,6 +12,7 @@ import {
   getAutoOpenEditor,
   getSolvedAcHandle,
   getArchiveStrategy,
+  getIncludeTag,
 } from '../core/config';
 import type { ProjectConfig } from '../types/index';
 
@@ -22,6 +23,7 @@ export type InitStep =
   | 'language'
   | 'editor'
   | 'auto-open'
+  | 'include-tag'
   | 'handle'
   | 'done'
   | 'cancelled'
@@ -47,6 +49,7 @@ export interface UseInitReturn {
   language: string;
   editor: string;
   autoOpen: boolean;
+  includeTag: boolean;
   handle: string;
   handleInputMode: boolean;
   created: string[];
@@ -57,6 +60,7 @@ export interface UseInitReturn {
   setLanguage: (value: string) => void;
   setEditorValue: (value: string) => void;
   setAutoOpen: (value: boolean) => void;
+  setIncludeTag: (value: boolean) => void;
   setHandle: (value: string) => void;
   setHandleInputMode: (value: boolean) => void;
   setConfirmExit: (value: boolean) => void;
@@ -85,6 +89,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   const [language, setLanguage] = useState<string>(getDefaultLanguage());
   const [editor, setEditorValue] = useState<string>(getEditor());
   const [autoOpen, setAutoOpen] = useState<boolean>(getAutoOpenEditor());
+  const [includeTag, setIncludeTag] = useState<boolean>(getIncludeTag());
   const [handle, setHandle] = useState<string>(getSolvedAcHandle() || '');
   const [handleInputMode, setHandleInputMode] = useState<boolean>(false);
   const [created, setCreated] = useState<string[]>([]);
@@ -134,6 +139,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         if (projectConfig.editor) setEditorValue(projectConfig.editor);
         if (projectConfig.autoOpenEditor !== undefined)
           setAutoOpen(projectConfig.autoOpenEditor);
+        if (projectConfig.includeTag !== undefined)
+          setIncludeTag(projectConfig.includeTag);
         if (projectConfig.solvedAcHandle)
           setHandle(projectConfig.solvedAcHandle);
       } catch {
@@ -159,6 +166,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         return '에디터 설정';
       case 'auto-open':
         return '자동 에디터 열기';
+      case 'include-tag':
+        return 'README에 알고리즘 분류 포함';
       case 'handle':
         return 'Solved.ac 핸들 (선택)';
       default:
@@ -188,6 +197,8 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           return editor;
         case 'auto-open':
           return autoOpen ? '예' : '아니오';
+        case 'include-tag':
+          return includeTag ? '예' : '아니오';
         case 'handle':
           return handle || '(스킵)';
         default:
@@ -200,6 +211,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       language,
       editor,
       autoOpen,
+      includeTag,
       handle,
       archiveStrategy,
     ],
@@ -219,6 +231,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           defaultLanguage: language,
           editor,
           autoOpenEditor: autoOpen,
+          includeTag,
         };
         // handle이 존재하고 빈 문자열이 아닐 때만 추가
         // overrideHandle이 있으면 우선 사용, 없으면 상태의 handle 사용
@@ -374,6 +387,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
       language,
       editor,
       autoOpen,
+      includeTag,
       handle,
       onComplete,
     ],
@@ -399,6 +413,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         'language',
         'editor',
         'auto-open',
+        'include-tag',
         'handle',
         'done',
       ];
@@ -432,6 +447,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     language,
     editor,
     autoOpen,
+    includeTag,
     handle,
     handleInputMode,
     created,
@@ -442,6 +458,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     setLanguage,
     setEditorValue,
     setAutoOpen,
+    setIncludeTag,
     setHandle,
     setHandleInputMode,
     setConfirmExit,

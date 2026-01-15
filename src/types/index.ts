@@ -141,6 +141,7 @@ export interface ProjectConfig {
   solvedAcHandle?: string;
   archiveAutoCommit?: boolean;
   archiveCommitMessage?: string;
+  includeTag?: boolean;
 }
 
 export type { Workbook, WorkbookProblem } from './workbook';

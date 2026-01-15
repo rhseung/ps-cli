@@ -383,6 +383,7 @@ ps config clear                        # .ps-cli.json 파일 삭제
 - `default-language`: 기본 언어 (python, javascript, typescript, cpp)
 - `editor`: 에디터 명령어 (code, cursor, vim 등)
 - `auto-open-editor`: fetch 후 자동으로 에디터 열기 (true/false)
+- `include-tag`: README에 알고리즘 분류(태그) 포함 여부 (true/false, 기본값: true)
 - `solved-ac-handle`: Solved.ac 핸들
 - `archive-dir`: 아카이브된 문제 디렉토리 (기본값: problems)
 - `solving-dir`: 푸는 중인 문제 디렉토리 (기본값: solving)

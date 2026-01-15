@@ -9,6 +9,7 @@ import {
   getTierName,
   getTierImageUrl,
   parseTimeLimitToMs,
+  getIncludeTag,
   type Language,
 } from '../core';
 import type { Problem } from '../types/index';
@@ -121,6 +122,7 @@ export async function generateProblemFiles(
   const tierName = getTierName(problem.level);
   const tierImageUrl = getTierImageUrl(problem.level);
   const tags = problem.tags.length > 0 ? problem.tags.join(', ') : '없음';
+  const includeTag = getIncludeTag();
 
   // 문제 정보 테이블 생성
   const headers: string[] = [];
@@ -211,11 +213,15 @@ ${tc.output.trim()}
 `.trim(),
   )
   .join('\n\n')}
-
+${
+  includeTag
+    ? `
 ## 태그
 
 ${tags.trim()}
-`.trim() + '\n';
+`
+    : ''
+}`.trim() + '\n';
 
   const readmePath = join(problemDir, 'README.md');
   await writeFile(readmePath, readmeContent, 'utf-8');

@@ -1,27 +1,25 @@
 import { StatusMessage, Select, TextInput, Alert } from '@inkjs/ui';
 import { render, Text, Box } from 'ink';
+import React from 'react';
 
 import {
   Command,
   CommandDef,
   CommandBuilder,
-  getDefaultLanguage,
-  getEditor,
-  getAutoOpenEditor,
-  getSolvedAcHandle,
-  getArchiveDir,
-  getArchiveStrategy,
-  getArchiveAutoCommit,
-  getArchiveCommitMessage,
-  getSupportedLanguages,
-  getSupportedLanguagesString,
+  getConfigMetadata,
   logger,
   icons,
   type CommandFlags,
+  type ConfigKey,
 } from '../core';
 import { useConfig } from '../hooks/use-config';
 
 export function getConfigHelp(): string {
+  const metadata = getConfigMetadata();
+  const keysHelp = metadata
+    .map((m) => `    ${m.key.padEnd(23)} ${m.label}`)
+    .join('\n');
+
   return `
   사용법:
     $ ps config get [키]
@@ -40,14 +38,7 @@ export function getConfigHelp(): string {
     clear                   .ps-cli.json 파일 삭제
 
   설정 키:
-    default-language       기본 언어 (${getSupportedLanguagesString()})
-    editor                 에디터 명령어 (예: code, vim, nano)
-    auto-open-editor       fetch 후 자동으로 에디터 열기 (true/false)
-    solved-ac-handle       Solved.ac 핸들 (stats 명령어용)
-    archive-dir            아카이브 디렉토리 경로 (기본값: problems, "." 또는 ""는 프로젝트 루트)
-    archive-strategy       아카이빙 전략 (flat, by-range, by-tier, by-tag)
-    archive-auto-commit    archive 시 Git 커밋 자동 실행 여부 (true/false)
-    archive-commit-message archive 커밋 메시지 템플릿 ({id}, {title} 사용 가능)
+${keysHelp}
 
   옵션:
     --help, -h             도움말 표시
@@ -65,19 +56,13 @@ export function getConfigHelp(): string {
 // index.ts에서 동적으로 로드하기 위한 export
 export const configHelp = getConfigHelp();
 
-const CONFIG_KEYS = [
-  { label: 'default-language', value: 'default-language' },
-  { label: 'editor', value: 'editor' },
-  { label: 'auto-open-editor', value: 'auto-open-editor' },
-  { label: 'solved-ac-handle', value: 'solved-ac-handle' },
-  { label: 'archive-dir', value: 'archive-dir' },
-  { label: 'archive-strategy', value: 'archive-strategy' },
-  { label: 'archive-auto-commit', value: 'archive-auto-commit' },
-  { label: 'archive-commit-message', value: 'archive-commit-message' },
-];
+const CONFIG_KEYS = getConfigMetadata().map((m) => ({
+  label: m.key,
+  value: m.key,
+}));
 
 interface ConfigViewProps {
-  configKey?: string;
+  configKey?: ConfigKey;
   value?: string;
   get?: boolean;
   list?: boolean;
@@ -128,16 +113,7 @@ function ConfigView({
   }
 
   if (list) {
-    const defaultLang = config?.defaultLanguage ?? getDefaultLanguage();
-    const editor = config?.editor ?? getEditor();
-    const autoOpen = config?.autoOpenEditor ?? getAutoOpenEditor();
-    const handle = config?.solvedAcHandle ?? getSolvedAcHandle();
-    const archiveDir = config?.archiveDir ?? getArchiveDir();
-    const archiveStrategy = config?.archiveStrategy ?? getArchiveStrategy();
-    const archiveAutoCommit =
-      config?.archiveAutoCommit ?? getArchiveAutoCommit();
-    const archiveCommitMessage =
-      config?.archiveCommitMessage ?? getArchiveCommitMessage();
+    const metadata = getConfigMetadata();
 
     return (
       <Box flexDirection="column">
@@ -147,111 +123,53 @@ function ConfigView({
           </Text>
         </Box>
         <Box flexDirection="column" marginTop={1}>
-          <Box marginBottom={1}>
-            <Text color="gray">default-language:</Text>
-            <Text> </Text>
-            <Text bold>{defaultLang}</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">editor:</Text>
-            <Text> </Text>
-            <Text bold>{editor}</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">auto-open-editor:</Text>
-            <Text> </Text>
-            <Text bold color={autoOpen ? 'green' : 'gray'}>
-              {autoOpen ? 'true' : 'false'}
-            </Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">solved-ac-handle:</Text>
-            <Text> </Text>
-            <Text bold color={handle ? 'cyan' : 'gray'}>
-              {handle || '설정 안 됨'}
-            </Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">archive-dir:</Text>
-            <Text> </Text>
-            <Text bold>{archiveDir}</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">archive-strategy:</Text>
-            <Text> </Text>
-            <Text bold>{archiveStrategy}</Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">archive-auto-commit:</Text>
-            <Text> </Text>
-            <Text bold color={archiveAutoCommit ? 'green' : 'gray'}>
-              {archiveAutoCommit ? 'true' : 'false'}
-            </Text>
-          </Box>
-          <Box marginBottom={1}>
-            <Text color="gray">archive-commit-message:</Text>
-            <Text> </Text>
-            <Text
-              bold
-              color={
-                archiveCommitMessage && archiveCommitMessage.length > 0
-                  ? 'cyan'
-                  : 'gray'
-              }
-            >
-              {archiveCommitMessage || '(설정 안 됨)'}
-            </Text>
-          </Box>
+          {metadata.map((m) => {
+            const val = config ? config[m.property] : undefined;
+            const displayValue =
+              val !== undefined ? String(val) : '(설정 안 됨)';
+            const isBool = m.type === 'boolean';
+            const valColor = isBool
+              ? val === true
+                ? 'green'
+                : 'gray'
+              : val
+                ? 'cyan'
+                : 'gray';
+
+            return (
+              <Box key={m.key} marginBottom={1}>
+                <Text color="gray">{m.key}:</Text>
+                <Text> </Text>
+                <Text bold color={valColor}>
+                  {displayValue}
+                </Text>
+              </Box>
+            );
+          })}
         </Box>
       </Box>
     );
   }
 
   if (get && configKey) {
-    let configValue: string | undefined;
-    switch (configKey) {
-      case 'default-language':
-        configValue = config?.defaultLanguage ?? getDefaultLanguage();
-        break;
-      case 'editor':
-        configValue = config?.editor ?? getEditor();
-        break;
-      case 'auto-open-editor':
-        configValue =
-          config?.autoOpenEditor !== undefined
-            ? String(config.autoOpenEditor)
-            : String(getAutoOpenEditor());
-        break;
-      case 'solved-ac-handle':
-        configValue = config?.solvedAcHandle ?? getSolvedAcHandle();
-        break;
-      case 'archive-dir':
-        configValue = config?.archiveDir ?? getArchiveDir();
-        break;
-      case 'archive-strategy':
-        configValue = config?.archiveStrategy ?? getArchiveStrategy();
-        break;
-      case 'archive-auto-commit':
-        configValue =
-          config?.archiveAutoCommit !== undefined
-            ? String(config.archiveAutoCommit)
-            : String(getArchiveAutoCommit());
-        break;
-      case 'archive-commit-message':
-        configValue = config?.archiveCommitMessage ?? getArchiveCommitMessage();
-        break;
-      default:
-        logger.error(`알 수 없는 설정 키: ${configKey}`);
-        process.exit(1);
+    const metadata = getConfigMetadata();
+    const item = metadata.find((m) => m.key === configKey);
+
+    if (!item) {
+      logger.error(`알 수 없는 설정 키: ${configKey}`);
+      process.exit(1);
     }
+
+    const val = config ? config[item.property] : undefined;
+    const displayValue = val !== undefined ? String(val) : '(설정 안 됨)';
 
     return (
       <Box flexDirection="column" marginTop={1}>
         <Box>
           <Text color="gray">{configKey}:</Text>
           <Text> </Text>
-          <Text bold color={configValue ? 'cyan' : 'gray'}>
-            {configValue || '(설정 안 됨)'}
+          <Text bold color={val ? 'cyan' : 'gray'}>
+            {displayValue}
           </Text>
         </Box>
       </Box>
@@ -321,7 +239,7 @@ export class ConfigCommand extends Command {
       if (key) {
         // 키가 있으면 바로 조회
         await this.renderView(ConfigView, {
-          configKey: key,
+          configKey: key as ConfigKey,
           get: true,
         });
       } else {
@@ -350,7 +268,7 @@ export class ConfigCommand extends Command {
           return;
         }
         await this.renderView(ConfigView, {
-          configKey: key,
+          configKey: key as ConfigKey,
           value: inputValue,
         });
       } else {
@@ -387,13 +305,13 @@ export class ConfigCommand extends Command {
   }
 
   // 설정 키 선택: private 메서드
-  private async selectConfigKey(): Promise<string | null> {
-    return new Promise<string | null>((resolve) => {
+  private async selectConfigKey(): Promise<ConfigKey | null> {
+    return new Promise<ConfigKey | null>((resolve) => {
       const { unmount } = render(
         <this.ConfigKeySelector
           onSelect={(key) => {
             unmount();
-            resolve(key);
+            resolve(key as ConfigKey);
           }}
         />,
       );
@@ -449,87 +367,25 @@ export class ConfigCommand extends Command {
     configKey: string;
     onSubmit: (value: string) => void;
   }) => {
-    const getPlaceholder = () => {
-      switch (configKey) {
-        case 'default-language':
-          return `언어 입력 (${getSupportedLanguagesString()})`;
-        case 'editor':
-          return '에디터 명령어 입력';
-        case 'auto-open-editor':
-          return 'true 또는 false 입력';
-        case 'solved-ac-handle':
-          return 'Solved.ac 핸들 입력';
-        case 'archive-dir':
-          return '아카이브 디렉토리 경로 입력';
-        case 'archive-strategy':
-          return '아카이빙 전략 입력 (flat, by-range, by-tier, by-tag)';
-        case 'archive-auto-commit':
-          return 'true 또는 false 입력';
-        case 'archive-commit-message':
-          return '커밋 메시지 템플릿 입력 (예: solve: {id} - {title})';
-        default:
-          return '값 입력';
-      }
-    };
-
-    const getDescription = () => {
-      switch (configKey) {
-        case 'default-language':
-          return `지원 언어: ${getSupportedLanguagesString()}`;
-        case 'editor':
-          return '예: code, cursor, vim, nano';
-        case 'auto-open-editor':
-          return 'fetch 후 자동으로 에디터를 열지 여부';
-        case 'solved-ac-handle':
-          return 'Solved.ac 사용자 핸들';
-        case 'archive-dir':
-          return '아카이브 디렉토리 경로 (기본값: "problems", 프로젝트 루트: ".")';
-        case 'archive-strategy':
-          return '아카이빙 전략: flat (평면), by-range (1000번대 묶기), by-tier (티어별), by-tag (태그별)';
-        case 'archive-auto-commit':
-          return 'archive 명령 실행 시 Git 커밋을 자동으로 수행할지 여부';
-        case 'archive-commit-message':
-          return 'archive 시 사용할 Git 커밋 메시지 템플릿 ({id}, {title} 사용 가능)';
-        default:
-          return '';
-      }
-    };
-
-    const getSuggestions = (): string[] => {
-      switch (configKey) {
-        case 'default-language':
-          return getSupportedLanguages();
-        case 'editor':
-          return ['code', 'cursor', 'vim', 'nano'];
-        case 'auto-open-editor':
-          return ['true', 'false'];
-        case 'archive-dir':
-          return ['problems', '.', ''];
-        case 'archive-strategy':
-          return ['flat', 'by-range', 'by-tier', 'by-tag'];
-        case 'archive-auto-commit':
-          return ['true', 'false'];
-        default:
-          return [];
-      }
-    };
+    const metadata = getConfigMetadata();
+    const item = metadata.find((m) => m.key === configKey);
 
     return (
       <Box flexDirection="column">
         <Box marginTop={1}>
           <Alert variant="info">값을 입력하세요</Alert>
         </Box>
-        {getDescription() && (
+        {item && (
           <Box marginTop={1} marginBottom={0}>
             <Text color="gray" dimColor>
-              {getDescription()}
+              {item.description}
             </Text>
           </Box>
         )}
         <Box marginTop={0}>
           <TextInput
-            placeholder={getPlaceholder()}
-            suggestions={getSuggestions()}
+            placeholder={item?.placeholder || '값 입력'}
+            suggestions={item?.suggestions || []}
             onSubmit={(value) => {
               onSubmit(value);
             }}
