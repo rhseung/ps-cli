@@ -9,6 +9,7 @@ export const icons = {
 
   // Actions
   open: '󰖟', // f05a1
+  editor: '󰅱', // f0171
   fetch: '󰇚', // f01da
   test: '', // f499
   submit: '󰭹', // f0b79

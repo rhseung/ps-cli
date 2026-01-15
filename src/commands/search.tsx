@@ -15,6 +15,7 @@ import {
   getSolvingDirPath,
   icons,
   logger,
+  getEditor,
   type Language,
 } from '../core';
 import { searchProblems } from '../services/scraper';
@@ -115,7 +116,14 @@ interface ProblemActionViewProps {
   onComplete?: () => void;
 }
 
-type Action = 'open' | 'fetch' | 'test' | 'submit' | 'archive' | 'back';
+type Action =
+  | 'open'
+  | 'editor'
+  | 'fetch'
+  | 'test'
+  | 'submit'
+  | 'archive'
+  | 'back';
 
 function ProblemActionView({
   problemId,
@@ -168,7 +176,20 @@ function ProblemActionView({
   }, [problemId, isSolving, isSolved]);
 
   if (selectedAction === 'open') {
-    return <OpenView problemId={problemId} onComplete={onComplete} />;
+    return (
+      <OpenView problemId={problemId} mode="browser" onComplete={onComplete} />
+    );
+  }
+
+  if (selectedAction === 'editor') {
+    return (
+      <OpenView
+        problemId={problemId}
+        problemDir={sourcePath || problemDir || undefined}
+        mode="editor"
+        onComplete={onComplete}
+      />
+    );
   }
 
   if (selectedAction === 'fetch') {
@@ -203,8 +224,20 @@ function ProblemActionView({
 
   const options = [
     { label: `${icons.open} 브라우저에서 열기 (open)`, value: 'open' },
-    { label: `${icons.fetch} 문제 가져오기 (fetch)`, value: 'fetch' },
   ];
+
+  if (isSolving || isSolved) {
+    const editorName = getEditor();
+    options.push({
+      label: `${icons.editor} 에디터에서 열기 (${editorName})`,
+      value: 'editor',
+    });
+  }
+
+  options.push({
+    label: `${icons.fetch} 문제 가져오기 (fetch)`,
+    value: 'fetch',
+  });
 
   if (isSolving || isSolved) {
     if (problemDir && language) {
