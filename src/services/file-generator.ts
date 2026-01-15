@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import { mkdir, writeFile, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -72,11 +73,16 @@ function getProjectRoot(): string {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
 
-  // dist/services에서 실행되는 경우
-  if (__dirname.includes('dist')) {
-    return join(__dirname, '../..');
+  // templates 디렉토리가 있는 곳을 찾을 때까지 상위로 올라감
+  let current = __dirname;
+  while (current !== dirname(current)) {
+    if (existsSync(join(current, 'templates'))) {
+      return current;
+    }
+    current = dirname(current);
   }
-  // src/services에서 실행되는 경우 (개발 모드)
+
+  // 기본값 (이전 로직 fallback)
   return join(__dirname, '../..');
 }
 
@@ -174,36 +180,50 @@ export async function generateProblemFiles(
     problem.outputFormat || '출력 형식 없음',
   );
 
-  const readmeContent = `# [${problem.id}: ${
-    problem.title
-  }](https://www.acmicpc.net/problem/${problem.id})
+  const readmeContent =
+    `
+# [${problem.id}: ${problem.title}](https://www.acmicpc.net/problem/${problem.id})
 
-${infoTable}## 문제 설명
-${description}## 입력
-${inputFormat}## 출력
-${outputFormat}
+${infoTable.trim()}
+
+## 문제 설명
+
+${description.trim()}
+
+## 입력
+
+${inputFormat.trim()}
+
+## 출력
+
+${outputFormat.trim()}
 
 ## 예제
+
 ${problem.testCases
-  .map(
-    (tc, i) => `### 예제 ${i + 1}
+  .map((tc, i) =>
+    `
+### 예제 ${i + 1}
 
 **입력:**
-\`\`\`
-${tc.input.trimEnd()}
+
+\`\`\`text
+${tc.input.trim()}
 \`\`\`
 
 **출력:**
+
+\`\`\`text
+${tc.output.trim()}
 \`\`\`
-${tc.output.trimEnd()}
-\`\`\`
-`,
+`.trim(),
   )
-  .join('\n')}
+  .join('\n\n')}
 
 ## 태그
-${tags}
-`;
+
+${tags.trim()}
+`.trim() + '\n';
 
   const readmePath = join(problemDir, 'README.md');
   await writeFile(readmePath, readmeContent, 'utf-8');
