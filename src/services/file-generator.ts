@@ -43,8 +43,11 @@ function ensureTrailingNewline(content: string): string {
   // 코드 블록으로 끝나는지 확인 (```로 끝나는 경우)
   const isCodeBlock = trimmed.endsWith('```');
 
-  // 리스트, 테이블, 코드 블록으로 끝나면 추가 개행 필요 (Markdown에서는 빈 줄이 있어야 함)
-  if (isListItem || isTableRow || isCodeBlock) {
+  // 이미지로 끝나는지 확인 (![...] (...) 형식)
+  const isImage = /!\[.*\]\(.*\)$/.test(trimmed);
+
+  // 리스트, 테이블, 코드 블록, 이미지로 끝나면 추가 개행 필요 (Markdown에서는 빈 줄이 있어야 함)
+  if (isListItem || isTableRow || isCodeBlock || isImage) {
     return trimmed + '\n\n';
   }
 

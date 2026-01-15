@@ -100,7 +100,7 @@ function htmlToMarkdown(
           break;
         case 'img': {
           const imgSrc = $node.attr('src') || '';
-          const imgAlt = $node.attr('alt') || '';
+          const imgAlt = $node.attr('alt') || '이미지';
           if (imgSrc) {
             // 상대 경로를 절대 URL로 변환
             let imageUrl = imgSrc;
@@ -113,7 +113,7 @@ function htmlToMarkdown(
               // 상대 경로인 경우
               imageUrl = `${BOJ_BASE_URL}/${imgSrc}`;
             }
-            result += `![${imgAlt}](${imageUrl})`;
+            result += `![${imgAlt}](${imageUrl})\n\n`;
           }
           break;
         }
