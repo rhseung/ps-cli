@@ -44,6 +44,7 @@
   "dependencies": {
     "@inkjs/ui": "^2.0.0",
     "@pppp606/ink-chart": "^0.2.4",
+    "@rhseung/ps-cli": "^1.9.1",
     "@types/gradient-string": "^1.1.6",
     "chalk": "^5.3.0",
     "cheerio": "^1.0.0",

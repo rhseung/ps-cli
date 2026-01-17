@@ -14,6 +14,126 @@ const BOJ_BASE_URL = 'https://www.acmicpc.net';
 const SOLVED_AC_BASE_URL = 'https://solved.ac';
 
 /**
+ * 테이블을 Markdown 형식으로 변환
+ */
+function tableToMarkdown(
+  $: cheerio.CheerioAPI,
+  $table: cheerio.Cheerio<Element>,
+): string {
+  const rows: string[][] = [];
+  let maxCols = 0;
+
+  // thead에서 헤더 행 찾기
+  const thead = $table.find('thead');
+  if (thead.length > 0) {
+    thead.find('tr').each((_, tr) => {
+      const cells: string[] = [];
+      $(tr)
+        .find('th, td')
+        .each((_, cell) => {
+          const cellContent = htmlToMarkdown($, $(cell))
+            .trim()
+            .replace(/\n/g, ' ')
+            .replace(/\|/g, '\\|');
+          cells.push(cellContent || ' ');
+        });
+      if (cells.length > 0) {
+        rows.push(cells);
+        maxCols = Math.max(maxCols, cells.length);
+      }
+    });
+  }
+
+  // tbody에서 데이터 행 찾기
+  const tbody = $table.find('tbody');
+  if (tbody.length > 0) {
+    tbody.find('tr').each((_, tr) => {
+      const cells: string[] = [];
+      $(tr)
+        .find('td, th')
+        .each((_, cell) => {
+          const cellContent = htmlToMarkdown($, $(cell))
+            .trim()
+            .replace(/\n/g, ' ')
+            .replace(/\|/g, '\\|');
+          cells.push(cellContent || ' ');
+        });
+      if (cells.length > 0) {
+        rows.push(cells);
+        maxCols = Math.max(maxCols, cells.length);
+      }
+    });
+  }
+
+  // thead/tbody가 없으면 직접 tr 찾기
+  if (rows.length === 0) {
+    $table.find('tr').each((_, tr) => {
+      const cells: string[] = [];
+      $(tr)
+        .find('th, td')
+        .each((_, cell) => {
+          const cellContent = htmlToMarkdown($, $(cell))
+            .trim()
+            .replace(/\n/g, ' ')
+            .replace(/\|/g, '\\|');
+          cells.push(cellContent || ' ');
+        });
+      if (cells.length > 0) {
+        rows.push(cells);
+        maxCols = Math.max(maxCols, cells.length);
+      }
+    });
+  }
+
+  // 빈 테이블 처리
+  if (rows.length === 0 || maxCols === 0) {
+    return '';
+  }
+
+  // 모든 행의 열 수를 maxCols로 맞추기
+  rows.forEach((row) => {
+    while (row.length < maxCols) {
+      row.push(' ');
+    }
+  });
+
+  // 마크다운 테이블 생성
+  const markdownRows: string[] = [];
+
+  // 헤더 행이 있는지 확인 (첫 번째 행에 th가 있거나, thead가 있었던 경우)
+  const hasHeader =
+    thead.length > 0 ||
+    (rows.length > 0 && $table.find('tr').first().find('th').length > 0);
+
+  if (hasHeader && rows.length > 0) {
+    // 헤더 행
+    const headerRow = `| ${rows[0].join(' | ')} |`;
+    markdownRows.push(headerRow);
+    // 구분선
+    const separator = `|${'---|'.repeat(maxCols)}`;
+    markdownRows.push(separator);
+    // 데이터 행들
+    for (let i = 1; i < rows.length; i++) {
+      markdownRows.push(`| ${rows[i].join(' | ')} |`);
+    }
+  } else {
+    // 헤더가 없으면 첫 번째 행을 헤더로 사용
+    if (rows.length > 0) {
+      const headerRow = `| ${rows[0].join(' | ')} |`;
+      markdownRows.push(headerRow);
+      const separator = `|${'---|'.repeat(maxCols)}`;
+      markdownRows.push(separator);
+      // 나머지 행들
+      for (let i = 1; i < rows.length; i++) {
+        markdownRows.push(`| ${rows[i].join(' | ')} |`);
+      }
+    }
+  }
+
+  return markdownRows.length > 0 ? markdownRows.join('\n') + '\n\n' : '';
+}
+
+/**
  * HTML 요소를 Markdown으로 변환
  * superscript, subscript, 강조 등을 유지
  */
@@ -97,6 +217,23 @@ function htmlToMarkdown(
           result += '\n';
           break;
         case 'li':
+          result += htmlToMarkdown($, $node);
+          break;
+        case 'table': {
+          const tableContent = tableToMarkdown($, $node);
+          if (tableContent) {
+            result += tableContent;
+          }
+          break;
+        }
+        case 'thead':
+        case 'tbody':
+        case 'tr':
+        case 'th':
+        case 'td':
+          // 테이블 관련 태그는 table 태그 내부에서만 처리되므로
+          // 여기서는 재귀적으로 처리하지 않음 (table 케이스에서 처리됨)
+          // 하지만 테이블 외부에 있는 경우를 대비해 재귀 처리
           result += htmlToMarkdown($, $node);
           break;
         case 'img': {
