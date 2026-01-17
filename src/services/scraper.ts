@@ -262,68 +262,30 @@ function htmlToMarkdown(
           result += htmlToMarkdown($, $node);
           break;
         case 'table': {
+          // 테이블은 tableToMarkdown에서 처리하므로 자식 노드를 재귀 처리하지 않음
           const tableContent = tableToMarkdown($, $node);
           if (tableContent) {
             result += tableContent;
-          } else {
-            // 테이블 구조가 없으면 텍스트 내용을 유지
-            // 공백으로 구분된 숫자나 텍스트를 테이블 형식으로 변환 시도
-            const tableText = $node.text().trim();
-            if (tableText) {
-              // 공백으로 구분된 숫자들을 테이블로 변환
-              const values = tableText.split(/\s+/).filter((v) => v.length > 0);
-              if (values.length > 0) {
-                // 한 행으로 표시하거나, 여러 열로 나누기
-                const cols = Math.min(values.length, 10); // 최대 10열
-                const rows: string[][] = [];
-                for (let i = 0; i < values.length; i += cols) {
-                  rows.push(values.slice(i, i + cols));
-                }
-                if (rows.length > 0) {
-                  const maxCols = Math.max(...rows.map((r) => r.length));
-                  const markdownRows: string[] = [];
-                  rows.forEach((row) => {
-                    while (row.length < maxCols) {
-                      row.push(' ');
-                    }
-                    markdownRows.push(`| ${row.join(' | ')} |`);
-                  });
-                  if (markdownRows.length > 0) {
-                    const separator = `|${'---|'.repeat(maxCols)}`;
-                    result += `| ${rows[0].join(' | ')} |\n${separator}\n`;
-                    for (let i = 1; i < markdownRows.length; i++) {
-                      result += markdownRows[i] + '\n';
-                    }
-                    result += '\n';
-                  }
-                } else {
-                  // 변환 실패 시 원본 텍스트 유지
-                  result += tableText + '\n\n';
-                }
-              } else {
-                // 텍스트가 있으면 그대로 유지
-                result += tableText + '\n\n';
-              }
-            }
           }
+          // tableToMarkdown이 빈 문자열을 반환하면 테이블이 무시됨 (내부 요소는 이미 처리됨)
           break;
         }
         case 'thead':
         case 'tbody':
         case 'tr':
         case 'th':
-        case 'td': {
+        case 'td':
           // 테이블 관련 태그는 table 태그 내부에서 tableToMarkdown에서 처리됨
           // 테이블 외부에 있을 때만 재귀 처리
           // closest('table')로 조상 중에 table이 있는지 확인
-          const hasTableAncestor = $node.closest('table').length > 0;
-          if (!hasTableAncestor) {
-            // 테이블 외부에 있으면 재귀 처리
-            result += htmlToMarkdown($, $node);
+          // 단, 자기 자신이 table이 아닌 경우에만 확인
+          if ($node.closest('table').not($node).length > 0) {
+            // 테이블 내부에 있으면 무시 (tableToMarkdown에서 처리됨)
+            break;
           }
-          // 테이블 내부에 있으면 무시 (table 케이스에서 처리됨)
+          // 테이블 외부에 있으면 재귀 처리
+          result += htmlToMarkdown($, $node);
           break;
-        }
         case 'img': {
           const imgSrc = $node.attr('src') || '';
           const imgAlt = $node.attr('alt') || '이미지';
