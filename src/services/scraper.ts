@@ -203,6 +203,21 @@ function htmlToMarkdown(
       const tagName = node.name.toLowerCase();
       const $node = $(node);
 
+      // 테이블 내부 요소는 건너뛰기 (tableToMarkdown에서 처리됨)
+      if (
+        tagName === 'thead' ||
+        tagName === 'tbody' ||
+        tagName === 'tr' ||
+        tagName === 'th' ||
+        tagName === 'td'
+      ) {
+        // 부모가 table인지 확인
+        if ($node.parent().is('table') || $node.closest('table').length > 0) {
+          // 테이블 내부에 있으면 건너뛰기
+          return;
+        }
+      }
+
       switch (tagName) {
         case 'sup':
           result += `^${htmlToMarkdown($, $node)}`;
