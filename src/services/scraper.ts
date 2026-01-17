@@ -312,15 +312,18 @@ function htmlToMarkdown(
         case 'tbody':
         case 'tr':
         case 'th':
-        case 'td':
+        case 'td': {
           // 테이블 관련 태그는 table 태그 내부에서 tableToMarkdown에서 처리됨
           // 테이블 외부에 있을 때만 재귀 처리
-          // 부모가 table이 아니면 재귀 처리
-          if (!$node.parent().is('table')) {
+          // closest('table')로 조상 중에 table이 있는지 확인
+          const hasTableAncestor = $node.closest('table').length > 0;
+          if (!hasTableAncestor) {
+            // 테이블 외부에 있으면 재귀 처리
             result += htmlToMarkdown($, $node);
           }
-          // table의 직접 자식이면 무시 (table 케이스에서 처리됨)
+          // 테이블 내부에 있으면 무시 (table 케이스에서 처리됨)
           break;
+        }
         case 'img': {
           const imgSrc = $node.attr('src') || '';
           const imgAlt = $node.attr('alt') || '이미지';
