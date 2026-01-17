@@ -27,16 +27,30 @@ function tableToMarkdown(
   const thead = $table.find('thead');
   if (thead.length > 0) {
     thead.find('tr').each((_, tr) => {
+      const $tr = $(tr);
       const cells: string[] = [];
-      $(tr)
-        .find('th, td')
-        .each((_, cell) => {
+
+      // th, td 태그가 있으면 사용
+      const cellElements = $tr.find('th, td');
+      if (cellElements.length > 0) {
+        cellElements.each((_, cell) => {
           const cellContent = htmlToMarkdown($, $(cell))
             .trim()
             .replace(/\n/g, ' ')
             .replace(/\|/g, '\\|');
           cells.push(cellContent || ' ');
         });
+      } else {
+        // th, td가 없으면 tr의 직접 텍스트를 공백으로 구분하여 셀로 처리
+        const trText = $tr.text().trim();
+        if (trText) {
+          const textCells = trText.split(/\s+/).filter((v) => v.length > 0);
+          textCells.forEach((cellText) => {
+            cells.push(cellText.replace(/\|/g, '\\|'));
+          });
+        }
+      }
+
       if (cells.length > 0) {
         rows.push(cells);
         maxCols = Math.max(maxCols, cells.length);
@@ -48,16 +62,30 @@ function tableToMarkdown(
   const tbody = $table.find('tbody');
   if (tbody.length > 0) {
     tbody.find('tr').each((_, tr) => {
+      const $tr = $(tr);
       const cells: string[] = [];
-      $(tr)
-        .find('td, th')
-        .each((_, cell) => {
+
+      // td, th 태그가 있으면 사용
+      const cellElements = $tr.find('td, th');
+      if (cellElements.length > 0) {
+        cellElements.each((_, cell) => {
           const cellContent = htmlToMarkdown($, $(cell))
             .trim()
             .replace(/\n/g, ' ')
             .replace(/\|/g, '\\|');
           cells.push(cellContent || ' ');
         });
+      } else {
+        // td, th가 없으면 tr의 직접 텍스트를 공백으로 구분하여 셀로 처리
+        const trText = $tr.text().trim();
+        if (trText) {
+          const textCells = trText.split(/\s+/).filter((v) => v.length > 0);
+          textCells.forEach((cellText) => {
+            cells.push(cellText.replace(/\|/g, '\\|'));
+          });
+        }
+      }
+
       if (cells.length > 0) {
         rows.push(cells);
         maxCols = Math.max(maxCols, cells.length);
@@ -68,16 +96,30 @@ function tableToMarkdown(
   // thead/tbody가 없으면 직접 tr 찾기
   if (rows.length === 0) {
     $table.find('tr').each((_, tr) => {
+      const $tr = $(tr);
       const cells: string[] = [];
-      $(tr)
-        .find('th, td')
-        .each((_, cell) => {
+
+      // th, td 태그가 있으면 사용
+      const cellElements = $tr.find('th, td');
+      if (cellElements.length > 0) {
+        cellElements.each((_, cell) => {
           const cellContent = htmlToMarkdown($, $(cell))
             .trim()
             .replace(/\n/g, ' ')
             .replace(/\|/g, '\\|');
           cells.push(cellContent || ' ');
         });
+      } else {
+        // th, td가 없으면 tr의 직접 텍스트를 공백으로 구분하여 셀로 처리
+        const trText = $tr.text().trim();
+        if (trText) {
+          const textCells = trText.split(/\s+/).filter((v) => v.length > 0);
+          textCells.forEach((cellText) => {
+            cells.push(cellText.replace(/\|/g, '\\|'));
+          });
+        }
+      }
+
       if (cells.length > 0) {
         rows.push(cells);
         maxCols = Math.max(maxCols, cells.length);
@@ -223,6 +265,46 @@ function htmlToMarkdown(
           const tableContent = tableToMarkdown($, $node);
           if (tableContent) {
             result += tableContent;
+          } else {
+            // 테이블 구조가 없으면 텍스트 내용을 유지
+            // 공백으로 구분된 숫자나 텍스트를 테이블 형식으로 변환 시도
+            const tableText = $node.text().trim();
+            if (tableText) {
+              // 공백으로 구분된 숫자들을 테이블로 변환
+              const values = tableText.split(/\s+/).filter((v) => v.length > 0);
+              if (values.length > 0) {
+                // 한 행으로 표시하거나, 여러 열로 나누기
+                const cols = Math.min(values.length, 10); // 최대 10열
+                const rows: string[][] = [];
+                for (let i = 0; i < values.length; i += cols) {
+                  rows.push(values.slice(i, i + cols));
+                }
+                if (rows.length > 0) {
+                  const maxCols = Math.max(...rows.map((r) => r.length));
+                  const markdownRows: string[] = [];
+                  rows.forEach((row) => {
+                    while (row.length < maxCols) {
+                      row.push(' ');
+                    }
+                    markdownRows.push(`| ${row.join(' | ')} |`);
+                  });
+                  if (markdownRows.length > 0) {
+                    const separator = `|${'---|'.repeat(maxCols)}`;
+                    result += `| ${rows[0].join(' | ')} |\n${separator}\n`;
+                    for (let i = 1; i < markdownRows.length; i++) {
+                      result += markdownRows[i] + '\n';
+                    }
+                    result += '\n';
+                  }
+                } else {
+                  // 변환 실패 시 원본 텍스트 유지
+                  result += tableText + '\n\n';
+                }
+              } else {
+                // 텍스트가 있으면 그대로 유지
+                result += tableText + '\n\n';
+              }
+            }
           }
           break;
         }
@@ -231,10 +313,13 @@ function htmlToMarkdown(
         case 'tr':
         case 'th':
         case 'td':
-          // 테이블 관련 태그는 table 태그 내부에서만 처리되므로
-          // 여기서는 재귀적으로 처리하지 않음 (table 케이스에서 처리됨)
-          // 하지만 테이블 외부에 있는 경우를 대비해 재귀 처리
-          result += htmlToMarkdown($, $node);
+          // 테이블 관련 태그는 table 태그 내부에서 tableToMarkdown에서 처리됨
+          // 테이블 외부에 있을 때만 재귀 처리
+          // 부모가 table이 아니면 재귀 처리
+          if (!$node.parent().is('table')) {
+            result += htmlToMarkdown($, $node);
+          }
+          // table의 직접 자식이면 무시 (table 케이스에서 처리됨)
           break;
         case 'img': {
           const imgSrc = $node.attr('src') || '';
