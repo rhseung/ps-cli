@@ -1,6 +1,6 @@
 {
   "name": "@rhseung/ps-cli",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "백준(BOJ) 문제 해결을 위한 통합 CLI 도구",
   "type": "module",
   "bin": {
