@@ -39,10 +39,16 @@ export function getLanguageConfig(language: string): LanguageConfig {
   const customConfig = projectConfig?.languages?.[language];
 
   if (customConfig) {
+    const templateFile =
+      // snake_case 우선
+      customConfig.template_file ||
+      // 혹시나 camelCase로 들어온 기존 값을 대비
+      (customConfig as Record<string, unknown>).templateFile?.toString() ||
+      `solution.${customConfig.extension}`;
+
     return {
       extension: customConfig.extension,
-      templateFile:
-        customConfig.templateFile || `solution.${customConfig.extension}`,
+      templateFile,
       compileCommand: customConfig.compile,
       runCommand: customConfig.run,
     };

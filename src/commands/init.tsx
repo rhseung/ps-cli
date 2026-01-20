@@ -29,17 +29,13 @@ function InitView({ onComplete }: InitViewProps) {
     completedSteps,
     confirmExit,
     initialized,
+    // form은 현재 단계 값 표시 등 확장용으로 남겨두되
+    // 아직 직접 사용하지 않으므로 린트 예외 패턴에 맞춰 _ 접두사를 사용한다.
+    form: _form,
     handleInputMode,
     created,
     cancelled,
-    setArchiveDirValue,
-    setSolvingDirValue,
-    setArchiveStrategy,
-    setLanguage,
-    setEditorValue,
-    setAutoOpen,
-    setIncludeTag,
-    setHandle,
+    setForm,
     setHandleInputMode,
     setConfirmExit,
     setCurrentStep,
@@ -99,7 +95,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setArchiveDirValue(value);
+              setForm((prev) => ({ ...prev, archiveDir: value }));
               const displayValue = value === '.' ? '프로젝트 루트' : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
@@ -117,7 +113,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setSolvingDirValue(value);
+              setForm((prev) => ({ ...prev, solvingDir: value }));
               const displayValue = value === '.' ? '프로젝트 루트' : value;
               moveToNextStep(displayValue, getStepLabel(currentStep));
             }}
@@ -137,7 +133,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setArchiveStrategy(value);
+              setForm((prev) => ({ ...prev, archiveStrategy: value }));
               const strategyLabels: Record<string, string> = {
                 flat: '평면 (전부 나열)',
                 'by-range': '1000번대 묶기',
@@ -164,7 +160,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setLanguage(value);
+              setForm((prev) => ({ ...prev, language: value }));
               moveToNextStep(value, getStepLabel(currentStep));
             }}
           />,
@@ -183,7 +179,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setEditorValue(value);
+              setForm((prev) => ({ ...prev, editor: value }));
               moveToNextStep(value, getStepLabel(currentStep));
             }}
           />,
@@ -200,7 +196,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setAutoOpen(value === 'true');
+              setForm((prev) => ({ ...prev, autoOpen: value === 'true' }));
               moveToNextStep(
                 value === 'true' ? '예' : '아니오',
                 getStepLabel(currentStep),
@@ -220,7 +216,7 @@ function InitView({ onComplete }: InitViewProps) {
           <Select
             options={options}
             onChange={(value) => {
-              setIncludeTag(value === 'true');
+              setForm((prev) => ({ ...prev, includeTag: value === 'true' }));
               moveToNextStep(
                 value === 'true' ? '예' : '아니오',
                 getStepLabel(currentStep),
@@ -239,7 +235,7 @@ function InitView({ onComplete }: InitViewProps) {
                 placeholder="핸들 입력"
                 onSubmit={(value) => {
                   const handleValue = value.trim();
-                  setHandle(handleValue);
+                  setForm((prev) => ({ ...prev, handle: handleValue }));
                   setHandleInputMode(false);
                   moveToNextStep(
                     handleValue || '(스킵)',
@@ -261,7 +257,7 @@ function InitView({ onComplete }: InitViewProps) {
             options={options}
             onChange={(value) => {
               if (value === 'skip') {
-                setHandle('');
+                setForm((prev) => ({ ...prev, handle: '' }));
                 moveToNextStep('(스킵)', getStepLabel(currentStep));
               } else {
                 setHandleInputMode(true);

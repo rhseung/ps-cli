@@ -167,30 +167,30 @@ export interface SearchResults {
 
 export interface ProjectConfig {
   general?: {
-    defaultLanguage?: string;
-    solvedAcHandle?: string;
+    default_language?: string;
+    solved_ac_handle?: string;
   };
   editor?: {
     command?: string;
-    autoOpen?: boolean;
+    auto_open?: boolean;
   };
   paths?: {
     solving?: string;
     archive?: string;
-    archiveStrategy?: string;
+    archive_strategy?: string;
   };
   archive?: {
-    autoCommit?: boolean;
-    commitMessage?: string;
+    auto_commit?: boolean;
+    commit_message?: string;
   };
   markdown?: {
-    includeTag?: boolean;
+    include_tag?: boolean;
   };
   languages?: Record<
     string,
     {
       extension: string;
-      templateFile?: string;
+      template_file?: string;
       compile?: string;
       run: string;
     }

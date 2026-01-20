@@ -51,7 +51,7 @@ export interface ConfigMetadata {
 export const getConfigMetadata = (): ConfigMetadata[] => [
   {
     key: 'general.default-language',
-    path: 'general.defaultLanguage',
+    path: 'general.default_language',
     label: '기본 언어',
     description: `기본으로 사용할 프로그래밍 언어입니다.`,
     placeholder: '언어 입력 (python, cpp 등)',
@@ -60,7 +60,7 @@ export const getConfigMetadata = (): ConfigMetadata[] => [
   },
   {
     key: 'general.solved-ac-handle',
-    path: 'general.solvedAcHandle',
+    path: 'general.solved_ac_handle',
     label: 'Solved.ac 핸들',
     description: '사용자의 Solved.ac 핸들입니다 (통계 조회용).',
     placeholder: '핸들 입력',
@@ -77,7 +77,7 @@ export const getConfigMetadata = (): ConfigMetadata[] => [
   },
   {
     key: 'editor.auto-open',
-    path: 'editor.autoOpen',
+    path: 'editor.auto_open',
     label: '자동 에디터 열기',
     description: 'fetch 명령 실행 후 자동으로 에디터를 열지 여부입니다.',
     placeholder: 'true 또는 false 입력',
@@ -104,7 +104,7 @@ export const getConfigMetadata = (): ConfigMetadata[] => [
   },
   {
     key: 'paths.archive-strategy',
-    path: 'paths.archiveStrategy',
+    path: 'paths.archive_strategy',
     label: '아카이빙 전략',
     description: '문제를 아카이브할 때의 디렉토리 구조 전략입니다.',
     placeholder: '전략 입력 (flat, by-range, by-tier, by-tag)',
@@ -113,7 +113,7 @@ export const getConfigMetadata = (): ConfigMetadata[] => [
   },
   {
     key: 'archive.auto-commit',
-    path: 'archive.autoCommit',
+    path: 'archive.auto_commit',
     label: '자동 Git 커밋',
     description: '아카이브 시 자동으로 Git 커밋을 수행할지 여부입니다.',
     placeholder: 'true 또는 false 입력',
@@ -122,7 +122,7 @@ export const getConfigMetadata = (): ConfigMetadata[] => [
   },
   {
     key: 'archive.commit-message',
-    path: 'archive.commitMessage',
+    path: 'archive.commit_message',
     label: '커밋 메시지 템플릿',
     description: '아카이브 시 사용할 Git 커밋 메시지 템플릿입니다.',
     placeholder: '메시지 템플릿 입력 ({id}, {title} 사용 가능)',
@@ -130,7 +130,7 @@ export const getConfigMetadata = (): ConfigMetadata[] => [
   },
   {
     key: 'markdown.include-tag',
-    path: 'markdown.includeTag',
+    path: 'markdown.include_tag',
     label: '태그 포함 여부',
     description: 'README 생성 시 알고리즘 분류(태그)를 포함할지 여부입니다.',
     placeholder: 'true 또는 false 입력',
@@ -201,24 +201,24 @@ function migrateOldConfig(projectRoot: string): ProjectConfig | null {
 
     const newConfig: ProjectConfig = {
       general: {
-        defaultLanguage: oldConfig.defaultLanguage,
-        solvedAcHandle: oldConfig.solvedAcHandle,
+        default_language: oldConfig.defaultLanguage,
+        solved_ac_handle: oldConfig.solvedAcHandle,
       },
       editor: {
         command: oldConfig.editor,
-        autoOpen: oldConfig.autoOpenEditor,
+        auto_open: oldConfig.autoOpenEditor,
       },
       paths: {
         solving: oldConfig.solvingDir,
         archive: oldConfig.archiveDir,
-        archiveStrategy: oldConfig.archiveStrategy,
+        archive_strategy: oldConfig.archiveStrategy,
       },
       archive: {
-        autoCommit: oldConfig.archiveAutoCommit,
-        commitMessage: oldConfig.archiveCommitMessage,
+        auto_commit: oldConfig.archiveAutoCommit,
+        commit_message: oldConfig.archiveCommitMessage,
       },
       markdown: {
-        includeTag: oldConfig.includeTag,
+        include_tag: oldConfig.includeTag,
       },
     };
 
@@ -292,7 +292,7 @@ export function setBojSessionCookie(cookie: string): void {
 export function getDefaultLanguage(): string {
   const projectConfig = getProjectConfigSync();
   return (
-    projectConfig?.general?.defaultLanguage ||
+    projectConfig?.general?.default_language ||
     config.get('defaultLanguage') ||
     'python'
   );
@@ -322,7 +322,7 @@ export function setEditor(editor: string): void {
 export function getAutoOpenEditor(): boolean {
   const projectConfig = getProjectConfigSync();
   return (
-    projectConfig?.editor?.autoOpen ?? config.get('autoOpenEditor') ?? false
+    projectConfig?.editor?.auto_open ?? config.get('autoOpenEditor') ?? false
   );
 }
 
@@ -332,7 +332,9 @@ export function setAutoOpenEditor(enabled: boolean): void {
 
 export function getSolvedAcHandle(): string | undefined {
   const projectConfig = getProjectConfigSync();
-  return projectConfig?.general?.solvedAcHandle || config.get('solvedAcHandle');
+  return (
+    projectConfig?.general?.solved_ac_handle || config.get('solvedAcHandle')
+  );
 }
 
 export function setSolvedAcHandle(handle: string): void {
@@ -362,7 +364,7 @@ export function setSolvingDir(dir: string): void {
 export function getArchiveStrategy(): string {
   const projectConfig = getProjectConfigSync();
   return (
-    projectConfig?.paths?.archiveStrategy ||
+    projectConfig?.paths?.archive_strategy ||
     config.get('archiveStrategy') ||
     'flat'
   );
@@ -375,7 +377,7 @@ export function setArchiveStrategy(strategy: string): void {
 export function getArchiveAutoCommit(): boolean {
   const projectConfig = getProjectConfigSync();
   return (
-    projectConfig?.archive?.autoCommit ??
+    projectConfig?.archive?.auto_commit ??
     config.get('archiveAutoCommit') ??
     true
   );
@@ -388,7 +390,7 @@ export function setArchiveAutoCommit(enabled: boolean): void {
 export function getArchiveCommitMessage(): string | undefined {
   const projectConfig = getProjectConfigSync();
   return (
-    projectConfig?.archive?.commitMessage || config.get('archiveCommitMessage')
+    projectConfig?.archive?.commit_message || config.get('archiveCommitMessage')
   );
 }
 
@@ -399,7 +401,7 @@ export function setArchiveCommitMessage(message: string): void {
 export function getIncludeTag(): boolean {
   const projectConfig = getProjectConfigSync();
   return (
-    projectConfig?.markdown?.includeTag ?? config.get('includeTag') ?? true
+    projectConfig?.markdown?.include_tag ?? config.get('includeTag') ?? true
   );
 }
 

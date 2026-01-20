@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { execaCommand, execa } from 'execa';
 import { useEffect, useState, useCallback } from 'react';
 
+import type { ConfigKey } from '../core/config';
 import {
   getArchiveDir,
   getSolvingDir,
@@ -22,6 +23,7 @@ import {
   getSolvedAcHandle,
   getArchiveStrategy,
   getIncludeTag,
+  getConfigMetadata,
 } from '../core/config';
 
 export type InitStep =
@@ -51,25 +53,11 @@ export interface UseInitReturn {
   completedSteps: CompletedStep[];
   confirmExit: boolean;
   initialized: boolean;
-  archiveDir: string;
-  solvingDir: string;
-  archiveStrategy: string;
-  language: string;
-  editor: string;
-  autoOpen: boolean;
-  includeTag: boolean;
-  handle: string;
+  form: InitForm;
   handleInputMode: boolean;
   created: string[];
   cancelled: boolean;
-  setArchiveDirValue: (value: string) => void;
-  setSolvingDirValue: (value: string) => void;
-  setArchiveStrategy: (value: string) => void;
-  setLanguage: (value: string) => void;
-  setEditorValue: (value: string) => void;
-  setAutoOpen: (value: boolean) => void;
-  setIncludeTag: (value: boolean) => void;
-  setHandle: (value: string) => void;
+  setForm: React.Dispatch<React.SetStateAction<InitForm>>;
   setHandleInputMode: (value: boolean) => void;
   setConfirmExit: (value: boolean) => void;
   setCurrentStep: (step: InitStep) => void;
@@ -104,6 +92,87 @@ function getCliRoot(): string {
   return join(__dirname, '../..');
 }
 
+function buildDefaultConfigYaml({
+  language,
+  editor,
+  autoOpen,
+  solvingDir,
+  archiveDir,
+  archiveStrategy,
+  includeTag,
+  handle,
+}: InitForm): string {
+  return `
+# ps-cli 설정 파일
+# 더 자세한 정보는 다음을 참고하세요: https://github.com/rhseung/ps-cli
+
+general:
+  # 새로운 문제를 가져올 때 사용할 기본 프로그래밍 언어입니다.
+  default_language: ${language}
+  # 통계 조회를 위한 Solved.ac 핸들(닉네임)입니다.
+  solved_ac_handle: "${handle}"
+
+editor:
+  # 에디터를 열 때 사용할 명령어입니다 (예: code, cursor, vim).
+  command: ${editor}
+  # 문제를 가져온 후 자동으로 에디터를 열지 여부입니다.
+  auto_open: ${autoOpen}
+
+paths:
+  # 현재 풀고 있는 문제들을 담을 디렉토리 경로입니다.
+  solving: ${solvingDir}
+  # 해결한 문제를 보관할 디렉토리 경로입니다.
+  archive: ${archiveDir}
+  # 아카이빙 전략입니다 (flat, by-range, by-tier, by-tag).
+  archive_strategy: ${archiveStrategy}
+
+archive:
+  # 아카이브 시 자동으로 Git 커밋을 수행할지 여부입니다.
+  auto_commit: true
+  # Git 커밋 메시지 템플릿입니다 ({id}, {title} 사용 가능).
+  commit_message: "feat: solve {id} {title}"
+
+markdown:
+  # 문제 README에 알고리즘 분류(태그)를 포함할지 여부입니다.
+  include_tag: ${includeTag}
+
+# 언어별 설정
+# 이곳에서 컴파일/실행 명령어나 템플릿 파일명을 수정하거나 새로운 언어를 추가할 수 있습니다.
+languages:
+  python:
+    extension: py
+    # 템플릿 파일명 (옵션, 기본값: solution.py)
+    template_file: "solution.py"
+    # 실행 명령어 (필수)
+    run: python3
+  cpp:
+    extension: cpp
+    # 템플릿 파일명 (옵션, 기본값: solution.cpp)
+    template_file: "solution.cpp"
+    # 컴파일 명령어 (옵션)
+    compile: "g++ -fdiagnostics-absolute-paths -o solution solution.cpp"
+    # 실행 명령어 (필수)
+    run: "./solution"
+  #   rust:
+  #     extension: rs
+  #     # 템플릿 파일명을 직접 지정하려면 template_file을 사용하세요 (기본: solution.{extension})
+  #     template_file: "solution.rs"
+  #     compile: "rustc {file}"
+  #     run: "./{file_no_ext}"
+`.trim();
+}
+
+export interface InitForm {
+  archiveDir: string;
+  solvingDir: string;
+  archiveStrategy: string;
+  language: string;
+  editor: string;
+  autoOpen: boolean;
+  includeTag: boolean;
+  handle: string;
+}
+
 export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   const [currentStep, setCurrentStep] = useState<InitStep>('archive-dir');
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
@@ -111,15 +180,16 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
 
   // 프로젝트별 config 파일에서 초기값 로드
   const [initialized, setInitialized] = useState(false);
-  const [archiveDir, setArchiveDirValue] = useState<string>(getArchiveDir());
-  const [solvingDir, setSolvingDirValue] = useState<string>(getSolvingDir());
-  const [archiveStrategy, setArchiveStrategy] =
-    useState<string>(getArchiveStrategy());
-  const [language, setLanguage] = useState<string>(getDefaultLanguage());
-  const [editor, setEditorValue] = useState<string>(getEditor());
-  const [autoOpen, setAutoOpen] = useState<boolean>(getAutoOpenEditor());
-  const [includeTag, setIncludeTag] = useState<boolean>(getIncludeTag());
-  const [handle, setHandle] = useState<string>(getSolvedAcHandle() || '');
+  const [form, setForm] = useState<InitForm>({
+    archiveDir: getArchiveDir(),
+    solvingDir: getSolvingDir(),
+    archiveStrategy: getArchiveStrategy(),
+    language: getDefaultLanguage(),
+    editor: getEditor(),
+    autoOpen: getAutoOpenEditor(),
+    includeTag: getIncludeTag(),
+    handle: getSolvedAcHandle() || '',
+  });
   const [handleInputMode, setHandleInputMode] = useState<boolean>(false);
   const [created, setCreated] = useState<string[]>([]);
   const [cancelled, setCancelled] = useState(false);
@@ -157,21 +227,24 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         const configContent = await readFile(projectConfigPath, 'utf-8');
         const projectConfig = JSON.parse(configContent);
 
-        if (projectConfig.archiveDir)
-          setArchiveDirValue(projectConfig.archiveDir);
-        if (projectConfig.solvingDir)
-          setSolvingDirValue(projectConfig.solvingDir);
-        if (projectConfig.archiveStrategy)
-          setArchiveStrategy(projectConfig.archiveStrategy);
-        if (projectConfig.defaultLanguage)
-          setLanguage(projectConfig.defaultLanguage);
-        if (projectConfig.editor) setEditorValue(projectConfig.editor);
-        if (projectConfig.autoOpenEditor !== undefined)
-          setAutoOpen(projectConfig.autoOpenEditor);
-        if (projectConfig.includeTag !== undefined)
-          setIncludeTag(projectConfig.includeTag);
-        if (projectConfig.solvedAcHandle)
-          setHandle(projectConfig.solvedAcHandle);
+        setForm((prev) => ({
+          ...prev,
+          archiveDir: projectConfig.archiveDir ?? prev.archiveDir,
+          solvingDir: projectConfig.solvingDir ?? prev.solvingDir,
+          archiveStrategy:
+            projectConfig.archiveStrategy ?? prev.archiveStrategy,
+          language: projectConfig.defaultLanguage ?? prev.language,
+          editor: projectConfig.editor ?? prev.editor,
+          autoOpen:
+            projectConfig.autoOpenEditor !== undefined
+              ? projectConfig.autoOpenEditor
+              : prev.autoOpen,
+          includeTag:
+            projectConfig.includeTag !== undefined
+              ? projectConfig.includeTag
+              : prev.includeTag,
+          handle: projectConfig.solvedAcHandle ?? prev.handle,
+        }));
       } catch {
         // 파일이 없으면 기본값 사용 (무시)
       } finally {
@@ -182,35 +255,29 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
   }, []);
 
   const getStepLabel = useCallback((step: InitStep): string => {
-    switch (step) {
-      case 'archive-dir':
-        return '아카이브 디렉토리 설정 (아카이브된 문제)';
-      case 'solving-dir':
-        return 'Solving 디렉토리 설정 (푸는 중인 문제)';
-      case 'archive-strategy':
-        return '아카이빙 전략 설정';
-      case 'language':
-        return '기본 언어 설정';
-      case 'editor':
-        return '에디터 설정';
-      case 'auto-open':
-        return '자동 에디터 열기';
-      case 'include-tag':
-        return 'README에 알고리즘 분류 포함';
-      case 'handle':
-        return 'Solved.ac 핸들 (선택)';
-      default:
-        return '';
-    }
+    const stepToConfigKey: Partial<Record<InitStep, ConfigKey>> = {
+      'archive-dir': 'paths.archive',
+      'solving-dir': 'paths.solving',
+      'archive-strategy': 'paths.archive-strategy',
+      language: 'general.default-language',
+      editor: 'editor.command',
+      'auto-open': 'editor.auto-open',
+      'include-tag': 'markdown.include-tag',
+      handle: 'general.solved-ac-handle',
+    };
+    const configKey = stepToConfigKey[step];
+    if (!configKey) return '';
+    const meta = getConfigMetadata().find((m) => m.key === configKey);
+    return meta?.label ?? '';
   }, []);
 
   const getStepValue = useCallback(
     (step: InitStep): string => {
       switch (step) {
         case 'archive-dir':
-          return archiveDir === '.' ? '프로젝트 루트' : archiveDir;
+          return form.archiveDir === '.' ? '프로젝트 루트' : form.archiveDir;
         case 'solving-dir':
-          return solvingDir === '.' ? '프로젝트 루트' : solvingDir;
+          return form.solvingDir === '.' ? '프로젝트 루트' : form.solvingDir;
         case 'archive-strategy': {
           const strategyLabels: Record<string, string> = {
             flat: '평면 (전부 나열)',
@@ -218,32 +285,23 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
             'by-tier': '티어별',
             'by-tag': '태그별',
           };
-          return strategyLabels[archiveStrategy] || archiveStrategy;
+          return strategyLabels[form.archiveStrategy] || form.archiveStrategy;
         }
         case 'language':
-          return language;
+          return form.language;
         case 'editor':
-          return editor;
+          return form.editor;
         case 'auto-open':
-          return autoOpen ? '예' : '아니오';
+          return form.autoOpen ? '예' : '아니오';
         case 'include-tag':
-          return includeTag ? '예' : '아니오';
+          return form.includeTag ? '예' : '아니오';
         case 'handle':
-          return handle || '(스킵)';
+          return form.handle || '(스킵)';
         default:
           return '';
       }
     },
-    [
-      archiveDir,
-      solvingDir,
-      language,
-      editor,
-      autoOpen,
-      includeTag,
-      handle,
-      archiveStrategy,
-    ],
+    [form],
   );
 
   const executeInit = useCallback(
@@ -260,56 +318,17 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         setCreated((prev) => [...prev, '.ps-cli/']);
 
         // .ps-cli/config.yaml 생성 (주석 포함)
-        const handleToUse = (overrideHandle ?? handle)?.trim() || '';
-        const configYaml = `
-# ps-cli 설정 파일
-# 더 자세한 정보는 다음을 참고하세요: https://github.com/rhseung/ps-cli
-
-general:
-  # 새로운 문제를 가져올 때 사용할 기본 프로그래밍 언어입니다.
-  default_language: ${language}
-  # 통계 조회를 위한 Solved.ac 핸들(닉네임)입니다.
-  solved_ac_handle: "${handleToUse}"
-
-editor:
-  # 에디터를 열 때 사용할 명령어입니다 (예: code, cursor, vim).
-  command: ${editor}
-  # 문제를 가져온 후 자동으로 에디터를 열지 여부입니다.
-  auto_open: ${autoOpen}
-
-paths:
-  # 현재 풀고 있는 문제들을 담을 디렉토리 경로입니다.
-  solving: ${solvingDir}
-  # 해결한 문제를 보관할 디렉토리 경로입니다.
-  archive: ${archiveDir}
-  # 아카이빙 전략입니다 (flat, by-range, by-tier, by-tag).
-  archive_strategy: ${archiveStrategy}
-
-archive:
-  # 아카이브 시 자동으로 Git 커밋을 수행할지 여부입니다.
-  auto_commit: true
-  # Git 커밋 메시지 템플릿입니다 ({id}, {title} 사용 가능).
-  commit_message: "feat: solve {id} {title}"
-
-markdown:
-  # 문제 README에 알고리즘 분류(태그)를 포함할지 여부입니다.
-  include_tag: ${includeTag}
-
-# 언어별 설정
-# 이곳에서 컴파일 및 실행 명령어를 변경하거나 새로운 언어를 추가할 수 있습니다.
-languages:
-  python:
-    extension: py
-    run: python3
-  cpp:
-    extension: cpp
-    compile: "g++ -fdiagnostics-absolute-paths -o solution solution.cpp"
-    run: "./solution"
-#   rust:
-#     extension: rs
-#     compile: "rustc {file}"
-#     run: "./{file_no_ext}"
-`.trim();
+        const handleToUse = (overrideHandle ?? form.handle)?.trim() || '';
+        const configYaml = buildDefaultConfigYaml({
+          language: form.language,
+          editor: form.editor,
+          autoOpen: form.autoOpen,
+          solvingDir: form.solvingDir,
+          archiveDir: form.archiveDir,
+          archiveStrategy: form.archiveStrategy,
+          includeTag: form.includeTag,
+          handle: handleToUse,
+        });
 
         await writeFile(join(psCliDir, 'config.yaml'), configYaml, 'utf-8');
         setCreated((prev) => [...prev, '.ps-cli/config.yaml']);
@@ -331,11 +350,11 @@ languages:
         }
 
         // archiveDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-        if (archiveDir !== '.' && archiveDir !== '') {
-          const archiveDirPath = join(cwd, archiveDir);
+        if (form.archiveDir !== '.' && form.archiveDir !== '') {
+          const archiveDirPath = join(cwd, form.archiveDir);
           try {
             await mkdir(archiveDirPath, { recursive: true });
-            setCreated((prev) => [...prev, `${archiveDir}/`]);
+            setCreated((prev) => [...prev, `${form.archiveDir}/`]);
           } catch (err) {
             const error = err as NodeJS.ErrnoException;
             if (error.code !== 'EEXIST') {
@@ -345,11 +364,11 @@ languages:
         }
 
         // solvingDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
-        if (solvingDir !== '.' && solvingDir !== '') {
-          const solvingDirPath = join(cwd, solvingDir);
+        if (form.solvingDir !== '.' && form.solvingDir !== '') {
+          const solvingDirPath = join(cwd, form.solvingDir);
           try {
             await mkdir(solvingDirPath, { recursive: true });
-            setCreated((prev) => [...prev, `${solvingDir}/`]);
+            setCreated((prev) => [...prev, `${form.solvingDir}/`]);
           } catch (err) {
             const error = err as NodeJS.ErrnoException;
             if (error.code !== 'EEXIST') {
@@ -362,8 +381,8 @@ languages:
         const gitignorePath = join(cwd, '.gitignore');
         // .ps-cli는 git에 포함시키고, solving dir만 무시하도록 함
         const gitignorePatterns: string[] = [];
-        if (solvingDir !== '.' && solvingDir !== '') {
-          gitignorePatterns.push(`${solvingDir}/`);
+        if (form.solvingDir !== '.' && form.solvingDir !== '') {
+          gitignorePatterns.push(`${form.solvingDir}/`);
         }
 
         if (gitignorePatterns.length > 0) {
@@ -454,17 +473,7 @@ languages:
         }, 2000);
       }
     },
-    [
-      archiveDir,
-      solvingDir,
-      archiveStrategy,
-      language,
-      editor,
-      autoOpen,
-      includeTag,
-      handle,
-      onComplete,
-    ],
+    [form, onComplete],
   );
 
   const moveToNextStep = useCallback(
@@ -477,7 +486,10 @@ languages:
 
       // handle 단계에서 handleValue가 전달된 경우 즉시 업데이트
       if (currentStep === 'handle' && handleValue !== undefined) {
-        setHandle(handleValue);
+        setForm((prev) => ({
+          ...prev,
+          handle: handleValue,
+        }));
       }
 
       const stepOrder: InitStep[] = [
@@ -515,25 +527,11 @@ languages:
     completedSteps,
     confirmExit,
     initialized,
-    archiveDir,
-    solvingDir,
-    archiveStrategy,
-    language,
-    editor,
-    autoOpen,
-    includeTag,
-    handle,
+    form,
     handleInputMode,
     created,
     cancelled,
-    setArchiveDirValue,
-    setSolvingDirValue,
-    setArchiveStrategy,
-    setLanguage,
-    setEditorValue,
-    setAutoOpen,
-    setIncludeTag,
-    setHandle,
+    setForm,
     setHandleInputMode,
     setConfirmExit,
     setCurrentStep,
