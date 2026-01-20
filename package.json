@@ -24,7 +24,7 @@
     "minor": "npm version minor && bun publish --access=public",
     "major": "npm version major && bun publish --access=public",
     "unlink": "npm unlink -g @rhseung/ps-cli",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "keywords": [
     "boj",
