@@ -8,11 +8,16 @@ import type {
 
 import { icons } from './icons';
 import { colors, logger, psGradient } from './logger';
+import { getVersion } from './version';
 
 export function generateGlobalHelp(
   commands: Map<string, CommandDefinition>,
 ): string {
-  const title = psGradient.multiline(`
+  const version = getVersion();
+  const versionInfo = version ? chalk.dim(`  v${version}`) : '';
+
+  const title =
+    psGradient.multiline(`
 
   ██████╗ ███████╗     ██████╗██╗     ██╗
   ██╔══██╗██╔════╝    ██╔════╝██║     ██║
@@ -20,7 +25,9 @@ export function generateGlobalHelp(
   ██╔═══╝ ╚════██║    ██║     ██║     ██║
   ██║     ███████║    ╚██████╗███████╗██║
   ╚═╝     ╚══════╝     ╚═════╝╚══════╝╚═╝
-  `);
+  `) +
+    '\n' +
+    versionInfo;
 
   const usage = `
   ${logger.bold('사용법:')}
