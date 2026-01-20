@@ -295,9 +295,16 @@ markdown:
   # 문제 README에 알고리즘 분류(태그)를 포함할지 여부입니다.
   include_tag: ${includeTag}
 
-# 커스텀 언어 설정
-# 이곳에 직접 새로운 언어를 추가할 수 있습니다.
-# languages:
+# 언어별 설정
+# 이곳에서 컴파일 및 실행 명령어를 변경하거나 새로운 언어를 추가할 수 있습니다.
+languages:
+  python:
+    extension: py
+    run: python3
+  cpp:
+    extension: cpp
+    compile: "g++ -fdiagnostics-absolute-paths -o solution solution.cpp"
+    run: "./solution"
 #   rust:
 #     extension: rs
 #     compile: "rustc {file}"
