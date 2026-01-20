@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { createInterface } from 'readline';
 
-import { execa, execaCommand } from 'execa';
+import { execaCommand } from 'execa';
 
 import type { Language } from '../core';
 import { getLanguageConfig } from '../core';
@@ -77,7 +77,7 @@ export async function runSolution({
       });
     }
 
-    const child = execa(langConfig.runCommand, [solutionPath], {
+    const child = execaCommand(`${langConfig.runCommand} ${solutionPath}`, {
       cwd: problemDir,
       ...(input !== undefined ? { input } : { stdin: 'inherit' }),
       timeout: timeoutMs,

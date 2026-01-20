@@ -10,6 +10,7 @@ import {
   getTierImageUrl,
   parseTimeLimitToMs,
   getIncludeTag,
+  findProjectRoot,
   type Language,
 } from '../core';
 import type { Problem } from '../types/index';
@@ -91,21 +92,46 @@ export async function generateProblemFiles(
 
   const langConfig = getLanguageConfig(language);
   const projectRoot = getProjectRoot();
-  const templatePath = join(projectRoot, 'templates', langConfig.templateFile);
+  const userProjectRoot = findProjectRoot(process.cwd());
   const solutionPath = join(problemDir, `solution.${langConfig.extension}`);
 
-  // 템플릿 파일 복사
-  try {
-    const templateContent = await readFile(templatePath, 'utf-8');
-    await writeFile(solutionPath, templateContent, 'utf-8');
-  } catch {
-    // 템플릿 파일이 없으면 기본 내용 생성
-    await writeFile(
-      solutionPath,
-      `// Problem ${problem.id}: ${problem.title}\n`,
-      'utf-8',
+  let templateContent = '';
+  let templateFound = false;
+
+  // 1. 프로젝트 로컬 템플릿 확인 (.ps-cli/templates/)
+  if (userProjectRoot) {
+    const localTemplatePath = join(
+      userProjectRoot,
+      '.ps-cli',
+      'templates',
+      langConfig.templateFile,
     );
+    if (existsSync(localTemplatePath)) {
+      try {
+        templateContent = await readFile(localTemplatePath, 'utf-8');
+        templateFound = true;
+      } catch {
+        // 읽기 실패 시 다음 단계로
+      }
+    }
   }
+
+  // 2. 기본 템플릿 확인
+  if (!templateFound) {
+    const templatePath = join(
+      projectRoot,
+      'templates',
+      langConfig.templateFile,
+    );
+    try {
+      templateContent = await readFile(templatePath, 'utf-8');
+    } catch {
+      // 템플릿 파일이 없으면 기본 내용 생성
+      templateContent = `// Problem ${problem.id}: ${problem.title}\n`;
+    }
+  }
+
+  await writeFile(solutionPath, templateContent, 'utf-8');
 
   // 예제 파일 생성
   const testcasesDir = join(problemDir, 'testcases');

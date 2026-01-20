@@ -1,4 +1,4 @@
-import { StatusMessage, Select, TextInput, Alert } from '@inkjs/ui';
+import { StatusMessage, Select, TextInput, Alert, Badge } from '@inkjs/ui';
 import { render, Text, Box } from 'ink';
 import React from 'react';
 
@@ -13,31 +13,32 @@ import {
   type ConfigKey,
 } from '../core';
 import { useConfig } from '../hooks/use-config';
+import { type ProjectConfig } from '../types';
 
 export function getConfigHelp(): string {
   const metadata = getConfigMetadata();
   const keysHelp = metadata
-    .map((m) => `    ${m.key.padEnd(23)} ${m.label}`)
+    .map((m) => `    ${m.key.padEnd(25)} ${m.label}`)
     .join('\n');
 
   return `
   사용법:
     $ ps config get [키]
-    $ ps config set [키]
+    $ ps config set [키] [값]
     $ ps config list
     $ ps config clear
 
   설명:
-    프로젝트 설정 파일(.ps-cli.json)을 관리합니다.
-    설정은 현재 프로젝트의 .ps-cli.json 파일에 저장됩니다.
+    프로젝트 설정(.ps-cli/config.yaml)을 관리합니다.
+    설정은 현재 프로젝트의 .ps-cli 디렉토리 내에 저장됩니다.
 
   명령어:
     get [키]                설정 값 조회 (키 없으면 대화형 선택)
-    set [키]                설정 값 설정 (키 없으면 대화형 선택)
+    set [키] [값]           설정 값 설정 (인자 없으면 대화형 선택)
     list                    모든 설정 조회
-    clear                   .ps-cli.json 파일 삭제
+    clear                   .ps-cli 폴더 및 설정 삭제
 
-  설정 키:
+  설정 키 예시:
 ${keysHelp}
 
   옵션:
@@ -45,21 +46,16 @@ ${keysHelp}
 
   예제:
     $ ps config get                         # 대화형으로 키 선택 후 값 조회
-    $ ps config get default-language         # default-language 값 조회
-    $ ps config set                         # 대화형으로 키 선택 후 값 설정
-    $ ps config set editor cursor            # editor를 cursor로 설정
+    $ ps config get general.default-language # 기본 언어 설정 조회
+    $ ps config set editor.command cursor    # 에디터를 cursor로 설정
     $ ps config list                         # 모든 설정 조회
-    $ ps config clear                        # .ps-cli.json 파일 삭제
+    $ ps config clear                        # 모든 설정 및 템플릿 삭제
 `;
 }
 
-// index.ts에서 동적으로 로드하기 위한 export
 export const configHelp = getConfigHelp();
 
-const CONFIG_KEYS = getConfigMetadata().map((m) => ({
-  label: m.key,
-  value: m.key,
-}));
+const METADATA = getConfigMetadata();
 
 interface ConfigViewProps {
   configKey?: ConfigKey;
@@ -100,67 +96,103 @@ function ConfigView({
       return (
         <Box>
           <StatusMessage variant="info">
-            .ps-cli.json 파일을 삭제하는 중...
+            .ps-cli 폴더를 삭제하는 중...
           </StatusMessage>
         </Box>
       );
     }
     return (
       <Box>
-        <Alert variant="success">.ps-cli.json 파일이 삭제되었습니다.</Alert>
+        <Alert variant="success">
+          .ps-cli 폴더와 모든 설정이 삭제되었습니다.
+        </Alert>
       </Box>
     );
   }
 
   if (list) {
-    const metadata = getConfigMetadata();
+    // 그룹별로 묶기
+    const groups: Record<string, typeof METADATA> = {};
+    METADATA.forEach((m) => {
+      const group = m.key.split('.')[0];
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(m);
+    });
+
+    const getNestedValue = (obj: ProjectConfig | null, path: string) => {
+      if (!obj) return undefined;
+      return path.split('.').reduce((acc: unknown, part) => {
+        if (acc && typeof acc === 'object' && part in acc) {
+          return (acc as Record<string, unknown>)[part];
+        }
+        return undefined;
+      }, obj);
+    };
 
     return (
       <Box flexDirection="column">
         <Box marginBottom={1}>
           <Text color="cyan" bold>
-            {icons.config} 현재 설정 (.ps-cli.json)
+            {icons.config} 현재 설정 (.ps-cli/config.yaml)
           </Text>
         </Box>
-        <Box flexDirection="column" marginTop={1}>
-          {metadata.map((m) => {
-            const val = config ? config[m.property] : undefined;
-            const displayValue =
-              val !== undefined ? String(val) : '(설정 안 됨)';
-            const isBool = m.type === 'boolean';
-            const valColor = isBool
-              ? val === true
-                ? 'green'
-                : 'gray'
-              : val
-                ? 'cyan'
-                : 'gray';
+        {Object.entries(groups).map(([groupName, items]) => (
+          <Box key={groupName} flexDirection="column" marginTop={1}>
+            <Box>
+              <Badge color="blue">{groupName.toUpperCase()}</Badge>
+            </Box>
+            <Box flexDirection="column" paddingLeft={2} marginTop={1}>
+              {items.map((m) => {
+                const val = getNestedValue(config, m.path);
+                const displayValue =
+                  val !== undefined ? String(val) : '(설정 안 됨)';
+                const isBool = m.type === 'boolean';
+                const valColor = isBool
+                  ? val === true
+                    ? 'green'
+                    : 'gray'
+                  : val
+                    ? 'cyan'
+                    : 'gray';
 
-            return (
-              <Box key={m.key} marginBottom={1}>
-                <Text color="gray">{m.key}:</Text>
-                <Text> </Text>
-                <Text bold color={valColor}>
-                  {displayValue}
-                </Text>
-              </Box>
-            );
-          })}
-        </Box>
+                return (
+                  <Box key={m.key} marginBottom={0}>
+                    <Text color="gray">
+                      {m.key.split('.').slice(1).join('.')}:
+                    </Text>
+                    <Text> </Text>
+                    <Text bold color={valColor}>
+                      {displayValue}
+                    </Text>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+        ))}
       </Box>
     );
   }
 
   if (get && configKey) {
-    const metadata = getConfigMetadata();
-    const item = metadata.find((m) => m.key === configKey);
+    const item = METADATA.find((m) => m.key === configKey);
 
     if (!item) {
       logger.error(`알 수 없는 설정 키: ${configKey}`);
       process.exit(1);
     }
 
-    const val = config ? config[item.property] : undefined;
+    const getNestedValue = (obj: ProjectConfig | null, path: string) => {
+      if (!obj) return undefined;
+      return path.split('.').reduce((acc: unknown, part) => {
+        if (acc && typeof acc === 'object' && part in acc) {
+          return (acc as Record<string, unknown>)[part];
+        }
+        return undefined;
+      }, obj);
+    };
+
+    const val = getNestedValue(config, item.path);
     const displayValue = val !== undefined ? String(val) : '(설정 안 됨)';
 
     return (
@@ -168,7 +200,7 @@ function ConfigView({
         <Box>
           <Text color="gray">{configKey}:</Text>
           <Text> </Text>
-          <Text bold color={val ? 'cyan' : 'gray'}>
+          <Text bold color={val !== undefined ? 'cyan' : 'gray'}>
             {displayValue}
           </Text>
         </Box>
@@ -189,8 +221,11 @@ function ConfigView({
         <Box marginTop={1}>
           <Alert variant="success">설정이 저장되었습니다</Alert>
         </Box>
-        <Box marginTop={1}>
-          <Text bold>{value}</Text>
+        <Box marginTop={1} paddingLeft={2}>
+          <Text color="gray">{configKey} → </Text>
+          <Text bold color="green">
+            {value}
+          </Text>
         </Box>
       </Box>
     );
@@ -201,53 +236,42 @@ function ConfigView({
 
 @CommandDef({
   name: 'config',
-  description: `프로젝트 설정 파일(.ps-cli.json)을 관리합니다.
-설정은 현재 프로젝트의 .ps-cli.json 파일에 저장됩니다.`,
+  description: `프로젝트 설정(.ps-cli/config.yaml)을 관리합니다.
+설정은 현재 프로젝트의 .ps-cli 디렉토리 내에 저장됩니다.`,
   autoDetectProblemId: false,
   examples: [
     'config get                         # 대화형으로 키 선택 후 값 조회',
-    'config get default-language         # default-language 값 조회',
-    'config set                         # 대화형으로 키 선택 후 값 설정',
-    'config set editor cursor            # editor를 cursor로 설정',
+    'config get general.default-language # 기본 언어 설정 조회',
+    'config set editor.command cursor    # 에디터를 cursor로 설정',
     'config list                         # 모든 설정 조회',
-    'config clear                        # .ps-cli.json 파일 삭제',
+    'config clear                        # 모든 설정 및 템플릿 삭제',
   ],
 })
 export class ConfigCommand extends Command {
   async execute(args: string[], flags: CommandFlags): Promise<void> {
     const command = args[0];
 
-    // clear 명령어 처리
     if (command === 'clear') {
-      await this.renderView(ConfigView, {
-        clear: true,
-      });
+      await this.renderView(ConfigView, { clear: true });
       return;
     }
 
-    // list 명령어 처리
     if (command === 'list' || flags.list) {
-      await this.renderView(ConfigView, {
-        list: true,
-      });
+      await this.renderView(ConfigView, { list: true });
       return;
     }
 
-    // get 명령어 처리
     if (command === 'get') {
       const key = args[1];
       if (key) {
-        // 키가 있으면 바로 조회
         await this.renderView(ConfigView, {
           configKey: key as ConfigKey,
           get: true,
         });
       } else {
-        // 키가 없으면 대화형으로 선택
-        const selectedKey = await this.selectConfigKey();
+        const selectedKey = await this.selectConfigKeyInteractive();
         if (!selectedKey) {
           process.exit(0);
-          return;
         }
         await this.renderView(ConfigView, {
           configKey: selectedKey,
@@ -257,32 +281,27 @@ export class ConfigCommand extends Command {
       return;
     }
 
-    // set 명령어 처리
     if (command === 'set') {
       const key = args[1];
-      if (key) {
-        // 키가 있으면 바로 값 입력
+      const value = args[2];
+
+      if (key && value !== undefined) {
+        await this.renderView(ConfigView, {
+          configKey: key as ConfigKey,
+          value: value,
+        });
+      } else if (key) {
         const inputValue = await this.inputConfigValue(key);
-        if (!inputValue) {
-          process.exit(0);
-          return;
-        }
+        if (inputValue === null) process.exit(0);
         await this.renderView(ConfigView, {
           configKey: key as ConfigKey,
           value: inputValue,
         });
       } else {
-        // 키가 없으면 대화형으로 선택
-        const selectedKey = await this.selectConfigKey();
-        if (!selectedKey) {
-          process.exit(0);
-          return;
-        }
+        const selectedKey = await this.selectConfigKeyInteractive();
+        if (!selectedKey) process.exit(0);
         const inputValue = await this.inputConfigValue(selectedKey);
-        if (!inputValue) {
-          process.exit(0);
-          return;
-        }
+        if (inputValue === null) process.exit(0);
         await this.renderView(ConfigView, {
           configKey: selectedKey,
           value: inputValue,
@@ -291,12 +310,10 @@ export class ConfigCommand extends Command {
       return;
     }
 
-    // 명령어가 없거나 알 수 없는 명령어
     if (!command) {
       logger.error('명령어를 입력해주세요.');
       console.log('도움말: ps config --help');
       process.exit(1);
-      return;
     }
 
     logger.error(`알 수 없는 명령어: ${command}`);
@@ -304,21 +321,58 @@ export class ConfigCommand extends Command {
     process.exit(1);
   }
 
-  // 설정 키 선택: private 메서드
-  private async selectConfigKey(): Promise<ConfigKey | null> {
+  private async selectConfigKeyInteractive(): Promise<ConfigKey | null> {
+    const groups = Array.from(
+      new Set(METADATA.map((m) => m.key.split('.')[0])),
+    );
+
+    // 1단계: 그룹 선택
+    const selectedGroup = await new Promise<string | null>((resolve) => {
+      const { unmount } = render(
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="cyan" bold>
+              {icons.config} 설정 그룹 선택
+            </Text>
+          </Box>
+          <Select
+            options={groups.map((g) => ({ label: g.toUpperCase(), value: g }))}
+            onChange={(val) => {
+              unmount();
+              resolve(val);
+            }}
+          />
+        </Box>,
+      );
+    });
+
+    if (!selectedGroup) return null;
+
+    // 2단계: 키 선택
+    const groupItems = METADATA.filter((m) =>
+      m.key.startsWith(selectedGroup + '.'),
+    );
+
     return new Promise<ConfigKey | null>((resolve) => {
       const { unmount } = render(
-        <this.ConfigKeySelector
-          onSelect={(key) => {
-            unmount();
-            resolve(key as ConfigKey);
-          }}
-        />,
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="cyan" bold>
+              {icons.config} [{selectedGroup.toUpperCase()}] 설정 키 선택
+            </Text>
+          </Box>
+          <Select
+            options={groupItems.map((m) => ({ label: m.label, value: m.key }))}
+            onChange={(val) => {
+              unmount();
+              resolve(val as ConfigKey);
+            }}
+          />
+        </Box>,
       );
     });
   }
 
-  // 설정 값 입력: private 메서드
   private async inputConfigValue(configKey: string): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
       const { unmount } = render(
@@ -333,33 +387,6 @@ export class ConfigCommand extends Command {
     });
   }
 
-  // 설정 키 선택 컴포넌트: 클래스 내부에 정의
-  private ConfigKeySelector = ({
-    onSelect,
-  }: {
-    onSelect: (key: string) => void;
-  }) => {
-    return (
-      <Box flexDirection="column">
-        <Box marginBottom={1}>
-          <Text color="cyan" bold>
-            {icons.config} 설정 관리
-          </Text>
-        </Box>
-        <Alert variant="info">설정 키를 선택하세요</Alert>
-        <Box marginTop={1}>
-          <Select
-            options={CONFIG_KEYS}
-            onChange={(value) => {
-              onSelect(value);
-            }}
-          />
-        </Box>
-      </Box>
-    );
-  };
-
-  // 설정 값 입력 컴포넌트: 클래스 내부에 정의
   private ConfigValueInput = ({
     configKey,
     onSubmit,
@@ -367,13 +394,12 @@ export class ConfigCommand extends Command {
     configKey: string;
     onSubmit: (value: string) => void;
   }) => {
-    const metadata = getConfigMetadata();
-    const item = metadata.find((m) => m.key === configKey);
+    const item = METADATA.find((m) => m.key === configKey);
 
     return (
       <Box flexDirection="column">
         <Box marginTop={1}>
-          <Alert variant="info">값을 입력하세요</Alert>
+          <Alert variant="info">값을 입력하세요 [{configKey}]</Alert>
         </Box>
         {item && (
           <Box marginTop={1} marginBottom={0}>

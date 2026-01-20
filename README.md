@@ -68,7 +68,7 @@ ps fetch <문제번호> [옵션]
 
 - `--help`, `-h`: 도움말 표시
 - `--language`, `-l`: 언어 선택 (python, javascript, typescript, cpp)
-  - 기본값: python 또는 설정 파일의 `default-language`
+  - 기본값: python 또는 설정 파일의 `general.default-language`
 
 **예제:**
 
@@ -218,8 +218,8 @@ ps archive                   # 현재 디렉토리에서 문제 번호 자동 �
 - solving 디렉토리에서 문제를 찾아 archive 디렉토리로 이동
 - 설정에 따라 Git add 및 commit 실행
 - 기본 커밋 메시지: "solve: {id} - {title}"
-- `archive-auto-commit` 이 `true` 인 경우, **archive 디렉토리로 이동 후** Git 커밋을 시도하며, 커밋 실패 시 다시 원래 위치로 되돌림 (롤백)
-- `archive-auto-commit` 이 `false` 인 경우, Git 커밋 없이 디렉토리만 이동
+- `archive.auto-commit` 이 `true` 인 경우, **archive 디렉토리로 이동 후** Git 커밋을 시도하며, 커밋 실패 시 다시 원래 위치로 되돌림 (롤백)
+- `archive.auto-commit` 이 `false` 인 경우, Git 커밋 없이 디렉토리만 이동
 
 ---
 
@@ -256,7 +256,7 @@ ps open --workbook 25052     # 문제집 25052 열기
 - 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론
 - `--workbook` 또는 `-w` 옵션으로 문제집 페이지를 열 수 있습니다
 - `--editor` 또는 `-e` 옵션으로 문제의 솔루션 파일이나 디렉토리를 에디터로 열 수 있습니다
-- 에디터는 `ps config set editor <명령어>`로 설정할 수 있습니다 (기본값: `code`)
+- 에디터는 `ps config set editor.command <명령어>`로 설정할 수 있습니다 (기본값: `code`)
 
 ---
 
@@ -339,7 +339,7 @@ ps stats                       # 설정에 저장된 핸들 사용
 
 ### `config` - 설정 관리
 
-프로젝트 설정 파일(.ps-cli.json)을 관리합니다.
+프로젝트 설정(.ps-cli/config.yaml)을 관리합니다.
 
 **사용법:**
 
@@ -352,7 +352,7 @@ ps config <명령어> [키] [값] [옵션]
 - `get [키]`: 설정 값 조회 (키 없으면 대화형 선택)
 - `set [키] [값]`: 설정 값 설정 (키/값 없으면 대화형 선택)
 - `list`: 모든 설정 조회
-- `clear`: .ps-cli.json 파일 삭제
+- `clear`: .ps-cli 폴더 및 모든 설정 삭제
 
 **옵션:**
 
@@ -362,34 +362,34 @@ ps config <명령어> [키] [값] [옵션]
 
 ```bash
 ps config get                         # 대화형으로 키 선택 후 값 조회
-ps config get default-language         # default-language 값 조회
+ps config get general.default-language         # 기본 언어 값 조회
 ps config set                         # 대화형으로 키 선택 후 값 설정
-ps config set editor cursor            # editor를 cursor로 설정
+ps config set editor.command cursor            # 에디터를 cursor로 설정
 ps config list                         # 모든 설정 조회
-ps config clear                        # .ps-cli.json 파일 삭제
+ps config clear                        # .ps-cli 폴더 및 모든 설정 삭제
 ```
 
 **설명:**
 
-- 설정은 현재 프로젝트의 .ps-cli.json 파일에 저장됩니다
+- 설정은 현재 프로젝트의 .ps-cli 디렉토리 내에 저장됩니다
 - 대화형 모드로 키와 값을 선택할 수 있습니다
 
 ## 설정
 
-프로젝트 루트의 `.ps-cli.json` 파일에 저장됩니다.
+프로젝트 루트의 `.ps-cli/config.yaml` 파일에 저장됩니다.
 
 ### 주요 설정
 
-- `default-language`: 기본 언어 (python, javascript, typescript, cpp)
-- `editor`: 에디터 명령어 (code, cursor, vim 등)
-- `auto-open-editor`: fetch 후 자동으로 에디터 열기 (true/false)
-- `include-tag`: README에 알고리즘 분류(태그) 포함 여부 (true/false, 기본값: true)
-- `solved-ac-handle`: Solved.ac 핸들
-- `archive-dir`: 아카이브된 문제 디렉토리 (기본값: problems)
-- `solving-dir`: 푸는 중인 문제 디렉토리 (기본값: solving)
-- `archive-strategy`: 아카이빙 전략
-- `archive-auto-commit`: archive 실행 시 Git 커밋 자동 실행 여부 (true/false, 기본값: true)
-- `archive-commit-message`: archive 시 사용할 Git 커밋 메시지 템플릿 (`{id}`, `{title}` 사용 가능, 기본값: `solve: {id} - {title}`)
+- `general.default-language`: 기본 언어 (python, javascript, typescript, cpp)
+- `general.solved-ac-handle`: Solved.ac 핸들
+- `editor.command`: 에디터 명령어 (code, cursor, vim 등)
+- `editor.auto-open`: fetch 후 자동으로 에디터 열기 (true/false)
+- `paths.solving`: 푸는 중인 문제 디렉토리 (기본값: solving)
+- `paths.archive`: 아카이브된 문제 디렉토리 (기본값: problems)
+- `paths.archive-strategy`: 아카이빙 전략 (flat, by-range, by-tier, by-tag)
+- `archive.auto-commit`: archive 실행 시 Git 커밋 자동 실행 여부 (true/false, 기본값: true)
+- `archive.commit-message`: archive 시 사용할 Git 커밋 메시지 템플릿 (`{id}`, `{title}` 사용 가능, 기본값: `solve: {id} - {title}`)
+- `markdown.include-tag`: README에 알고리즘 분류(태그) 포함 여부 (true/false, 기본값: true)
 
 ### 아카이빙 전략
 

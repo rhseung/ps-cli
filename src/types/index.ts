@@ -166,16 +166,35 @@ export interface SearchResults {
 }
 
 export interface ProjectConfig {
-  archiveDir?: string;
-  solvingDir?: string;
-  archiveStrategy?: string;
-  defaultLanguage?: string;
-  editor?: string;
-  autoOpenEditor?: boolean;
-  solvedAcHandle?: string;
-  archiveAutoCommit?: boolean;
-  archiveCommitMessage?: string;
-  includeTag?: boolean;
+  general?: {
+    defaultLanguage?: string;
+    solvedAcHandle?: string;
+  };
+  editor?: {
+    command?: string;
+    autoOpen?: boolean;
+  };
+  paths?: {
+    solving?: string;
+    archive?: string;
+    archiveStrategy?: string;
+  };
+  archive?: {
+    autoCommit?: boolean;
+    commitMessage?: string;
+  };
+  markdown?: {
+    includeTag?: boolean;
+  };
+  languages?: Record<
+    string,
+    {
+      extension: string;
+      templateFile?: string;
+      compile?: string;
+      run: string;
+    }
+  >;
 }
 
 export type { Workbook, WorkbookProblem } from './workbook';

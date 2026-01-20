@@ -1,5 +1,14 @@
-import { mkdir, readFile, writeFile, access } from 'fs/promises';
-import { join } from 'path';
+import { existsSync } from 'fs';
+import {
+  mkdir,
+  readFile,
+  writeFile,
+  access,
+  copyFile,
+  readdir,
+} from 'fs/promises';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 import { execaCommand, execa } from 'execa';
 import { useEffect, useState, useCallback } from 'react';
@@ -14,7 +23,6 @@ import {
   getArchiveStrategy,
   getIncludeTag,
 } from '../core/config';
-import type { ProjectConfig } from '../types/index';
 
 export type InitStep =
   | 'archive-dir'
@@ -73,6 +81,27 @@ export interface UseInitReturn {
   ) => void;
   getStepLabel: (step: InitStep) => string;
   getStepValue: (step: InitStep) => string;
+}
+
+// 프로젝트 루트 경로 찾기 (dist 또는 src에서 실행될 수 있음)
+function getCliRoot(): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+
+  let current = __dirname;
+  while (current !== dirname(current)) {
+    const templatesDir = join(current, 'templates');
+    try {
+      // package.json과 templates 디렉토리가 같이 있는 곳을 루트로 간주
+      const stats = existsSync(templatesDir);
+      if (stats) return current;
+    } catch {
+      // ignore
+    }
+    current = dirname(current);
+  }
+
+  return join(__dirname, '../..');
 }
 
 export function useInit({ onComplete }: UseInitParams): UseInitReturn {
@@ -221,34 +250,78 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
     async (overrideHandle?: string) => {
       try {
         const cwd = process.cwd();
+        const cliRoot = getCliRoot();
 
-        // 프로젝트별 메타데이터 파일 생성 (.ps-cli.json)
-        const projectConfigPath = join(cwd, '.ps-cli.json');
-        const projectConfig: ProjectConfig = {
-          archiveDir,
-          solvingDir,
-          archiveStrategy,
-          defaultLanguage: language,
-          editor,
-          autoOpenEditor: autoOpen,
-          includeTag,
-        };
-        // handle이 존재하고 빈 문자열이 아닐 때만 추가
-        // overrideHandle이 있으면 우선 사용, 없으면 상태의 handle 사용
-        const handleToUse = overrideHandle ?? handle;
-        if (
-          handleToUse &&
-          typeof handleToUse === 'string' &&
-          handleToUse.trim().length > 0
-        ) {
-          projectConfig.solvedAcHandle = handleToUse.trim();
+        // .ps-cli 폴더 생성
+        const psCliDir = join(cwd, '.ps-cli');
+        const templatesDir = join(psCliDir, 'templates');
+        await mkdir(psCliDir, { recursive: true });
+        await mkdir(templatesDir, { recursive: true });
+        setCreated((prev) => [...prev, '.ps-cli/']);
+
+        // .ps-cli/config.yaml 생성 (주석 포함)
+        const handleToUse = (overrideHandle ?? handle)?.trim() || '';
+        const configYaml = `
+# ps-cli configuration
+# For more information, visit: https://github.com/rhseung/ps-cli
+
+general:
+  # The default programming language for new problems.
+  default_language: ${language}
+  # Your solved.ac handle for statistics.
+  solved_ac_handle: "${handleToUse}"
+
+editor:
+  # The command to open your editor (e.g., code, cursor, vim).
+  command: ${editor}
+  # Whether to automatically open the editor after fetching a problem.
+  auto_open: ${autoOpen}
+
+paths:
+  # Directory for problems you are currently solving.
+  solving: ${solvingDir}
+  # Directory for archived problems.
+  archive: ${archiveDir}
+  # Strategy for archiving (flat, by-range, by-tier, by-tag).
+  archive_strategy: ${archiveStrategy}
+
+archive:
+  # Whether to automatically commit to Git when archiving.
+  auto_commit: true
+  # Commit message template ({id}, {title} available).
+  commit_message: "feat: solve {id} {title}"
+
+markdown:
+  # Whether to include algorithm tags in the problem README.
+  include_tag: ${includeTag}
+
+# Custom language configurations.
+# You can add your own languages here.
+# languages:
+#   rust:
+#     extension: rs
+#     compile: "rustc {file}"
+#     run: "./{file_no_ext}"
+`.trim();
+
+        await writeFile(join(psCliDir, 'config.yaml'), configYaml, 'utf-8');
+        setCreated((prev) => [...prev, '.ps-cli/config.yaml']);
+
+        // 기본 템플릿 복사
+        const defaultTemplatesDir = join(cliRoot, 'templates');
+        if (existsSync(defaultTemplatesDir)) {
+          const files = await readdir(defaultTemplatesDir);
+          for (const file of files) {
+            await copyFile(
+              join(defaultTemplatesDir, file),
+              join(templatesDir, file),
+            );
+          }
+          setCreated((prev) => [
+            ...prev,
+            '.ps-cli/templates/ (기본 템플릿 복사)',
+          ]);
         }
-        await writeFile(
-          projectConfigPath,
-          JSON.stringify(projectConfig, null, 2),
-          'utf-8',
-        );
-        setCreated((prev) => [...prev, '.ps-cli.json']);
 
         // archiveDir가 "." 또는 ""인 경우 디렉토리 생성 스킵
         if (archiveDir !== '.' && archiveDir !== '') {
@@ -278,10 +351,10 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           }
         }
 
-        // .gitignore 업데이트 (solving dir만 포함, archive dir은 Git에 커밋)
+        // .gitignore 업데이트
         const gitignorePath = join(cwd, '.gitignore');
+        // .ps-cli는 git에 포함시키고, solving dir만 무시하도록 함
         const gitignorePatterns: string[] = [];
-        // archiveDir은 Git에 커밋하므로 .gitignore에 포함하지 않음
         if (solvingDir !== '.' && solvingDir !== '') {
           gitignorePatterns.push(`${solvingDir}/`);
         }
@@ -296,7 +369,7 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
               if (!gitignoreContent.includes(pattern)) {
                 updatedContent +=
                   (updatedContent ? '\n' : '') +
-                  `# ps-cli 문제 디렉토리\n${pattern}`;
+                  `\n# ps-cli 문제 디렉토리\n${pattern}`;
                 hasChanges = true;
               }
             }
@@ -329,14 +402,12 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           }
 
           if (!isGitRepo) {
-            // Git 저장소 초기화
             await execaCommand('git init', { cwd });
             setCreated((prev) => [...prev, 'Git 저장소 초기화']);
           }
 
-          // .ps-cli.json과 .gitignore를 스테이징
-          const filesToAdd: string[] = ['.ps-cli.json'];
-          const gitignorePath = join(cwd, '.gitignore');
+          // .ps-cli 폴더와 .gitignore를 스테이징
+          const filesToAdd: string[] = ['.ps-cli'];
           try {
             await access(gitignorePath);
             filesToAdd.push('.gitignore');
@@ -347,12 +418,9 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
           if (filesToAdd.length > 0) {
             await execa('git', ['add', ...filesToAdd], { cwd });
 
-            // 초기 커밋 생성 (이미 커밋이 있는지 확인)
             try {
               await execa('git', ['rev-parse', '--verify', 'HEAD'], { cwd });
-              // HEAD가 있으면 커밋 스킵 (이미 커밋이 있는 경우)
             } catch {
-              // HEAD가 없으면 초기 커밋 생성
               await execa(
                 'git',
                 ['commit', '-m', 'chore: ps-cli 프로젝트 초기화'],
@@ -362,7 +430,6 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
             }
           }
         } catch (err) {
-          // Git 연동 실패해도 계속 진행 (경고만 표시)
           const error = err as NodeJS.ErrnoException;
           console.warn('Git 연동 실패:', error.message);
         }

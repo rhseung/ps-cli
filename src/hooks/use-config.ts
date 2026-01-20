@@ -1,24 +1,27 @@
-import { existsSync } from 'fs';
-import { readFile, writeFile, unlink } from 'fs/promises';
+import { existsSync, mkdirSync } from 'fs';
+import { readFile, writeFile, unlink, rm } from 'fs/promises';
 import { join } from 'path';
 
 import { useEffect, useState } from 'react';
+import { parse, stringify } from 'yaml';
 
-import { getConfigMetadata, type ConfigKey } from '../core';
+import { getConfigMetadata, type ConfigKey, findProjectRoot } from '../core';
 import type { ProjectConfig } from '../types/index';
 
-function getProjectConfigPath(): string {
-  return join(process.cwd(), '.ps-cli.json');
+function getProjectConfigPath(): string | null {
+  const root = findProjectRoot();
+  if (!root) return null;
+  return join(root, '.ps-cli', 'config.yaml');
 }
 
 async function readProjectConfig(): Promise<ProjectConfig | null> {
   const configPath = getProjectConfigPath();
-  if (!existsSync(configPath)) {
+  if (!configPath || !existsSync(configPath)) {
     return null;
   }
   try {
     const content = await readFile(configPath, 'utf-8');
-    return JSON.parse(content) as ProjectConfig;
+    return parse(content) as ProjectConfig;
   } catch {
     return null;
   }
@@ -26,7 +29,30 @@ async function readProjectConfig(): Promise<ProjectConfig | null> {
 
 async function writeProjectConfig(config: ProjectConfig): Promise<void> {
   const configPath = getProjectConfigPath();
-  await writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  if (!configPath) {
+    const root = process.cwd();
+    const psCliDir = join(root, '.ps-cli');
+    if (!existsSync(psCliDir)) {
+      mkdirSync(psCliDir, { recursive: true });
+    }
+    const newConfigPath = join(psCliDir, 'config.yaml');
+    await writeFile(newConfigPath, stringify(config), 'utf-8');
+    return;
+  }
+  await writeFile(configPath, stringify(config), 'utf-8');
+}
+
+function setDeep(obj: Record<string, unknown>, path: string, value: unknown) {
+  const keys = path.split('.');
+  let current = obj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    if (!(key in current) || typeof current[key] !== 'object') {
+      current[key] = {};
+    }
+    current = current[key] as Record<string, unknown>;
+  }
+  current[keys[keys.length - 1]] = value;
 }
 
 export interface UseConfigParams {
@@ -70,9 +96,18 @@ export function useConfig({
   useEffect(() => {
     if (clear && !cleared) {
       void (async () => {
-        const configPath = getProjectConfigPath();
-        if (existsSync(configPath)) {
-          await unlink(configPath);
+        const root = findProjectRoot();
+        if (root) {
+          const psCliDir = join(root, '.ps-cli');
+          if (existsSync(psCliDir)) {
+            // .ps-cli 폴더 전체 삭제
+            await rm(psCliDir, { recursive: true, force: true });
+          }
+          // 레거시 파일 삭제
+          const legacyPath = join(root, '.ps-cli.json');
+          if (existsSync(legacyPath)) {
+            await unlink(legacyPath);
+          }
         }
         setCleared(true);
       })();
@@ -93,7 +128,8 @@ export function useConfig({
           process.exit(1);
         }
 
-        const property = item.property;
+        const path = item.path;
+        let finalValue: unknown = value;
 
         if (item.type === 'boolean') {
           if (value !== 'true' && value !== 'false') {
@@ -102,7 +138,7 @@ export function useConfig({
             );
             process.exit(1);
           }
-          Object.assign(updatedConfig, { [property]: value === 'true' });
+          finalValue = value === 'true';
         } else if (item.type === 'select' && item.suggestions) {
           if (!item.suggestions.includes(value)) {
             console.error(
@@ -110,11 +146,13 @@ export function useConfig({
             );
             process.exit(1);
           }
-          Object.assign(updatedConfig, { [property]: value });
-        } else {
-          Object.assign(updatedConfig, { [property]: value });
         }
 
+        setDeep(
+          updatedConfig as unknown as Record<string, unknown>,
+          path,
+          finalValue,
+        );
         await writeProjectConfig(updatedConfig);
         setSaved(true);
       })();

@@ -167,7 +167,7 @@ export function OpenView({
 - --workbook 옵션으로 문제집 ID를 지정하면 문제집 페이지를 엽니다.
 - --editor 옵션으로 문제 파일을 에디터로 엽니다.
 - 옵션이 없으면 브라우저를 엽니다.
-* 에디터는 config editor 옵션으로 설정할 수 있습니다 (기본값: code)`,
+* 에디터는 ps config set editor.command <명령어> 옵션으로 설정할 수 있습니다 (기본값: code)`,
   autoDetectProblemId: true,
   requireProblemId: false,
   flags: defineFlags(openFlagsSchema),
