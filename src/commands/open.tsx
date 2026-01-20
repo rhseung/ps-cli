@@ -8,7 +8,6 @@ import {
   resolveProblemContext,
   logger,
   getEditor,
-  findSolutionFile,
 } from '../core';
 import { useOpenBrowser } from '../hooks/use-open-browser';
 import { useOpenEditor } from '../hooks/use-open-editor';
@@ -215,15 +214,8 @@ export class OpenCommand extends Command<OpenCommandFlags> {
     }
 
     const mode = flags.editor ? 'editor' : 'browser';
-    let problemPath = context.archiveDir;
-
-    if (flags.editor) {
-      try {
-        problemPath = await findSolutionFile(context.archiveDir);
-      } catch {
-        // solution 파일을 찾을 수 없으면 디렉토리를 엽니다.
-      }
-    }
+    // 에디터로 열 때는 항상 디렉토리를 엽니다
+    const problemPath = context.archiveDir;
 
     await this.renderView(OpenView, {
       problemId: context.problemId,
