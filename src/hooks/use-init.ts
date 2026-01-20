@@ -262,41 +262,41 @@ export function useInit({ onComplete }: UseInitParams): UseInitReturn {
         // .ps-cli/config.yaml 생성 (주석 포함)
         const handleToUse = (overrideHandle ?? handle)?.trim() || '';
         const configYaml = `
-# ps-cli configuration
-# For more information, visit: https://github.com/rhseung/ps-cli
+# ps-cli 설정 파일
+# 더 자세한 정보는 다음을 참고하세요: https://github.com/rhseung/ps-cli
 
 general:
-  # The default programming language for new problems.
+  # 새로운 문제를 가져올 때 사용할 기본 프로그래밍 언어입니다.
   default_language: ${language}
-  # Your solved.ac handle for statistics.
+  # 통계 조회를 위한 Solved.ac 핸들(닉네임)입니다.
   solved_ac_handle: "${handleToUse}"
 
 editor:
-  # The command to open your editor (e.g., code, cursor, vim).
+  # 에디터를 열 때 사용할 명령어입니다 (예: code, cursor, vim).
   command: ${editor}
-  # Whether to automatically open the editor after fetching a problem.
+  # 문제를 가져온 후 자동으로 에디터를 열지 여부입니다.
   auto_open: ${autoOpen}
 
 paths:
-  # Directory for problems you are currently solving.
+  # 현재 풀고 있는 문제들을 담을 디렉토리 경로입니다.
   solving: ${solvingDir}
-  # Directory for archived problems.
+  # 해결한 문제를 보관할 디렉토리 경로입니다.
   archive: ${archiveDir}
-  # Strategy for archiving (flat, by-range, by-tier, by-tag).
+  # 아카이빙 전략입니다 (flat, by-range, by-tier, by-tag).
   archive_strategy: ${archiveStrategy}
 
 archive:
-  # Whether to automatically commit to Git when archiving.
+  # 아카이브 시 자동으로 Git 커밋을 수행할지 여부입니다.
   auto_commit: true
-  # Commit message template ({id}, {title} available).
+  # Git 커밋 메시지 템플릿입니다 ({id}, {title} 사용 가능).
   commit_message: "feat: solve {id} {title}"
 
 markdown:
-  # Whether to include algorithm tags in the problem README.
+  # 문제 README에 알고리즘 분류(태그)를 포함할지 여부입니다.
   include_tag: ${includeTag}
 
-# Custom language configurations.
-# You can add your own languages here.
+# 커스텀 언어 설정
+# 이곳에 직접 새로운 언어를 추가할 수 있습니다.
 # languages:
 #   rust:
 #     extension: rs
