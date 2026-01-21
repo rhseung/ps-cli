@@ -47,3 +47,9 @@ export type {
 
 export { useArchive } from './use-archive';
 export type { UseArchiveParams, UseArchiveReturn } from './use-archive';
+
+export { useTestcaseAc } from './use-testcase-ac';
+export type {
+  UseTestcaseAcParams,
+  UseTestcaseAcReturn,
+} from './use-testcase-ac';

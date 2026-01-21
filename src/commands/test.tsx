@@ -1,6 +1,6 @@
-import { Alert, Spinner } from '@inkjs/ui';
-import { Box, Text } from 'ink';
-import React from 'react';
+import { Alert, Badge, Spinner, StatusMessage } from '@inkjs/ui';
+import { Box, Text, useInput } from 'ink';
+import React, { useEffect, useState } from 'react';
 
 import { TestResultView } from '../components/test-result';
 import {
@@ -9,11 +9,13 @@ import {
   CommandBuilder,
   resolveProblemContext,
   resolveLanguage,
+  findSolutionFile,
+  detectProblemIdFromPath,
   getSupportedLanguagesString,
   icons,
   type Language,
 } from '../core';
-import { useTestRunner } from '../hooks/use-test-runner';
+import { useTestRunner, useTestcaseAc } from '../hooks';
 import type {
   InferFlagsFromSchema,
   FlagDefinitionSchema,
@@ -34,6 +36,11 @@ const testFlagsSchema = {
     description: `watch 모드 (파일 변경 시 자동 재테스트)
                         solution.*, testcases/**/*.txt 파일 변경 감지`,
   },
+  testcaseAc: {
+    type: 'boolean' as const,
+    description:
+      '로컬 테스트 실행 없이 testcase.ac 문제 페이지를 열고 소스를 클립보드에 복사합니다',
+  },
 } as const satisfies FlagDefinitionSchema;
 
 type TestCommandFlags = InferFlagsFromSchema<typeof testFlagsSchema>;
@@ -44,6 +51,94 @@ export interface TestViewProps {
   watch: boolean;
   timeoutMs?: number;
   onComplete: () => void;
+  problemId?: number | null;
+  sourcePath?: string;
+}
+
+interface TestcaseAcPanelProps {
+  problemId: number;
+  sourcePath: string;
+  onComplete: () => void;
+}
+
+function TestcaseAcPanel({
+  problemId,
+  sourcePath,
+  onComplete,
+}: TestcaseAcPanelProps) {
+  const { status, message, error, url, clipboardSuccess, clipboardError } =
+    useTestcaseAc({
+      problemId,
+      sourcePath,
+      onComplete,
+    });
+
+  if (status === 'loading') {
+    return (
+      <Box flexDirection="column" marginTop={1}>
+        <Spinner label={message} />
+      </Box>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <Box flexDirection="column" marginTop={1}>
+        <Alert variant="error">testcase.ac 열기 실패: {error}</Alert>
+        {url && (
+          <Box marginTop={1}>
+            <Text color="gray">URL: {url}</Text>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column" width="100%" marginTop={1}>
+      <StatusMessage variant="success">
+        testcase.ac 페이지를 열었습니다!
+      </StatusMessage>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor="gray"
+        marginTop={1}
+        paddingX={1}
+        paddingY={0}
+        alignSelf="flex-start"
+      >
+        <Text>
+          <Text color="cyan" bold>
+            문제 번호:
+          </Text>{' '}
+          {problemId}
+        </Text>
+        {url && (
+          <Text>
+            <Text color="cyan" bold>
+              URL:
+            </Text>{' '}
+            <Text color="blue" underline>
+              {url}
+            </Text>
+          </Text>
+        )}
+        <Box marginTop={1}>
+          {clipboardSuccess ? (
+            <Badge color="green">클립보드에 복사됨</Badge>
+          ) : (
+            <Badge color="yellow">클립보드 복사 실패</Badge>
+          )}
+        </Box>
+        {clipboardError && !clipboardSuccess && (
+          <Box marginTop={1}>
+            <Alert variant="warning">{clipboardError}</Alert>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
 }
 
 export function TestView({
@@ -52,13 +147,102 @@ export function TestView({
   watch,
   timeoutMs,
   onComplete,
+  problemId,
+  sourcePath,
 }: TestViewProps) {
   const { status, results, summary, error } = useTestRunner({
     problemDir,
     language,
     watch,
     timeoutMs,
+    onComplete: () => {
+      // use-test-runner 훅 내부에서는 onComplete를 사용하지 않습니다.
+      // 완료 시점 관리는 TestView에서 직접 수행합니다.
+    },
+  });
+
+  const [completed, setCompleted] = useState(false);
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [acceptedSuggestion, setAcceptedSuggestion] = useState(false);
+
+  const allPassed =
+    summary.total > 0 &&
+    summary.total === summary.passed &&
+    summary.failed === 0 &&
+    summary.errored === 0;
+
+  // 테스트 완료 후 자동 종료 시점 제어
+  useEffect(() => {
+    if (watch || completed) {
+      return;
+    }
+
+    if (status === 'error') {
+      const timer = setTimeout(() => {
+        setCompleted(true);
+        onComplete();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+
+    if (status === 'ready') {
+      // testcase.ac 제안을 할 수 있는 경우에는 사용자의 입력을 기다립니다.
+      const canSuggest =
+        allPassed && !!problemId && !!sourcePath && !acceptedSuggestion;
+      if (!canSuggest) {
+        const timer = setTimeout(() => {
+          setCompleted(true);
+          onComplete();
+        }, 200);
+        return () => clearTimeout(timer);
+      }
+    }
+
+    return undefined;
+  }, [
+    status,
+    watch,
+    completed,
     onComplete,
+    allPassed,
+    acceptedSuggestion,
+    problemId,
+    sourcePath,
+  ]);
+
+  // 모든 테스트 통과 시 제안 표시
+  useEffect(() => {
+    if (watch) {
+      setShowSuggestion(false);
+      return;
+    }
+
+    if (status === 'ready' && allPassed && problemId && sourcePath) {
+      setShowSuggestion(true);
+    } else {
+      setShowSuggestion(false);
+    }
+  }, [status, allPassed, watch]);
+
+  // 사용자의 Y/N 입력 처리
+  useInput((input, key) => {
+    if (!showSuggestion || acceptedSuggestion || completed) {
+      return;
+    }
+
+    const lower = input.toLowerCase();
+
+    if (lower === 'y' || key.return) {
+      setAcceptedSuggestion(true);
+      setShowSuggestion(false);
+    } else if (lower === 'n' || key.escape) {
+      setShowSuggestion(false);
+      // 거절 시에는 약간의 딜레이 후 종료
+      if (!completed) {
+        setCompleted(true);
+        onComplete();
+      }
+    }
   });
 
   if (status === 'loading') {
@@ -92,6 +276,31 @@ export function TestView({
         </Text>
       </Box>
       <TestResultView results={results} summary={summary} />
+      {showSuggestion && !acceptedSuggestion && (
+        <Box marginTop={1} flexDirection="column">
+          <Alert variant="info">
+            모든 로컬 테스트를 통과했습니다. testcase.ac에서 추가 테스트를
+            실행해 볼까요? (Y/n)
+          </Alert>
+          <Box marginTop={1}>
+            <Text color="gray">
+              Y 또는 Enter: testcase.ac 열기 / N 또는 Esc: 건너뛰기
+            </Text>
+          </Box>
+        </Box>
+      )}
+      {acceptedSuggestion && problemId && sourcePath && !completed && (
+        <TestcaseAcPanel
+          problemId={problemId}
+          sourcePath={sourcePath}
+          onComplete={() => {
+            if (!completed) {
+              setCompleted(true);
+              onComplete();
+            }
+          }}
+        />
+      )}
     </Box>
   );
 }
@@ -121,6 +330,30 @@ export class TestCommand extends Command<TestCommandFlags> {
     // 문제 컨텍스트 해석
     const context = await resolveProblemContext(args);
 
+    // 솔루션 파일 경로
+    const sourcePath = await findSolutionFile(context.archiveDir);
+
+    // 최종 문제 번호 결정
+    let finalProblemId = context.problemId;
+    if (finalProblemId === null) {
+      finalProblemId = detectProblemIdFromPath(context.archiveDir);
+    }
+
+    // --testcase-ac 플래그: 로컬 테스트 없이 바로 testcase.ac 열기
+    if (flags.testcaseAc) {
+      if (finalProblemId === null) {
+        throw new Error(
+          '문제 번호를 찾을 수 없습니다. 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행해주세요.',
+        );
+      }
+
+      await this.renderView(TestcaseAcPanel, {
+        problemId: finalProblemId,
+        sourcePath,
+      });
+      return;
+    }
+
     // 언어 감지
     const language = await resolveLanguage(
       context.archiveDir,
@@ -132,6 +365,8 @@ export class TestCommand extends Command<TestCommandFlags> {
       language,
       watch: Boolean(flags.watch),
       timeoutMs: flags.timeoutMs as number | undefined,
+      problemId: finalProblemId,
+      sourcePath,
     });
   }
 }

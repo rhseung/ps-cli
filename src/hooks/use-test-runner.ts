@@ -29,7 +29,6 @@ export function useTestRunner({
   language,
   watch,
   timeoutMs,
-  onComplete,
 }: UseTestRunnerParams): UseTestRunnerReturn {
   const [status, setStatus] = useState<Status>('loading');
   const [results, setResults] = useState<TestResult[]>([]);
@@ -98,14 +97,6 @@ export function useTestRunner({
       void watcher.close();
     };
   }, [problemDir, watch, runTests]);
-
-  useEffect(() => {
-    if (!watch && status === 'ready') {
-      const timer = setTimeout(() => onComplete(), 200);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [status, watch, onComplete]);
 
   return {
     status,
