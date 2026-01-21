@@ -355,7 +355,7 @@ export class ConfigCommand extends Command {
 
     return new Promise<ConfigKey | null>((resolve) => {
       const { unmount } = render(
-        <Box flexDirection="column">
+        <Box flexDirection="column" marginTop={1}>
           <Box marginBottom={1}>
             <Text color="cyan" bold>
               {icons.config} [{selectedGroup.toUpperCase()}] 설정 키 선택
