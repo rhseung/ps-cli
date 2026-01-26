@@ -179,7 +179,9 @@ function RunView({
   name: 'run',
   description: `코드를 실행합니다 (테스트 없이).
 - 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
-- solution.* 파일을 자동으로 찾아 언어 감지
+- solution.* 파일을 자동으로 찾아 언어 감지 (기본적으로 가장 최근 수정된 파일 사용)
+- 여러 답안 파일 지원: solution-1.py, solution-2.py 형식으로 여러 답안 관리 가능
+- --file 또는 --index 옵션으로 특정 파일 지정 가능
 - --input 옵션으로 입력 파일 지정 가능 (예: testcases/1/input.txt)
 - 옵션 없이 실행 시 표준 입력으로 입력 받기
 - 테스트 케이스 검증 없이 단순 실행

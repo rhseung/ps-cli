@@ -325,7 +325,9 @@ export function TestView({
   name: 'test',
   description: `예제 입출력 기반으로 로컬 테스트를 실행합니다.
 - 현재 디렉토리 또는 지정한 문제 번호의 테스트 실행
-- solution.* 파일을 자동으로 찾아 언어 감지
+- solution.* 파일을 자동으로 찾아 언어 감지 (기본적으로 가장 최근 수정된 파일 사용)
+- 여러 답안 파일 지원: solution-1.py, solution-2.py 형식으로 여러 답안 관리 가능
+- --file 또는 --index 옵션으로 특정 파일 지정 가능
 - testcases/{번호}/input.txt와 testcases/{번호}/output.txt 파일을 기반으로 테스트
 - 문제의 시간 제한을 자동으로 적용
 - --watch 옵션으로 파일 변경 시 자동 재테스트

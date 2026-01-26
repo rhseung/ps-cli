@@ -82,7 +82,8 @@ ps fetch 1000 -l cpp
 
 - Solved.ac API와 BOJ 크롤링을 통해 문제 정보 수집
 - 문제 설명, 입출력 형식, 예제 입출력 파일 자동 생성
-- 선택한 언어의 솔루션 템플릿 파일 생성
+- 선택한 언어의 솔루션 템플릿 파일 생성 (`solution-1.{확장자}` 형식)
+- 같은 언어로 다시 fetch하면 자동으로 다음 인덱스 파일 생성 (`solution-2.{확장자}`, `solution-3.{확장자}` 등)
 - README.md에 문제 정보, 통계, 태그 등 포함
 
 ---
@@ -104,6 +105,8 @@ ps test [문제번호] [옵션]
   - 지원 언어: python, javascript, typescript, cpp
 - `--watch`, `-w`: watch 모드 (파일 변경 시 자동 재테스트)
   - solution._, testcases/\*\*/_.txt 파일 변경 감지
+- `--file`, `-f`: 특정 solution 파일 지정 (예: `solution-2.py`)
+- `--index`: 인덱스로 solution 파일 지정 (예: `2`)
 
 **예제:**
 
@@ -113,12 +116,16 @@ ps test 1000               # 1000번 문제 테스트
 ps test --watch            # watch 모드로 테스트
 ps test 1000 --watch       # 1000번 문제를 watch 모드로 테스트
 ps test --language python  # Python으로 테스트
+ps test --file solution-2.py  # 특정 파일로 테스트
+ps test --index 2          # 인덱스 2의 파일로 테스트
 ```
 
 **설명:**
 
 - 현재 디렉토리 또는 지정한 문제 번호의 테스트 실행
-- solution.\* 파일을 자동으로 찾아 언어 감지
+- solution.\* 파일을 자동으로 찾아 언어 감지 (기본적으로 가장 최근 수정된 파일 사용)
+- 여러 답안 파일이 있는 경우 `--file` 또는 `--index` 옵션으로 특정 파일 지정 가능
+- 파일 네이밍: `solution-1.py`, `solution-2.py` 형식으로 여러 답안 관리 가능
 - testcases/{번호}/input.txt와 testcases/{번호}/output.txt 파일을 기반으로 테스트
 - 문제의 시간 제한을 자동으로 적용
 
@@ -142,6 +149,8 @@ ps run [문제번호] [옵션]
 - `--input`, `-i`: 입력 파일 지정
   - 숫자만 입력 시 testcases/{숫자}/input.txt로 자동 변환 (예: `--input 1`)
   - 전체 경로도 지원 (예: testcases/1/input.txt)
+- `--file`, `-f`: 특정 solution 파일 지정 (예: `solution-2.py`)
+- `--index`: 인덱스로 solution 파일 지정 (예: `2`)
 
 **예제:**
 
@@ -151,12 +160,16 @@ ps run 1000             # 1000번 문제 표준 입력으로 실행
 ps run --language python # Python으로 표준 입력으로 실행
 ps run --input 1         # 테스트 케이스 1번 사용
 ps run --input testcases/1/input.txt # 전체 경로로 입력 파일 지정
+ps run --file solution-2.py          # 특정 파일로 실행
+ps run --index 2                     # 인덱스 2의 파일로 실행
 ```
 
 **설명:**
 
 - 현재 디렉토리 또는 지정한 문제 번호의 코드 실행
-- solution.\* 파일을 자동으로 찾아 언어 감지
+- solution.\* 파일을 자동으로 찾아 언어 감지 (기본적으로 가장 최근 수정된 파일 사용)
+- 여러 답안 파일이 있는 경우 `--file` 또는 `--index` 옵션으로 특정 파일 지정 가능
+- 파일 네이밍: `solution-1.py`, `solution-2.py` 형식으로 여러 답안 관리 가능
 - --input 옵션으로 입력 파일 지정 가능 (예: `--input 1` 또는 `--input testcases/1/input.txt`)
 - 옵션 없이 실행 시 표준 입력으로 입력 받기
 - 테스트 케이스 검증 없이 단순 실행
@@ -178,6 +191,8 @@ ps submit [문제번호] [옵션]
 - `--help`, `-h`: 도움말 표시
 - `--language`, `-l`: 언어 선택 (지정 시 자동 감지 무시)
   - 지원 언어: python, javascript, typescript, cpp
+- `--file`, `-f`: 특정 solution 파일 지정 (예: `solution-2.py`)
+- `--index`, `-i`: 인덱스로 solution 파일 지정 (예: `2`)
 
 **예제:**
 
@@ -185,12 +200,16 @@ ps submit [문제번호] [옵션]
 ps submit                    # 현재 디렉토리에서 제출
 ps submit 1000                # 1000번 문제 제출
 ps submit --language python   # Python으로 제출
+ps submit --file solution-2.py  # 특정 파일로 제출
+ps submit --index 2          # 인덱스 2의 파일로 제출
 ```
 
 **설명:**
 
 - 문제 번호를 인자로 전달하거나 문제 디렉토리에서 실행하면 자동으로 문제 번호를 추론
-- solution.\* 파일을 자동으로 찾아 언어 감지
+- solution.\* 파일을 자동으로 찾아 언어 감지 (기본적으로 가장 최근 수정된 파일 사용)
+- 여러 답안 파일이 있는 경우 `--file` 또는 `--index` 옵션으로 특정 파일 지정 가능
+- 파일 네이밍: `solution-1.py`, `solution-2.py` 형식으로 여러 답안 관리 가능
 - 소스 코드를 클립보드에 자동 복사
 - 제출 페이지를 브라우저로 자동 열기
 
@@ -425,6 +444,42 @@ ps config clear                        # .ps-cli 폴더 및 모든 설정 삭제
   ```
 
 **참고:** solving 디렉토리는 항상 평면적으로 나열됩니다.
+
+## 여러 답안 파일 지원
+
+한 문제에 대해 여러 답안 파일을 관리할 수 있습니다.
+
+### 파일 네이밍
+
+- 형식: `solution-{인덱스}.{확장자}` (예: `solution-1.py`, `solution-2.py`, `solution-1.cpp`)
+- 첫 번째 파일은 `solution-1.{확장자}`로 시작
+- 같은 언어로 `ps fetch`를 다시 실행하면 자동으로 다음 인덱스 파일 생성
+
+### 파일 선택
+
+- **기본 동작**: 가장 최근 수정된 파일을 자동으로 선택
+- **직접 지정**: `--file` 또는 `--index` 옵션으로 특정 파일 지정
+
+**예제:**
+
+```bash
+# 가장 최근 파일로 테스트 (기본값)
+ps test
+
+# 특정 파일로 테스트
+ps test --file solution-2.py
+ps test --index 2
+
+# 다른 명령어에서도 동일하게 사용 가능
+ps run --index 2
+ps submit --file solution-3.py
+```
+
+### 사용 사례
+
+- 같은 문제를 여러 알고리즘으로 해결한 경우
+- 같은 언어로 여러 버전의 코드를 작성한 경우
+- 다른 언어로 같은 문제를 해결한 경우
 
 ## 워크플로우
 
