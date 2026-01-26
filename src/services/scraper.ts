@@ -329,6 +329,18 @@ function htmlToMarkdown(
   return result.trim();
 }
 
+/**
+ * LaTeX 수식을 Markdown 형식으로 변환
+ * \[ ... \] 형식을 ${ ... }$ 형식으로 변환
+ */
+function convertLatexToMarkdown(text: string): string {
+  // \[ ... \] 패턴을 ${ ... }$로 변환
+  // non-greedy 매칭으로 첫 번째 \]까지 매칭
+  return text.replace(/\\\[([\s\S]*?)\\\]/g, (match, latexCode) => {
+    return `$${latexCode}$`;
+  });
+}
+
 export async function scrapeProblem(
   problemId: number,
 ): Promise<ScrapedProblem> {
@@ -349,11 +361,14 @@ export async function scrapeProblem(
     if (!description) {
       description = descriptionEl.text().trim();
     }
+    // LaTeX 변환 적용
+    description = convertLatexToMarkdown(description);
   } else {
     // 대체 선택자 시도
     const altDesc = $('[id*="description"]').first();
     if (altDesc.length > 0) {
       description = altDesc.text().trim();
+      description = convertLatexToMarkdown(description);
     }
   }
 
@@ -366,11 +381,14 @@ export async function scrapeProblem(
     if (!inputFormat) {
       inputFormat = inputEl.text().trim();
     }
+    // LaTeX 변환 적용
+    inputFormat = convertLatexToMarkdown(inputFormat);
   } else {
     // 대체 선택자 시도
     const altInput = $('[id*="input"]').first();
     if (altInput.length > 0) {
       inputFormat = altInput.text().trim();
+      inputFormat = convertLatexToMarkdown(inputFormat);
     }
   }
 
@@ -383,11 +401,14 @@ export async function scrapeProblem(
     if (!outputFormat) {
       outputFormat = outputEl.text().trim();
     }
+    // LaTeX 변환 적용
+    outputFormat = convertLatexToMarkdown(outputFormat);
   } else {
     // 대체 선택자 시도
     const altOutput = $('[id*="output"]').first();
     if (altOutput.length > 0) {
       outputFormat = altOutput.text().trim();
+      outputFormat = convertLatexToMarkdown(outputFormat);
     }
   }
 
