@@ -185,7 +185,7 @@ function ProblemActionView({
     return (
       <OpenView
         problemId={problemId}
-        problemDir={sourcePath || problemDir || undefined}
+        problemDir={problemDir || undefined}
         mode="editor"
         onComplete={onComplete}
       />
