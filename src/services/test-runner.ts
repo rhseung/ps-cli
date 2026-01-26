@@ -11,6 +11,7 @@ export interface RunAllTestsOptions {
   problemDir: string;
   language: Language;
   timeoutMs?: number;
+  solutionPath?: string; // 특정 solution 파일 경로 (지정하지 않으면 자동으로 찾음)
 }
 
 export interface RunAllTestsResult {
@@ -39,6 +40,7 @@ export async function runAllTests({
   problemDir,
   language,
   timeoutMs,
+  solutionPath,
 }: RunAllTestsOptions): Promise<RunAllTestsResult> {
   const testcasesDir = join(problemDir, 'testcases');
   let caseDirs: string[] = [];
@@ -92,6 +94,7 @@ export async function runAllTests({
       language,
       inputPath,
       timeoutMs: effectiveTimeout,
+      solutionPath,
     });
 
     // 실행 에러 처리

@@ -8,6 +8,7 @@ export interface UseRunSolutionParams {
   language: Language;
   inputFile?: string;
   onComplete: () => void;
+  solutionPath?: string; // 특정 solution 파일 경로
 }
 
 export interface RunResult {
@@ -30,6 +31,7 @@ export function useRunSolution({
   language,
   inputFile,
   onComplete,
+  solutionPath,
 }: UseRunSolutionParams): UseRunSolutionReturn {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
     'loading',
@@ -49,6 +51,7 @@ export function useRunSolution({
           language,
           inputPath: inputFile,
           timeoutMs: effectiveTimeout,
+          solutionPath,
         });
         setResult(runResult);
         setStatus('ready');
@@ -65,7 +68,7 @@ export function useRunSolution({
     }
 
     void run();
-  }, [problemDir, language, inputFile, onComplete]);
+  }, [problemDir, language, inputFile, onComplete, solutionPath]);
 
   return {
     status,

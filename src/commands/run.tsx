@@ -10,6 +10,10 @@ import {
   CommandBuilder,
   resolveProblemContext,
   resolveLanguage,
+  findSolutionFile,
+  findSolutionFileByIndex,
+  findSolutionFiles,
+  detectLanguageFromFile,
   getSupportedLanguagesString,
   icons,
   type Language,
@@ -34,6 +38,15 @@ const runFlagsSchema = {
     shortFlag: 'i',
     description: '입력 파일 지정 (예: 1 또는 testcases/1/input.txt)',
   },
+  file: {
+    type: 'string' as const,
+    shortFlag: 'f',
+    description: '특정 solution 파일 지정 (예: solution-2.py)',
+  },
+  index: {
+    type: 'string' as const,
+    description: '인덱스로 solution 파일 지정 (예: 2)',
+  },
 } as const satisfies FlagDefinitionSchema;
 
 type RunCommandFlags = InferFlagsFromSchema<typeof runFlagsSchema>;
@@ -43,6 +56,7 @@ interface RunViewProps {
   language: Language;
   inputFile?: string;
   onComplete: () => void;
+  solutionPath?: string; // 실행에 사용할 solution 파일 경로
 }
 
 function RunView({
@@ -50,12 +64,14 @@ function RunView({
   language,
   inputFile,
   onComplete,
+  solutionPath,
 }: RunViewProps) {
   const { status, result, error } = useRunSolution({
     problemDir,
     language,
     inputFile,
     onComplete,
+    solutionPath,
   });
 
   if (status === 'loading') {
@@ -177,12 +193,76 @@ function RunView({
     'run --language python             # Python으로 표준 입력으로 실행',
     'run --input 1                     # 테스트 케이스 1번 사용',
     'run --input testcases/1/input.txt # 전체 경로로 입력 파일 지정',
+    'run --file solution-2.py          # 특정 파일로 실행',
+    'run --index 2                     # 인덱스 2의 파일로 실행',
   ],
 })
 export class RunCommand extends Command<RunCommandFlags> {
   async execute(args: string[], flags: RunCommandFlags): Promise<void> {
     // 문제 컨텍스트 해석
     const context = await resolveProblemContext(args);
+
+    // 솔루션 파일 경로 결정 및 언어 감지
+    let solutionPath: string | undefined;
+    let detectedLanguage: Language;
+
+    if (flags.file) {
+      // --file 플래그로 특정 파일 지정
+      const filePath = flags.file as string;
+      if (filePath.startsWith('/') || filePath.match(/^[A-Z]:/)) {
+        solutionPath = filePath;
+      } else {
+        // 상대 경로인 경우 파일명만 지정된 것으로 간주
+        solutionPath = join(context.archiveDir, filePath);
+      }
+
+      // 파일명에서 언어 감지
+      const fileName = solutionPath.split(/[/\\]/).pop() || '';
+      const fileLang = detectLanguageFromFile(fileName);
+      if (flags.language) {
+        detectedLanguage = flags.language as Language;
+      } else if (fileLang) {
+        detectedLanguage = fileLang;
+      } else {
+        // 언어를 감지할 수 없으면 resolveLanguage 시도
+        detectedLanguage = await resolveLanguage(
+          context.archiveDir,
+          flags.language as Language | undefined,
+        );
+      }
+    } else if (flags.index) {
+      // --index 플래그로 인덱스 지정
+      const index = parseInt(flags.index as string, 10);
+      if (isNaN(index) || index < 1) {
+        throw new Error(`유효하지 않은 인덱스입니다: ${flags.index}`);
+      }
+
+      // 언어가 지정되어 있으면 사용, 없으면 먼저 파일 찾기
+      if (flags.language) {
+        detectedLanguage = flags.language as Language;
+        solutionPath = await findSolutionFileByIndex(
+          context.archiveDir,
+          index,
+          detectedLanguage,
+        );
+      } else {
+        // 언어가 없으면 모든 파일에서 찾기
+        const files = await findSolutionFiles(context.archiveDir);
+        const targetFile = files.find((f) => f.index === index);
+        if (!targetFile) {
+          throw new Error(`인덱스 ${index}의 solution 파일을 찾을 수 없습니다.`);
+        }
+        solutionPath = targetFile.path;
+        detectedLanguage = targetFile.language as Language;
+      }
+    } else {
+      // 기본값: 언어 감지 후 가장 최근 파일 찾기
+      detectedLanguage = await resolveLanguage(
+        context.archiveDir,
+        flags.language as Language | undefined,
+      );
+      // solutionPath는 undefined로 두어 runner에서 자동으로 찾도록 함
+    }
 
     // 입력 파일 찾기 (옵션이 있을 때만)
     let inputPath: string | undefined;
@@ -202,16 +282,11 @@ export class RunCommand extends Command<RunCommandFlags> {
       }
     }
 
-    // 언어 감지
-    const detectedLanguage = await resolveLanguage(
-      context.archiveDir,
-      flags.language as Language | undefined,
-    );
-
     await this.renderView(RunView, {
       problemDir: context.archiveDir,
       language: detectedLanguage,
       inputFile: inputPath,
+      solutionPath,
     });
   }
 }

@@ -10,6 +10,9 @@ import {
   resolveProblemContext,
   resolveLanguage,
   findSolutionFile,
+  findSolutionFileByIndex,
+  findSolutionFiles,
+  detectLanguageFromFile,
   detectProblemIdFromPath,
   getSupportedLanguagesString,
   icons,
@@ -41,6 +44,16 @@ const testFlagsSchema = {
     description:
       '로컬 테스트 실행 없이 testcase.ac 문제 페이지를 열고 소스를 클립보드에 복사합니다',
   },
+  file: {
+    type: 'string' as const,
+    shortFlag: 'f',
+    description: '특정 solution 파일 지정 (예: solution-2.py)',
+  },
+  index: {
+    type: 'string' as const,
+    shortFlag: 'i',
+    description: '인덱스로 solution 파일 지정 (예: 2)',
+  },
 } as const satisfies FlagDefinitionSchema;
 
 type TestCommandFlags = InferFlagsFromSchema<typeof testFlagsSchema>;
@@ -53,6 +66,7 @@ export interface TestViewProps {
   onComplete: () => void;
   problemId?: number | null;
   sourcePath?: string;
+  solutionPath?: string; // 테스트에 사용할 solution 파일 경로
 }
 
 interface TestcaseAcPanelProps {
@@ -149,12 +163,14 @@ export function TestView({
   onComplete,
   problemId,
   sourcePath,
+  solutionPath,
 }: TestViewProps) {
   const { status, results, summary, error } = useTestRunner({
     problemDir,
     language,
     watch,
     timeoutMs,
+    solutionPath,
     onComplete: () => {
       // use-test-runner 훅 내부에서는 onComplete를 사용하지 않습니다.
       // 완료 시점 관리는 TestView에서 직접 수행합니다.
@@ -323,6 +339,8 @@ export function TestView({
     'test --watch            # watch 모드로 테스트',
     'test 1000 --watch       # 1000번 문제를 watch 모드로 테스트',
     'test --language python  # Python으로 테스트',
+    'test --file solution-2.py  # 특정 파일로 테스트',
+    'test --index 2          # 인덱스 2의 파일로 테스트',
   ],
 })
 export class TestCommand extends Command<TestCommandFlags> {
@@ -330,8 +348,70 @@ export class TestCommand extends Command<TestCommandFlags> {
     // 문제 컨텍스트 해석
     const context = await resolveProblemContext(args);
 
-    // 솔루션 파일 경로
-    const sourcePath = await findSolutionFile(context.archiveDir);
+    // 솔루션 파일 경로 결정 및 언어 감지
+    let sourcePath: string;
+    let language: Language;
+
+    if (flags.file) {
+      // --file 플래그로 특정 파일 지정
+      const filePath = flags.file as string;
+      if (filePath.startsWith('/') || filePath.match(/^[A-Z]:/)) {
+        sourcePath = filePath;
+      } else {
+        // 상대 경로인 경우 파일명만 지정된 것으로 간주
+        const { join } = await import('path');
+        sourcePath = join(context.archiveDir, filePath);
+      }
+
+      // 파일명에서 언어 감지
+      const fileName = sourcePath.split(/[/\\]/).pop() || '';
+      const fileLang = detectLanguageFromFile(fileName);
+      if (flags.language) {
+        language = flags.language as Language;
+      } else if (fileLang) {
+        language = fileLang;
+      } else {
+        // 언어를 감지할 수 없으면 resolveLanguage 시도
+        language = await resolveLanguage(
+          context.archiveDir,
+          flags.language as Language | undefined,
+        );
+      }
+    } else if (flags.index) {
+      // --index 플래그로 인덱스 지정
+      const index = parseInt(flags.index as string, 10);
+      if (isNaN(index) || index < 1) {
+        throw new Error(`유효하지 않은 인덱스입니다: ${flags.index}`);
+      }
+
+      // 언어가 지정되어 있으면 사용, 없으면 먼저 파일 찾기
+      if (flags.language) {
+        language = flags.language as Language;
+        sourcePath = await findSolutionFileByIndex(
+          context.archiveDir,
+          index,
+          language,
+        );
+      } else {
+        // 언어가 없으면 모든 파일에서 찾기
+        const files = await findSolutionFiles(context.archiveDir);
+        const targetFile = files.find((f) => f.index === index);
+        if (!targetFile) {
+          throw new Error(
+            `인덱스 ${index}의 solution 파일을 찾을 수 없습니다.`,
+          );
+        }
+        sourcePath = targetFile.path;
+        language = targetFile.language as Language;
+      }
+    } else {
+      // 기본값: 언어 감지 후 가장 최근 파일 찾기
+      language = await resolveLanguage(
+        context.archiveDir,
+        flags.language as Language | undefined,
+      );
+      sourcePath = await findSolutionFile(context.archiveDir, language);
+    }
 
     // 최종 문제 번호 결정
     let finalProblemId = context.problemId;
@@ -354,12 +434,6 @@ export class TestCommand extends Command<TestCommandFlags> {
       return;
     }
 
-    // 언어 감지
-    const language = await resolveLanguage(
-      context.archiveDir,
-      flags.language as Language | undefined,
-    );
-
     await this.renderView(TestView, {
       problemDir: context.archiveDir,
       language,
@@ -367,6 +441,7 @@ export class TestCommand extends Command<TestCommandFlags> {
       timeoutMs: flags.timeoutMs as number | undefined,
       problemId: finalProblemId,
       sourcePath,
+      solutionPath: sourcePath,
     });
   }
 }

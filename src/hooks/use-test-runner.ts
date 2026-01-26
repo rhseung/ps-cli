@@ -15,6 +15,7 @@ export interface UseTestRunnerParams {
   watch: boolean;
   timeoutMs?: number;
   onComplete: () => void;
+  solutionPath?: string; // 특정 solution 파일 경로
 }
 
 export interface UseTestRunnerReturn {
@@ -29,6 +30,7 @@ export function useTestRunner({
   language,
   watch,
   timeoutMs,
+  solutionPath,
 }: UseTestRunnerParams): UseTestRunnerReturn {
   const [status, setStatus] = useState<Status>('loading');
   const [results, setResults] = useState<TestResult[]>([]);
@@ -51,6 +53,7 @@ export function useTestRunner({
         problemDir,
         language,
         timeoutMs,
+        solutionPath,
       })
         .then(({ results, summary }) => {
           setResults(results);
@@ -62,7 +65,7 @@ export function useTestRunner({
           setStatus('error');
         });
     },
-    [problemDir, language, timeoutMs, watch],
+    [problemDir, language, timeoutMs, watch, solutionPath],
   );
 
   // 초기 테스트 실행

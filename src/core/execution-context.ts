@@ -1,4 +1,4 @@
-import { access } from 'fs/promises';
+import { access, stat } from 'fs/promises';
 import { readdir } from 'fs/promises';
 import { join } from 'path';
 
@@ -7,6 +7,7 @@ import type { ProblemContext } from '../types/execution';
 import {
   detectLanguageFromFile,
   getSupportedLanguages,
+  getLanguageConfig,
   type Language,
 } from './language';
 import {
@@ -137,16 +138,158 @@ export async function resolveLanguage(
 }
 
 /**
- * 문제 디렉토리에서 solution 파일을 찾습니다.
+ * solution 파일 이름에서 인덱스를 파싱합니다.
+ * @param filename - 파일 이름
+ * @returns 인덱스 (파싱 실패 시 null)
+ */
+function parseSolutionIndex(filename: string): number | null {
+  // solution-{인덱스}.{확장자} 형식
+  const match = filename.match(/^solution-(\d+)\./);
+  if (match) {
+    const index = parseInt(match[1], 10);
+    if (!isNaN(index) && index > 0) {
+      return index;
+    }
+  }
+
+  // solution.{확장자} 형식은 인덱스 1로 간주 (하위 호환성)
+  if (filename.match(/^solution\./)) {
+    return 1;
+  }
+
+  return null;
+}
+
+/**
+ * 문제 디렉토리에서 모든 solution 파일을 찾습니다.
  * @param problemDir - 문제 디렉토리 경로
+ * @param language - 언어 필터 (선택적)
+ * @returns solution 파일 정보 배열
+ */
+export async function findSolutionFiles(
+  problemDir: string,
+  language?: Language,
+): Promise<
+  Array<{
+    path: string;
+    filename: string;
+    index: number;
+    language: string;
+    mtime: Date;
+  }>
+> {
+  try {
+    const files = await readdir(problemDir);
+    const solutionFiles: Array<{
+      path: string;
+      filename: string;
+      index: number;
+      language: string;
+      mtime: Date;
+    }> = [];
+
+    for (const file of files) {
+      if (!file.startsWith('solution')) {
+        continue;
+      }
+
+      const detectedLang = detectLanguageFromFile(file);
+      if (!detectedLang) {
+        continue;
+      }
+
+      // 언어 필터가 있으면 확인
+      if (language && detectedLang !== language) {
+        continue;
+      }
+
+      const index = parseSolutionIndex(file);
+      if (index === null) {
+        continue;
+      }
+
+      const filePath = join(problemDir, file);
+      try {
+        const stats = await stat(filePath);
+        solutionFiles.push({
+          path: filePath,
+          filename: file,
+          index,
+          language: detectedLang,
+          mtime: stats.mtime,
+        });
+      } catch {
+        // stat 실패 시 스킵
+      }
+    }
+
+    return solutionFiles;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 문제 디렉토리에서 가장 최근 수정된 solution 파일을 찾습니다.
+ * @param problemDir - 문제 디렉토리 경로
+ * @param language - 언어 필터 (선택적)
  * @returns solution 파일의 전체 경로
  * @throws solution 파일을 찾을 수 없는 경우
  */
-export async function findSolutionFile(problemDir: string): Promise<string> {
-  const files = await readdir(problemDir);
-  const solutionFile = files.find((f) => f.startsWith('solution.'));
-  if (!solutionFile) {
+export async function findLatestSolutionFile(
+  problemDir: string,
+  language?: Language,
+): Promise<string> {
+  const files = await findSolutionFiles(problemDir, language);
+  if (files.length === 0) {
     throw new Error('solution.* 파일을 찾을 수 없습니다.');
   }
-  return join(problemDir, solutionFile);
+
+  // 가장 최근 수정된 파일 찾기
+  const latest = files.reduce((prev, current) => {
+    return current.mtime > prev.mtime ? current : prev;
+  });
+
+  return latest.path;
+}
+
+/**
+ * 문제 디렉토리에서 특정 인덱스의 solution 파일을 찾습니다.
+ * @param problemDir - 문제 디렉토리 경로
+ * @param index - 인덱스
+ * @param language - 언어 필터 (선택적)
+ * @returns solution 파일의 전체 경로
+ * @throws solution 파일을 찾을 수 없는 경우
+ */
+export async function findSolutionFileByIndex(
+  problemDir: string,
+  index: number,
+  language?: Language,
+): Promise<string> {
+  const files = await findSolutionFiles(problemDir, language);
+  const targetFile = files.find((f) => f.index === index);
+
+  if (!targetFile) {
+    const langText = language ? ` (언어: ${language})` : '';
+    throw new Error(
+      `인덱스 ${index}의 solution 파일을 찾을 수 없습니다.${langText}`,
+    );
+  }
+
+  return targetFile.path;
+}
+
+/**
+ * 문제 디렉토리에서 solution 파일을 찾습니다.
+ * 기본적으로 가장 최근 수정된 파일을 반환합니다.
+ * @param problemDir - 문제 디렉토리 경로
+ * @param language - 언어 필터 (선택적)
+ * @returns solution 파일의 전체 경로
+ * @throws solution 파일을 찾을 수 없는 경우
+ */
+export async function findSolutionFile(
+  problemDir: string,
+  language?: Language,
+): Promise<string> {
+  return findLatestSolutionFile(problemDir, language);
 }

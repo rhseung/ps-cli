@@ -5,13 +5,14 @@ import { createInterface } from 'readline';
 import { execaCommand } from 'execa';
 
 import type { Language } from '../core';
-import { getLanguageConfig } from '../core';
+import { getLanguageConfig, findSolutionFile } from '../core';
 
 export interface RunSolutionParams {
   problemDir: string;
   language: Language;
   inputPath?: string;
   timeoutMs?: number;
+  solutionPath?: string; // 특정 solution 파일 경로 (지정하지 않으면 자동으로 찾음)
 }
 
 export interface RunResult {
@@ -49,10 +50,24 @@ export async function runSolution({
   language,
   inputPath,
   timeoutMs = 5000,
+  solutionPath: providedSolutionPath,
 }: RunSolutionParams): Promise<RunResult> {
+  // solution 파일 경로 결정
+  let solutionPath: string;
+  if (providedSolutionPath) {
+    // 절대 경로인지 확인
+    if (providedSolutionPath.startsWith('/') || providedSolutionPath.match(/^[A-Z]:/)) {
+      solutionPath = providedSolutionPath;
+    } else {
+      // 상대 경로인 경우 problemDir 기준으로 해석
+      solutionPath = join(problemDir, providedSolutionPath);
+    }
+  } else {
+    // 자동으로 가장 최근 파일 찾기
+    solutionPath = await findSolutionFile(problemDir, language);
+  }
+
   const langConfig = getLanguageConfig(language);
-  const solutionFile = `solution.${langConfig.extension}`;
-  const solutionPath = join(problemDir, solutionFile);
 
   // 표준 입력을 받는 경우 먼저 읽기
   let input: string | undefined;

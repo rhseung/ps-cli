@@ -1,5 +1,5 @@
 import { existsSync } from 'fs';
-import { mkdir, writeFile, readFile } from 'fs/promises';
+import { mkdir, writeFile, readFile, readdir, stat } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,6 +11,7 @@ import {
   parseTimeLimitToMs,
   getIncludeTag,
   findProjectRoot,
+  detectLanguageFromFile,
   type Language,
 } from '../core';
 import type { Problem } from '../types/index';
@@ -83,6 +84,80 @@ function getProjectRoot(): string {
   return join(__dirname, '../..');
 }
 
+/**
+ * solution 파일 이름에서 인덱스를 파싱합니다.
+ * @param filename - 파일 이름 (예: "solution-1.py", "solution.py")
+ * @returns 인덱스 (파싱 실패 시 null)
+ */
+function parseSolutionIndex(filename: string): number | null {
+  // solution-{인덱스}.{확장자} 형식
+  const match = filename.match(/^solution-(\d+)\./);
+  if (match) {
+    const index = parseInt(match[1], 10);
+    if (!isNaN(index) && index > 0) {
+      return index;
+    }
+  }
+
+  // solution.{확장자} 형식은 인덱스 1로 간주 (하위 호환성)
+  if (filename.match(/^solution\./)) {
+    return 1;
+  }
+
+  return null;
+}
+
+/**
+ * 문제 디렉토리에서 해당 언어의 다음 solution 파일 인덱스를 계산합니다.
+ * @param problemDir - 문제 디렉토리 경로
+ * @param language - 언어
+ * @returns 다음 인덱스 (기본값: 1)
+ */
+async function getNextSolutionIndex(
+  problemDir: string,
+  language: Language,
+): Promise<number> {
+  try {
+    if (!existsSync(problemDir)) {
+      return 1;
+    }
+
+    const files = await readdir(problemDir);
+    const langConfig = getLanguageConfig(language);
+    const extension = langConfig.extension;
+
+    let maxIndex = 0;
+
+    for (const file of files) {
+      // 해당 언어의 확장자인지 확인
+      if (!file.endsWith(`.${extension}`)) {
+        continue;
+      }
+
+      // solution 파일인지 확인
+      if (!file.startsWith('solution')) {
+        continue;
+      }
+
+      // 언어 감지 (같은 확장자라도 다른 언어일 수 있음)
+      const detectedLang = detectLanguageFromFile(file);
+      if (detectedLang !== language) {
+        continue;
+      }
+
+      const index = parseSolutionIndex(file);
+      if (index !== null && index > maxIndex) {
+        maxIndex = index;
+      }
+    }
+
+    return maxIndex + 1;
+  } catch {
+    // 오류 발생 시 기본값 1 반환
+    return 1;
+  }
+}
+
 export async function generateProblemFiles(
   problem: Problem,
   language: Language = 'python',
@@ -93,7 +168,13 @@ export async function generateProblemFiles(
   const langConfig = getLanguageConfig(language);
   const projectRoot = getProjectRoot();
   const userProjectRoot = findProjectRoot(process.cwd());
-  const solutionPath = join(problemDir, `solution.${langConfig.extension}`);
+
+  // 다음 인덱스 계산
+  const nextIndex = await getNextSolutionIndex(problemDir, language);
+  const solutionPath = join(
+    problemDir,
+    `solution-${nextIndex}.${langConfig.extension}`,
+  );
 
   let templateContent = '';
   let templateFound = false;
