@@ -264,8 +264,9 @@ function htmlToMarkdown(
           break;
         }
         case 'ul':
-        case 'ol':
-          $node.find('li').each((i, li) => {
+        case 'ol': {
+          // 직접 자식 li만 처리 (중첩 리스트는 재귀적으로 처리됨)
+          $node.children('li').each((i, li) => {
             const liContent = htmlToMarkdown($, $(li));
             if (liContent) {
               result += `- ${liContent}\n`;
@@ -273,6 +274,7 @@ function htmlToMarkdown(
           });
           result += '\n';
           break;
+        }
         case 'li':
           result += htmlToMarkdown($, $node);
           break;
