@@ -3,7 +3,12 @@
 **대화형** 인터페이스와 **사용자 친화적인 디자인**을 갖춘 백준 문제 해결 CLI 도구입니다.
 검색부터 제출까지, 모든 과정을 직관적이고 아름다운 터미널 환경에서 해결하세요.
 
-Nerd Font 사용을 권장합니다.
+Nerd Font 사용이 필요합니다.
+
+<img width="75%" alt="CleanShot 2026-01-31 at 11 36 08@2x" src="https://github.com/user-attachments/assets/5e10b16e-e5d6-4c0d-a036-3bbe7a9d891a" />
+
+<img width="75%" alt="CleanShot 2026-01-31 at 11 34 26@2x" src="https://github.com/user-attachments/assets/df352cf2-ac60-4061-adb3-07b1145356af" />
+
 
 ## 설치
 
