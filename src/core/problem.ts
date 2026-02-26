@@ -1,4 +1,4 @@
-import { readFile } from 'fs/promises';
+import { readFile, readdir, stat } from 'fs/promises';
 import { join } from 'path';
 
 import type { Problem } from '../types/index';
@@ -372,4 +372,73 @@ export function getSolvingDirPath(
 
   // 그 외의 경우 해당 디렉토리 아래에 직접 생성
   return join(baseDir, solvingDir, problemId.toString());
+}
+
+/** solving 디렉터리에서 meta.json을 가진 문제들의 정보 */
+export interface SolvingProblemInfo {
+  problemId: number;
+  title: string;
+  level?: number;
+  problemDir: string;
+}
+
+/**
+ * solving 디렉터리에 있는 모든 문제를 스캔하고 meta.json에서 정보를 읽어 반환합니다.
+ * @param cwd - 현재 작업 디렉터리 (기본값: process.cwd())
+ * @returns solving 디렉터리에 있는 문제 목록 (problemId 기준 오름차순)
+ */
+export async function getSolvingProblems(
+  cwd: string = process.cwd(),
+): Promise<SolvingProblemInfo[]> {
+  const projectRoot = findProjectRoot(cwd);
+  if (!projectRoot) {
+    return [];
+  }
+
+  const solvingDir = getSolvingDir();
+  const solvingBasePath =
+    solvingDir === '.' || solvingDir === ''
+      ? projectRoot
+      : join(projectRoot, solvingDir);
+
+  const results: SolvingProblemInfo[] = [];
+
+  try {
+    const entries = await readdir(solvingBasePath);
+    for (const entry of entries) {
+      if (entry.startsWith('.')) continue;
+
+      const fullPath = join(solvingBasePath, entry);
+      const s = await stat(fullPath);
+      if (!s.isDirectory()) continue;
+
+      const metaPath = join(fullPath, 'meta.json');
+      try {
+        const metaRaw = await readFile(metaPath, 'utf-8');
+        const meta = JSON.parse(metaRaw) as {
+          id?: number;
+          title?: string;
+          level?: number;
+        };
+
+        const problemId = meta.id ?? parseInt(entry, 10);
+        if (isNaN(problemId) || problemId <= 0) continue;
+
+        results.push({
+          problemId,
+          title: meta.title ?? `문제 ${problemId}`,
+          level: meta.level,
+          problemDir: fullPath,
+        });
+      } catch {
+        // meta.json 없거나 파싱 실패 시 스킵
+      }
+    }
+  } catch {
+    // solving 디렉터리 자체가 없거나 읽기 실패
+    return [];
+  }
+
+  results.sort((a, b) => a.problemId - b.problemId);
+  return results;
 }
