@@ -235,8 +235,8 @@ async function main() {
     finalFlags = { ...cli.flags, ...commandCli.flags };
   }
 
-  // init 명령어는 예외 (프로젝트 초기화 명령어)
-  if (command !== 'init') {
+  // init, completion 명령어는 예외 (프로젝트 없이 실행 가능)
+  if (command !== 'init' && command !== 'completion') {
     // 프로젝트 폴더 확인
     const projectRoot = findProjectRoot();
 

@@ -17,6 +17,16 @@ npm install -g @rhseung/ps-cli
 bun install -g @rhseung/ps-cli
 ```
 
+### zsh 자동 완성
+
+zsh 사용자는 다음 명령어로 자동 완성 설치 방법을 확인할 수 있습니다:
+
+```bash
+ps completion
+```
+
+출력된 안내에 따라 `.zshrc`에 설정을 추가한 뒤, 새 터미널을 열거나 `exec zsh`를 실행하면 `ps ` 입력 후 Tab으로 명령어·옵션 자동 완성을 사용할 수 있습니다.
+
 ## 빠른 시작
 
 ```bash

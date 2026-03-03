@@ -1,0 +1,145 @@
+#compdef ps
+# ps-cli zsh completion script
+
+local -a subcmds
+subcmds=(
+  'init:프로젝트 초기화'
+  'fetch:문제 가져오기'
+  'test:로컬 테스트'
+  'run:코드 실행'
+  'submit:제출'
+  'archive:아카이빙'
+  'solving:풀이 중인 문제 목록'
+  'open:문제 페이지 또는 에디터 열기'
+  'search:문제 검색'
+  'stats:통계 조회'
+  'config:설정 관리'
+  'completion:zsh 자동 완성 설치 방법'
+  'help:도움말 표시'
+)
+
+local -a languages
+languages=(python javascript typescript cpp)
+
+local -a config_subcmds
+config_subcmds=(get set list clear)
+
+local -a config_keys
+config_keys=(
+  'general.default-language:기본 언어'
+  'general.solved-ac-handle:Solved.ac 핸들'
+  'editor.command:에디터 명령어'
+  'editor.auto-open:자동 에디터 열기'
+  'paths.solving:Solving 디렉토리'
+  'paths.archive:아카이브 디렉토리'
+  'paths.archive-strategy:아카이빙 전략'
+  'archive.auto-commit:자동 Git 커밋'
+  'archive.commit-message:커밋 메시지 템플릿'
+  'markdown.include-tag:태그 포함 여부'
+)
+
+local -a archive_strategies
+archive_strategies=(flat 'by-range' 'by-tier' 'by-tag')
+
+_ps() {
+  local context state line
+  typeset -A opt_args
+
+  _arguments -C \
+    '(-h --help)'{-h,--help}'[도움말 표시]' \
+    '1: :->cmd' \
+    '*::arg:->args'
+
+  case $state in
+    cmd)
+      _describe '명령어' subcmds
+      ;;
+    args)
+      case ${words[2]} in
+        init)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]'
+          ;;
+        fetch)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(-l --language)'{-l,--language}'[언어 선택]:언어:($languages)' \
+            ':문제번호:'
+          ;;
+        test)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(-l --language)'{-l,--language}'[언어 선택]:언어:($languages)' \
+            '(-w --watch)'{-w,--watch}'[watch 모드]' \
+            '(-f --file)'{-f,--file}'[solution 파일 지정]:파일:_files' \
+            '(--index)'--index'[인덱스로 지정]:인덱스:' \
+            ':문제번호:'
+          ;;
+        run)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(-l --language)'{-l,--language}'[언어 선택]:언어:($languages)' \
+            '(-i --input)'{-i,--input}'[입력 파일]:파일:_files' \
+            '(-f --file)'{-f,--file}'[solution 파일 지정]:파일:_files' \
+            '(--index)'--index'[인덱스로 지정]:인덱스:' \
+            ':문제번호:'
+          ;;
+        submit)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(-l --language)'{-l,--language}'[언어 선택]:언어:($languages)' \
+            '(-f --file)'{-f,--file}'[solution 파일 지정]:파일:_files' \
+            '(-i --index)'{-i,--index}'[인덱스로 지정]:인덱스:' \
+            ':문제번호:'
+          ;;
+        archive)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            ':문제번호:'
+          ;;
+        solving)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]'
+          ;;
+        open)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(-w --workbook)'{-w,--workbook}'[문제집 ID]:ID:' \
+            '(-e --editor)'{-e,--editor}'[에디터로 열기]' \
+            ':문제번호:'
+          ;;
+        search)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(--workbook)'--workbook'[문제집 ID]:ID:' \
+            ':검색 쿼리:'
+          ;;
+        stats)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(--handle)'--handle'[Solved.ac 핸들]:핸들:' \
+            ':핸들:'
+          ;;
+        config)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '1:config 명령어:($config_subcmds)' \
+            '2:설정 키:($config_keys)' \
+            '3:값:'
+          ;;
+        completion)
+          _arguments '(-h --help)'{-h,--help}'[도움말 표시]'
+          ;;
+        help)
+          _describe '명령어' subcmds
+          ;;
+        *)
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_ps "$@"
