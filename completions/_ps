@@ -128,7 +128,9 @@ _ps() {
             '3:값:'
           ;;
         completion)
-          _arguments '(-h --help)'{-h,--help}'[도움말 표시]'
+          _arguments \
+            '(-h --help)'{-h,--help}'[도움말 표시]' \
+            '(--install)'--install'[.zshrc에 자동 완성 설정 추가]'
           ;;
         help)
           _describe '명령어' subcmds

@@ -19,13 +19,15 @@ bun install -g @rhseung/ps-cli
 
 ### zsh 자동 완성
 
-zsh 사용자는 다음 명령어로 자동 완성 설치 방법을 확인할 수 있습니다:
+zsh 사용자는 다음 명령어로 자동 완성을 설치할 수 있습니다:
 
 ```bash
-ps completion
+ps completion --install
 ```
 
-출력된 안내에 따라 `.zshrc`에 설정을 추가한 뒤, 새 터미널을 열거나 `exec zsh`를 실행하면 `ps ` 입력 후 Tab으로 명령어·옵션 자동 완성을 사용할 수 있습니다.
+이 명령은 `.zshrc`에 필요한 설정을 자동으로 추가합니다. 적용하려면 새 터미널을 열거나 `exec zsh`를 실행하세요.
+
+수동 설치가 필요하면 `ps completion`으로 안내를 확인할 수 있습니다.
 
 ## 빠른 시작
 
@@ -424,6 +426,30 @@ ps config clear                        # .ps-cli 폴더 및 모든 설정 삭제
 
 - 설정은 현재 프로젝트의 .ps-cli 디렉토리 내에 저장됩니다
 - 대화형 모드로 키와 값을 선택할 수 있습니다
+
+---
+
+### `completion` - zsh 자동 완성 설치
+
+zsh 자동 완성 설치 방법을 표시하거나 `.zshrc`에 자동으로 추가합니다.
+
+**사용법:**
+
+```bash
+ps completion [옵션]
+```
+
+**옵션:**
+
+- `--help`, `-h`: 도움말 표시
+- `--install`: `.zshrc`에 자동 완성 설정을 자동으로 추가
+
+**예제:**
+
+```bash
+ps completion --install    # 자동 설치 (권장)
+ps completion              # 수동 설치 안내 표시
+```
 
 ## 설정
 
