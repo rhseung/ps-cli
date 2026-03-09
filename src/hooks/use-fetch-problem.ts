@@ -98,7 +98,7 @@ export function useFetchProblem({
             await execaCommand(`${editor} ${problemDir}`, {
               shell: true,
               detached: true,
-              stdio: 'ignore',
+              stdio: 'inherit',
             });
             setMessage(
               `문제 파일이 생성되었습니다: ${problemDir}\n${editor}로 열었습니다.`,

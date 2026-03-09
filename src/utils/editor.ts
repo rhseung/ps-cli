@@ -13,6 +13,6 @@ export async function openEditor(path: string): Promise<void> {
   await execaCommand(`${editor} ${path}`, {
     shell: true,
     detached: true,
-    stdio: 'ignore',
+    stdio: 'inherit',
   });
 }
